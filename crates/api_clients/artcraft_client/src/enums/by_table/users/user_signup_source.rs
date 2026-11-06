@@ -12,7 +12,7 @@ use strum::EnumIter;
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum UserSignupSource {
-  #[deprecated(since = "2026-01-30", note = "Use other Artcraft* enum variants instead")]
+  #[deprecated(note = "Use other Artcraft* enum variants instead")]
   #[serde(rename = "artcraft")]
   ArtCraft,
 
