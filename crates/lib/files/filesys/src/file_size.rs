@@ -34,7 +34,8 @@ mod tests {
   pub fn test_file_size() {
     // Success case
     let path = test_file("test_data/audio/flac/zelda_ocarina_small_item.flac");
-    assert_eq!(file_size(path).unwrap(), 271925);
+    // The pinned fixture is a short FLAC sample (not the older full-length file).
+    assert_eq!(file_size(path).unwrap(), 115);
 
     // Error case
     assert!(file_size("non/existing/path").is_err());
