@@ -3,43 +3,18 @@ use crate::cloudflare_response_signals::CloudflareResponseSignals;
 
 /// Body markers of Cloudflare's challenge pages (managed challenge, JS
 /// challenge, Turnstile interstitial). Any one is conclusive.
-const CHALLENGE_BODY_MARKERS: &[&str] = &[
-  "challenge-platform",
-  "challenge-error-text",
-  "cType: 'managed'",
-  "Just a moment...",
-  "_cf_chl_opt",
-  "cf-chl-",
-  "cf_chl_",
-  "Enable JavaScript and cookies to continue",
-  "Checking if the site connection is secure",
-  "Verify you are human",
-];
+const CHALLENGE_BODY_MARKERS: &[&str] =
+  &["challenge-platform", "challenge-error-text", "cType: 'managed'", "Just a moment...", "_cf_chl_opt", "cf-chl-", "cf_chl_", "Enable JavaScript and cookies to continue", "Checking if the site connection is secure", "Verify you are human"];
 
 /// Body markers of a hard WAF block page.
-const ACCESS_DENIED_BODY_MARKERS: &[&str] = &[
-  "error code: 1020",
-  "Error 1020",
-  "Access denied",
-  "Sorry, you have been blocked",
-  "Attention Required! | Cloudflare",
-];
+const ACCESS_DENIED_BODY_MARKERS: &[&str] = &["error code: 1020", "Error 1020", "Access denied", "Sorry, you have been blocked", "Attention Required! | Cloudflare"];
 
 /// Body markers of Cloudflare's rate-limit page.
-const RATE_LIMIT_BODY_MARKERS: &[&str] = &[
-  "error code: 1015",
-  "Error 1015",
-  "You are being rate limited",
-];
+const RATE_LIMIT_BODY_MARKERS: &[&str] = &["error code: 1015", "Error 1015", "You are being rate limited"];
 
 /// Body markers that a page came from Cloudflare at all (used only to avoid
 /// mislabeling an origin's own 5xx as an edge error).
-const CLOUDFLARE_BODY_MARKERS: &[&str] = &[
-  "cloudflare",
-  "Cloudflare",
-  "cf-error-details",
-  "Ray ID",
-];
+const CLOUDFLARE_BODY_MARKERS: &[&str] = &["cloudflare", "Cloudflare", "cf-error-details", "Ray ID"];
 
 /// Decide whether a response is a Cloudflare edge response and which kind.
 ///
@@ -91,7 +66,7 @@ pub fn classify_cloudflare_response(signals: &CloudflareResponseSignals<'_>) -> 
       } else {
         None
       }
-    }
+    },
   }
 }
 
@@ -110,7 +85,8 @@ fn contains_any(haystack: &str, needles: &[&str]) -> bool {
 mod tests {
   use super::*;
 
-  const CHALLENGE_PAGE: &str = r#"<!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title></head><body><div id="challenge-error-text">Enable JavaScript and cookies to continue</div><script>window._cf_chl_opt={cvId: '3'};</script></body></html>"#;
+  const CHALLENGE_PAGE: &str =
+    r#"<!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title></head><body><div id="challenge-error-text">Enable JavaScript and cookies to continue</div><script>window._cf_chl_opt={cvId: '3'};</script></body></html>"#;
   const BLOCK_PAGE: &str = r#"<html><head><title>Attention Required! | Cloudflare</title></head><body><h1>Sorry, you have been blocked</h1><p>error code: 1020</p><span class="cf-footer-item">Cloudflare Ray ID: 8abc</span></body></html>"#;
   const RATE_LIMIT_PAGE: &str = r#"<html><body><h1>Error 1015</h1><p>You are being rate limited</p><p>Cloudflare Ray ID: 8abc</p></body></html>"#;
   const ORIGIN_502_PAGE: &str = r#"<html><head><title>502: Bad gateway</title></head><body><div id="cf-error-details"><h1>Bad gateway</h1><p>Error code 502</p><p>Cloudflare Ray ID: 8abc</p></div></body></html>"#;

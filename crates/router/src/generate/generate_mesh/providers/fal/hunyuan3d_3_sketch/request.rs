@@ -59,8 +59,7 @@ mod tests {
   // ── Helpers ──
 
   fn get_fal_client() -> RouterClient {
-    let secret = std::fs::read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt")
-      .expect("Failed to read fal_api_key.txt");
+    let secret = std::fs::read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt").expect("Failed to read fal_api_key.txt");
     let api_key = FalApiKey::from_str(secret.trim());
     let webhook_url = "https://example.com/fal-webhook-test".to_string();
     RouterClient::Fal(RouterFalClient::new_with_webhook(api_key, webhook_url))

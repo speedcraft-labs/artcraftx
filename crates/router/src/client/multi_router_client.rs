@@ -21,43 +21,34 @@ pub struct MultiRouterClient {
 
 impl MultiRouterClient {
   pub fn get_artcraft_client_ref(&self) -> Result<&RouterArtcraftClient, ClientError> {
-    self.artcraft_client.as_ref()
-      .ok_or(ClientError::ClientNotConfigured(ClientType::Artcraft))
+    self.artcraft_client.as_ref().ok_or(ClientError::ClientNotConfigured(ClientType::Artcraft))
   }
 
   pub fn get_fal_client_ref(&self) -> Result<&RouterFalClient, ClientError> {
-    self.fal_client.as_ref()
-      .ok_or(ClientError::ClientNotConfigured(ClientType::Fal))
+    self.fal_client.as_ref().ok_or(ClientError::ClientNotConfigured(ClientType::Fal))
   }
 
   pub fn get_gmicloud_client_ref(&self) -> Result<&RouterGmiCloudClient, ClientError> {
-    self.gmicloud_client.as_ref()
-      .ok_or(ClientError::ClientNotConfigured(ClientType::GmiCloud))
+    self.gmicloud_client.as_ref().ok_or(ClientError::ClientNotConfigured(ClientType::GmiCloud))
   }
 
   pub fn get_grok_api_client_ref(&self) -> Result<&RouterGrokApiClient, ClientError> {
-    self.grok_api_client.as_ref()
-      .ok_or(ClientError::ClientNotConfigured(ClientType::GrokApi))
+    self.grok_api_client.as_ref().ok_or(ClientError::ClientNotConfigured(ClientType::GrokApi))
   }
 
   pub fn get_grok_client_ref(&self) -> Result<&RouterGrokClient, ClientError> {
-    self.grok_client.as_ref()
-      .ok_or(ClientError::ClientNotConfigured(ClientType::Grok))
+    self.grok_client.as_ref().ok_or(ClientError::ClientNotConfigured(ClientType::Grok))
   }
 
   pub fn get_higgsfield_client_ref(&self) -> Result<&RouterHiggsfieldClient, ClientError> {
-    self.higgsfield_client.as_ref()
-      .ok_or(ClientError::ClientNotConfigured(ClientType::Higgsfield))
+    self.higgsfield_client.as_ref().ok_or(ClientError::ClientNotConfigured(ClientType::Higgsfield))
   }
 
   pub fn get_midjourney_client_ref(&self) -> Result<&RouterMidjourneyClient, ClientError> {
-    self.midjourney_client.as_ref()
-      .ok_or(ClientError::ClientNotConfigured(ClientType::Midjourney))
+    self.midjourney_client.as_ref().ok_or(ClientError::ClientNotConfigured(ClientType::Midjourney))
   }
 
   pub fn get_seedance2pro_client_ref(&self) -> Result<&RouterSeedance2ProClient, ClientError> {
-    self.seedance2pro_client.as_ref()
-      .ok_or(ClientError::ClientNotConfigured(ClientType::Seedance2Pro))
+    self.seedance2pro_client.as_ref().ok_or(ClientError::ClientNotConfigured(ClientType::Seedance2Pro))
   }
-
 }

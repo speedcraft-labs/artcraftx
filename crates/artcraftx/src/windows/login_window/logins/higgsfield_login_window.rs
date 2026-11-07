@@ -10,9 +10,7 @@ const DESTINATION_HOSTNAMES: &[&str] = &["higgsfield.ai", "www.higgsfield.ai"];
 /// Clerk's session JWT cookie, set on higgsfield.ai only while signed in.
 const CLERK_SESSION_COOKIE: &str = "__session";
 
-static WEBSITE_ENTRY_URL: Lazy<Url> = Lazy::new(|| {
-  Url::parse("https://higgsfield.ai/").expect("URL should parse")
-});
+static WEBSITE_ENTRY_URL: Lazy<Url> = Lazy::new(|| Url::parse("https://higgsfield.ai/").expect("URL should parse"));
 
 pub struct HiggsfieldLoginWindow;
 
@@ -27,8 +25,7 @@ impl LoginWindowSite for HiggsfieldLoginWindow {
 
   /// Higgsfield has no distinct login page — the entry page hosts the login.
   fn journey(&self) -> LoginJourney {
-    LoginJourney::with_default_pre_navigation()
-        .website_entry(WEBSITE_ENTRY_URL.clone())
+    LoginJourney::with_default_pre_navigation().website_entry(WEBSITE_ENTRY_URL.clone())
   }
 
   fn destination_hostnames(&self) -> &[&str] {

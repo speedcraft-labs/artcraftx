@@ -11,9 +11,7 @@ use router::generate::generate_image::generate_image_request_builder::GenerateIm
 use sqlite_identifiers::enums::task_type::TaskType;
 use sqlite_identifiers::ids::media_file_token::MediaFileToken;
 
-use crate::commands::generate::common::higgsfield_generation::{
-  higgsfield_media_url_map, higgsfield_router_client, join_higgsfield_job_ids, send_higgsfield_image_request,
-};
+use crate::commands::generate::common::higgsfield_generation::{higgsfield_media_url_map, higgsfield_router_client, join_higgsfield_job_ids, send_higgsfield_image_request};
 use crate::commands::generate::common::media_source_conversion::collect_source_tokens;
 use crate::commands::generate::common::tauri_media_source::TauriMediaSource;
 use crate::commands::generate::generate_error::GenerateError;
@@ -34,26 +32,14 @@ use crate::services::asset_uploads::asset_upload_ledger::AssetUploadLedger;
 /// CDN URLs through the map built here before the router downloads and
 /// re-uploads them. The returned task carries every job id of the
 /// Higgsfield job set so the poller can follow a batch.
-pub async fn enqueue_via_higgsfield(
-  maybe_app: Option<&AppHandle>,
-  request: &TauriGenerateImageRequest,
-  credential: &AuthCredential,
-  ledger: &AssetUploadLedger,
-) -> Result<TaskEnqueueSuccess, GenerateError> {
+pub async fn enqueue_via_higgsfield(maybe_app: Option<&AppHandle>, request: &TauriGenerateImageRequest, credential: &AuthCredential, ledger: &AssetUploadLedger) -> Result<TaskEnqueueSuccess, GenerateError> {
   let tauri_model = request.model.ok_or(GenerateError::no_model_specified())?;
 
-  let router_model = tauri_image_model_to_router_model(tauri_model).ok_or(
-    GenerateError::NotYetImplemented(format!(
-      "Model {:?} is not supported for a Higgsfield account",
-      tauri_model
-    )),
-  )?;
+  let router_model = tauri_image_model_to_router_model(tauri_model).ok_or(GenerateError::NotYetImplemented(format!("Model {:?} is not supported for a Higgsfield account", tauri_model)))?;
 
   let sources = collect_reference_sources(request);
   let media_url_map = higgsfield_media_url_map(&collect_source_tokens(&sources)).await?;
-  let image_inputs = (!sources.is_empty()).then(|| {
-    ImageListRef::Sources(sources.into_iter().map(TauriMediaSource::into_image_ref).collect())
-  });
+  let image_inputs = (!sources.is_empty()).then(|| ImageListRef::Sources(sources.into_iter().map(TauriMediaSource::into_image_ref).collect()));
 
   let router_request = GenerateImageRequestBuilder {
     model: router_model,
@@ -77,14 +63,9 @@ pub async fn enqueue_via_higgsfield(
   let upload_cache = ledger.for_higgsfield_credential(&credential.id);
   let response = send_higgsfield_image_request(maybe_app, credential, router_request, &client, &media_url_map, &upload_cache).await?;
 
-  let payload = response
-      .get_higgsfield_payload()
-      .ok_or(GenerateError::ResponseHadNoJobTokens)?;
+  let payload = response.get_higgsfield_payload().ok_or(GenerateError::ResponseHadNoJobTokens)?;
 
-  info!(
-    "Higgsfield image generation enqueued: job_set={} jobs={:?}",
-    payload.job_set_id, payload.job_ids,
-  );
+  info!("Higgsfield image generation enqueued: job_set={} jobs={:?}", payload.job_set_id, payload.job_ids,);
 
   Ok(TaskEnqueueSuccess {
     task_type: TaskType::ImageGeneration,
@@ -141,13 +122,7 @@ mod live_higgsfield_image_tests {
 
   fn higgsfield_credential() -> AuthCredential {
     let app_data_root = AppDataRoot::create_default().expect("app data root");
-    app_data_root
-        .credentials_dir()
-        .load_credentials()
-        .expect("load credentials")
-        .into_iter()
-        .find(|c| c.service == GenerationSource::HiggsfieldCookies)
-        .expect("no `higgsfield_cookies` credential on disk; log into Higgsfield via the app first")
+    app_data_root.credentials_dir().load_credentials().expect("load credentials").into_iter().find(|c| c.service == GenerationSource::HiggsfieldCookies).expect("no `higgsfield_cookies` credential on disk; log into Higgsfield via the app first")
   }
 
   #[tokio::test]

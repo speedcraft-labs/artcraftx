@@ -12,9 +12,7 @@ pub struct GetPromptboxStateResponse {
 }
 
 #[tauri::command]
-pub async fn get_promptbox_state_command(
-  promptbox_state: State<'_, PromptboxStateManager>,
-) -> Result<GetPromptboxStateResponse, String> {
+pub async fn get_promptbox_state_command(promptbox_state: State<'_, PromptboxStateManager>) -> Result<GetPromptboxStateResponse, String> {
   info!("get_promptbox_state_command called");
 
   let state = promptbox_state.get().map_err(|err| {

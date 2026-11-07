@@ -6,9 +6,7 @@ use crate::state::database::task_database::TaskDatabase;
 use crate::threads::third_party_task_polling_thread::handlers::grok::grok_image_collector::GrokImageCollector;
 use crate::threads::third_party_task_polling_thread::handlers::grok::handle_grok_image_complete::handle_grok_image_complete;
 use crate::threads::third_party_task_polling_thread::handlers::grok::handle_grok_image_failure::handle_grok_image_failure;
-use grok_consumer_client::endpoint_bindings::generate_image_websocket::grok_generate_image_websocket::{
-  ImageWebsocketEvent, DEFAULT_IMAGE_COUNT,
-};
+use grok_consumer_client::endpoint_bindings::generate_image_websocket::grok_generate_image_websocket::{ImageWebsocketEvent, DEFAULT_IMAGE_COUNT};
 use log::{debug, error, info, warn};
 use sqlite_database::queries::task::Task;
 use std::collections::HashMap;
@@ -39,9 +37,7 @@ pub async fn poll_grok_image_tasks(
   grok_tasks: &[&Task],
 ) {
   // provider_job_id is the websocket request id the enqueue returned.
-  let tasks_by_request_id: HashMap<&str, &Task> = grok_tasks.iter()
-      .filter_map(|task| task.provider_job_id.as_deref().map(|id| (id, *task)))
-      .collect();
+  let tasks_by_request_id: HashMap<&str, &Task> = grok_tasks.iter().filter_map(|task| task.provider_job_id.as_deref().map(|id| (id, *task))).collect();
 
   let live_request_ids: Vec<&str> = tasks_by_request_id.keys().copied().collect();
   collector.retain_only(&live_request_ids);
@@ -54,7 +50,7 @@ pub async fn poll_grok_image_tasks(
     Err(err) => {
       error!("[GrokPolling] Could not read Grok websockets: {:?}", err);
       return;
-    }
+    },
   };
 
   if websockets.is_empty() {
@@ -72,7 +68,7 @@ pub async fn poll_grok_image_tasks(
           error!("[GrokPolling] Could not reconnect Grok websocket for credential {}: {}", credential_id.as_str(), err);
         }
         continue;
-      }
+      },
     };
 
     for event in events {
@@ -84,7 +80,7 @@ pub async fn poll_grok_image_tasks(
           } else {
             debug!("[GrokPolling] Ignoring image for untracked request {}", request_id);
           }
-        }
+        },
         ImageWebsocketEvent::Failed { request_id, message, err_code, raw_frame } => {
           let reason = match (&message, &err_code) {
             (Some(message), _) => format!("Grok rejected the prompt: {message}"),
@@ -101,7 +97,7 @@ pub async fn poll_grok_image_tasks(
             collector.remove(&request_id);
             handle_grok_image_failure(app_handle, task_database, task, &reason).await;
           }
-        }
+        },
       }
     }
   }
@@ -114,23 +110,10 @@ pub async fn poll_grok_image_tasks(
 
     if pending.is_complete(DEFAULT_IMAGE_COUNT, PARTIAL_RESULT_IDLE_TIMEOUT) {
       let pending = collector.remove(request_id).expect("checked above");
-      handle_grok_image_complete(
-        app_handle,
-        app_data_root,
-        app_preferences,
-        task_database,
-        storyteller_creds_manager,
-        task,
-        &pending.images,
-      ).await;
+      handle_grok_image_complete(app_handle, app_data_root, app_preferences, task_database, storyteller_creds_manager, task, &pending.images).await;
     } else if pending.is_timed_out(NO_RESULT_TIMEOUT) {
       collector.remove(request_id);
-      handle_grok_image_failure(
-        app_handle,
-        task_database,
-        task,
-        "Grok did not return any images in time",
-      ).await;
+      handle_grok_image_failure(app_handle, task_database, task, "Grok did not return any images in time").await;
     }
   }
 }

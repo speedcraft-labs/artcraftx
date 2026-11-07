@@ -30,9 +30,7 @@ impl EnqueueJobsResponse {
   /// The ids of every job created, across all job sets, in order. These are
   /// what to poll.
   pub fn job_ids(&self) -> Vec<JobId> {
-    self.job_sets.iter()
-        .flat_map(|job_set| job_set.jobs.iter().map(|job| job.id.clone()))
-        .collect()
+    self.job_sets.iter().flat_map(|job_set| job_set.jobs.iter().map(|job| job.id.clone())).collect()
   }
 
   /// The first job set (there's normally exactly one).

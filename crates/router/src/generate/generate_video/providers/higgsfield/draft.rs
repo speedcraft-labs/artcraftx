@@ -60,17 +60,9 @@ pub struct HiggsfieldVideoDraftState {
 }
 
 impl HiggsfieldVideoDraftState {
-  pub async fn to_request(
-    &mut self,
-    draft_context: &VideoGenerationDraftContext<'_>,
-  ) -> Result<HiggsfieldVideoRequestState, ArtcraftRouterError> {
+  pub async fn to_request(&mut self, draft_context: &VideoGenerationDraftContext<'_>) -> Result<HiggsfieldVideoRequestState, ArtcraftRouterError> {
     let client = draft_context.get_higgsfield_client_ref()?;
-    let uploads = HiggsfieldUploadContext {
-      session: &client.session,
-      maybe_map: draft_context.media_file_to_artcraft_url_map,
-      maybe_cache: draft_context.asset_upload_cache,
-      maybe_observer: draft_context.asset_upload_observer,
-    };
+    let uploads = HiggsfieldUploadContext { session: &client.session, maybe_map: draft_context.media_file_to_artcraft_url_map, maybe_cache: draft_context.asset_upload_cache, maybe_observer: draft_context.asset_upload_observer };
     let label = self.plan.model_label();
 
     let references = self.unhandled_request_state.take().unwrap_or_default();
@@ -98,7 +90,7 @@ impl HiggsfieldVideoDraftState {
         request.generate_audio = plan.generate_audio;
         request.bitrate_mode = plan.bitrate_mode;
         HiggsfieldVideoRequest::Seedance2p5Edit(request)
-      }
+      },
     };
 
     attach(&mut request, start_frame.map(MediaReference::start_frame));

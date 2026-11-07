@@ -36,12 +36,10 @@ impl HiggsfieldPollSessions {
       Err(err) => {
         warn!("[HiggsfieldPolling] Could not load credentials: {}", err);
         return self.sessions.iter().map(|(id, entry)| (id.clone(), entry.session.clone())).collect();
-      }
+      },
     };
 
-    let higgsfield_credentials: Vec<AuthCredential> = credentials.into_iter()
-        .filter(|credential| credential.service == GenerationSource::HiggsfieldCookies)
-        .collect();
+    let higgsfield_credentials: Vec<AuthCredential> = credentials.into_iter().filter(|credential| credential.service == GenerationSource::HiggsfieldCookies).collect();
 
     let live_ids: Vec<String> = higgsfield_credentials.iter().map(|c| c.id.as_str().to_string()).collect();
     self.sessions.retain(|id, _| live_ids.contains(id));
@@ -64,12 +62,12 @@ impl HiggsfieldPollSessions {
           Ok(session) => {
             info!("[HiggsfieldPolling] Opened a session for credential {}", id);
             self.sessions.insert(id.clone(), SessionEntry { cookie_header, session });
-          }
+          },
           Err(err) => {
             warn!("[HiggsfieldPolling] Credential {} can't open a Higgsfield session: {}", id, err);
             self.sessions.remove(&id);
             continue;
-          }
+          },
         }
       }
       if let Some(entry) = self.sessions.get(&id) {

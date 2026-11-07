@@ -40,11 +40,7 @@ impl BrowserProfile {
   /// embedded webview that captured the cookies, since Cloudflare's
   /// `cf_clearance` is bound to the exact User-Agent string.
   pub fn safari_macos_with_user_agent(user_agent: impl Into<String>) -> Self {
-    Self::Custom(CustomBrowserProfile {
-      emulation: Emulation::Safari18,
-      os: EmulationOS::MacOS,
-      maybe_user_agent: Some(user_agent.into()),
-    })
+    Self::Custom(CustomBrowserProfile { emulation: Emulation::Safari18, os: EmulationOS::MacOS, maybe_user_agent: Some(user_agent.into()) })
   }
 
   /// The profile that best matches a User-Agent captured from another client
@@ -61,11 +57,7 @@ impl BrowserProfile {
   pub fn matching_user_agent(user_agent: impl Into<String>) -> Self {
     let user_agent = user_agent.into();
     let emulation = emulation_for_user_agent(&user_agent);
-    Self::Custom(CustomBrowserProfile {
-      emulation,
-      os: os_for_user_agent(&user_agent),
-      maybe_user_agent: Some(user_agent),
-    })
+    Self::Custom(CustomBrowserProfile { emulation, os: os_for_user_agent(&user_agent), maybe_user_agent: Some(user_agent) })
   }
 
   /// Build a ready-to-use client carrying this profile's full fingerprint and
@@ -93,10 +85,7 @@ impl BrowserProfile {
   /// [`Self::configure_client_builder`]. When emulating at the request level,
   /// apply any override yourself with a `user-agent` header.
   pub fn emulation_option(&self) -> EmulationOption {
-    EmulationOption::builder()
-        .emulation(self.emulation())
-        .emulation_os(self.os())
-        .build()
+    EmulationOption::builder().emulation(self.emulation()).emulation_os(self.os()).build()
   }
 
   /// The underlying `wreq_util` emulation for this profile.
@@ -139,7 +128,7 @@ impl BrowserProfile {
       Self::Safari18 => "safari18".to_string(),
       Self::Custom(custom) => {
         format!("custom({:?} on {:?})", custom.emulation, custom.os)
-      }
+      },
     }
   }
 }
@@ -221,11 +210,7 @@ mod tests {
 
   #[test]
   fn custom_carries_os_and_ua_override() {
-    let profile = BrowserProfile::Custom(CustomBrowserProfile {
-      emulation: Emulation::Chrome145,
-      os: EmulationOS::Windows,
-      maybe_user_agent: Some("custom-agent/1.0".to_string()),
-    });
+    let profile = BrowserProfile::Custom(CustomBrowserProfile { emulation: Emulation::Chrome145, os: EmulationOS::Windows, maybe_user_agent: Some("custom-agent/1.0".to_string()) });
     assert_eq!(profile.emulation(), Emulation::Chrome145);
     assert_eq!(profile.os(), EmulationOS::Windows);
     assert_eq!(profile.maybe_user_agent_override(), Some("custom-agent/1.0"));
@@ -233,16 +218,8 @@ mod tests {
 
   #[test]
   fn every_profile_builds_a_client() {
-    for profile in [
-      BrowserProfile::Firefox139,
-      BrowserProfile::Firefox147,
-      BrowserProfile::Chrome131,
-      BrowserProfile::Chrome145,
-      BrowserProfile::Safari18,
-    ] {
-      profile.build_client().unwrap_or_else(|err| {
-        panic!("profile {} failed to build a client: {err}", profile.label())
-      });
+    for profile in [BrowserProfile::Firefox139, BrowserProfile::Firefox147, BrowserProfile::Chrome131, BrowserProfile::Chrome145, BrowserProfile::Safari18] {
+      profile.build_client().unwrap_or_else(|err| panic!("profile {} failed to build a client: {err}", profile.label()));
     }
   }
 }

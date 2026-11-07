@@ -47,30 +47,18 @@ pub async fn handle_successful_job(
   // Primary media file: the first listed file, falling back to the job's
   // single result entity (some generation paths don't populate the
   // media-file -> source-job linkage yet).
-  let maybe_primary_media_file_token = media_files.first()
-      .map(|file| file.token.clone())
-      .or_else(|| {
-        job.maybe_result
-            .as_ref()
-            .map(|result| MediaFileToken::new_from_str(&result.entity_token))
-      });
+  let maybe_primary_media_file_token = media_files.first().map(|file| file.token.clone()).or_else(|| job.maybe_result.as_ref().map(|result| MediaFileToken::new_from_str(&result.entity_token)));
 
   let updated = update_successful_task_status_with_metadata(UpdateSuccessfulTaskArgs {
     db: task_database.get_connection(),
     task_id: &task.id,
-    maybe_batch_token: media_files.first()
-        .and_then(|file| file.maybe_batch_token.as_ref()),
+    maybe_batch_token: media_files.first().and_then(|file| file.maybe_batch_token.as_ref()),
     maybe_primary_media_file_token: maybe_primary_media_file_token.as_ref(),
     maybe_primary_media_file_class: get_media_file_class(job, media_files.first()),
     maybe_primary_media_file_thumbnail_url_template: get_thumbnail_template(job, media_files.first()),
-    maybe_primary_media_file_cdn_url: media_files.first()
-        .map(|file| file.media_links.cdn_url.as_str())
-        .or_else(|| {
-          job.maybe_result
-              .as_ref()
-              .map(|result| result.media_links.cdn_url.as_str())
-        }),
-  }).await?;
+    maybe_primary_media_file_cdn_url: media_files.first().map(|file| file.media_links.cdn_url.as_str()).or_else(|| job.maybe_result.as_ref().map(|result| result.media_links.cdn_url.as_str())),
+  })
+  .await?;
 
   if !updated {
     return Ok(()); // If anything breaks with queries, don't spam events.
@@ -103,69 +91,41 @@ pub async fn handle_successful_job(
 /// preferred filename convention. Fails open per file so one bad download
 /// doesn't lose the rest. Returns the files' paths (in job order), including
 /// ones that were already there from an earlier run.
-async fn download_all_files(
-  app_data_root: &AppDataRoot,
-  app_preferences: &AppPreferencesManager,
-  job: &JobStatusPayload,
-  task: &Task,
-  media_files: &[JobMediaFileInfo],
-) -> Vec<PathBuf> {
+async fn download_all_files(app_data_root: &AppDataRoot, app_preferences: &AppPreferencesManager, job: &JobStatusPayload, task: &Task, media_files: &[JobMediaFileInfo]) -> Vec<PathBuf> {
   let mut downloaded = Vec::new();
   let app_prefs = match app_preferences.get() {
     Ok(prefs) => prefs,
     Err(err) => {
       error!("Can't read app preferences; skipping downloads for job {}: {:?}", job.job_token.as_str(), err);
       return downloaded;
-    }
+    },
   };
 
   // Every listed file; fall back to the job's single result entity when the
   // media-file listing is empty.
-  let cdn_urls = if media_files.is_empty() {
-    job.maybe_result
-        .as_ref()
-        .map(|result| result.media_links.cdn_url.clone())
-        .into_iter()
-        .collect::<Vec<_>>()
-  } else {
-    media_files.iter()
-        .map(|file| file.media_links.cdn_url.clone())
-        .collect::<Vec<_>>()
-  };
+  let cdn_urls = if media_files.is_empty() { job.maybe_result.as_ref().map(|result| result.media_links.cdn_url.clone()).into_iter().collect::<Vec<_>>() } else { media_files.iter().map(|file| file.media_links.cdn_url.clone()).collect::<Vec<_>>() };
 
-  let model_slug = task.model_type
-      .as_ref()
-      .map(|model_type| model_slug_from_model_type_str(model_type.to_str()))
-      .unwrap_or_else(|| "artcraft".to_string());
+  let model_slug = task.model_type.as_ref().map(|model_type| model_slug_from_model_type_str(model_type.to_str())).unwrap_or_else(|| "artcraft".to_string());
 
   let download_time = Local::now();
 
   for (index, cdn_url) in cdn_urls.iter().enumerate() {
-    let extension = cdn_url.path()
-        .rsplit('.')
-        .next()
-        .unwrap_or("bin")
-        .to_string();
+    let extension = cdn_url.path().rsplit('.').next().unwrap_or("bin").to_string();
 
-    let filename = app_prefs.downloads.preferred_download_filename.build_filename(&DownloadFilenameParts {
-      model_slug: &model_slug,
-      download_time,
-      maybe_batch_index: (cdn_urls.len() > 1).then(|| index + 1),
-      extension: &extension,
-    });
+    let filename = app_prefs.downloads.preferred_download_filename.build_filename(&DownloadFilenameParts { model_slug: &model_slug, download_time, maybe_batch_index: (cdn_urls.len() > 1).then(|| index + 1), extension: &extension });
 
     match download_url_to_download_dir_via_temp(cdn_url, Some(&filename), app_data_root, &app_prefs).await {
       Ok(path) => {
         info!("Downloaded job {} file to {:?}", job.job_token.as_str(), path);
         downloaded.push(path);
-      }
+      },
       Err(ArtcraftXError::CannotDownloadFilePathAlreadyExists { path }) => {
         info!("Job {} file already downloaded: {:?}", job.job_token.as_str(), path);
         downloaded.push(path);
-      }
+      },
       Err(err) => {
         error!("Failed to download job {} file {}: {:?}", job.job_token.as_str(), cdn_url, err);
-      }
+      },
     }
   }
   downloaded
@@ -173,16 +133,13 @@ async fn download_all_files(
 
 /// Fetch every media file the job produced. Fails open with an empty list
 /// (callers fall back to the job's single result entity).
-async fn list_all_job_media_files(
-  creds: Option<&StorytellerCredentialSet>,
-  job: &JobStatusPayload,
-) -> Vec<JobMediaFileInfo> {
+async fn list_all_job_media_files(creds: Option<&StorytellerCredentialSet>, job: &JobStatusPayload) -> Vec<JobMediaFileInfo> {
   let creds = match creds {
     Some(creds) => creds,
     None => {
       warn!("No credentials; can't list media files for job {}", job.job_token.as_str());
       return Vec::new();
-    }
+    },
   };
 
   match list_media_files_by_job(&ApiHost::Storyteller, creds, &job.job_token).await {
@@ -190,34 +147,21 @@ async fn list_all_job_media_files(
     Err(err) => {
       warn!("Failed to list media files for job {}: {:?}", job.job_token.as_str(), err);
       Vec::new()
-    }
+    },
   }
 }
 
-async fn send_additional_success_events(
-  app_handle: &AppHandle,
-  job: &JobStatusPayload,
-  task: &Task,
-  media_files: &[JobMediaFileInfo],
-) {
+async fn send_additional_success_events(app_handle: &AppHandle, job: &JobStatusPayload, task: &Task, media_files: &[JobMediaFileInfo]) {
   info!("Attempting to dispatch events for completed Storyteller job: {:?}", task);
 
-  let result = maybe_handle_frontend_caller_notification(
-    app_handle,
-    task,
-    job,
-    media_files,
-  ).await;
+  let result = maybe_handle_frontend_caller_notification(app_handle, task, job, media_files).await;
 
   if let Err(err) = result {
     error!("Failed to send generation complete event: {:?}", err);
   }
 }
 
-fn get_thumbnail_template<'a>(
-  job: &'a JobStatusPayload,
-  maybe_primary_file: Option<&'a JobMediaFileInfo>,
-) -> Option<&'a str> {
+fn get_thumbnail_template<'a>(job: &'a JobStatusPayload, maybe_primary_file: Option<&'a JobMediaFileInfo>) -> Option<&'a str> {
   if let Some(file) = maybe_primary_file {
     if let Some(template) = media_links_to_thumbnail_template(&file.media_links) {
       return Some(template);
@@ -232,10 +176,7 @@ fn get_thumbnail_template<'a>(
   media_links_to_thumbnail_template(links)
 }
 
-fn get_media_file_class(
-  job: &JobStatusPayload,
-  maybe_primary_file: Option<&JobMediaFileInfo>,
-) -> Option<TaskMediaFileClass> {
+fn get_media_file_class(job: &JobStatusPayload, maybe_primary_file: Option<&JobMediaFileInfo>) -> Option<TaskMediaFileClass> {
   // The listed media file's class is authoritative when we have it.
   if let Some(file) = maybe_primary_file {
     match file.media_class {
@@ -244,7 +185,7 @@ fn get_media_file_class(
       MediaFileClass::Video => return Some(TaskMediaFileClass::Video),
       MediaFileClass::Mesh => return Some(TaskMediaFileClass::Mesh),
       MediaFileClass::Splat => return Some(TaskMediaFileClass::Splat),
-      _ => {} // Fall-through (Unknown / legacy Dimensional / Project): infer below.
+      _ => {}, // Fall-through (Unknown / legacy Dimensional / Project): infer below.
     }
   }
 
@@ -262,16 +203,11 @@ fn get_media_file_class(
     (None, None) => return None,
   };
 
-  if url.ends_with("jpg")
-      || url.ends_with("jpeg")
-      || url.ends_with("png")
-  {
+  if url.ends_with("jpg") || url.ends_with("jpeg") || url.ends_with("png") {
     return Some(TaskMediaFileClass::Image);
   }
 
-  if url.ends_with("mp4")
-      || url.ends_with("webm")
-  {
+  if url.ends_with("mp4") || url.ends_with("webm") {
     return Some(TaskMediaFileClass::Video);
   }
 
@@ -283,9 +219,7 @@ fn get_media_file_class(
     return Some(TaskMediaFileClass::Splat);
   }
 
-  if url.ends_with("wav")
-      || url.ends_with("mp3")
-  {
+  if url.ends_with("wav") || url.ends_with("mp3") {
     return Some(TaskMediaFileClass::Audio);
   }
 

@@ -1,6 +1,4 @@
-use crate::requests::api::image::angle::qwen_edit_2511_edit_image_angle::api::{
-  QwenEdit2511AngleNumImages, QwenEdit2511EditImageAngleRequest,
-};
+use crate::requests::api::image::angle::qwen_edit_2511_edit_image_angle::api::{QwenEdit2511AngleNumImages, QwenEdit2511EditImageAngleRequest};
 use crate::requests::traits::fal_request_cost_calculator_trait::{FalRequestCostCalculator, UsdCents};
 
 impl FalRequestCostCalculator for QwenEdit2511EditImageAngleRequest {

@@ -12,15 +12,10 @@ pub struct ResetArtcraftCommandResponse {
 impl SerializeMarker for ResetArtcraftCommandResponse {}
 
 #[tauri::command]
-pub async fn reset_artcraft_command(
-  _app: AppHandle,
-) -> ResponseOrErrorMessage<ResetArtcraftCommandResponse> {
+pub async fn reset_artcraft_command(_app: AppHandle) -> ResponseOrErrorMessage<ResetArtcraftCommandResponse> {
   info!("reset_artcraft_command called");
 
   // TODO: Reset local vs. production
 
-  Ok(ResetArtcraftCommandResponse {
-    success: true,
-  }.into())
+  Ok(ResetArtcraftCommandResponse { success: true }.into())
 }
-

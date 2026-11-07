@@ -43,8 +43,7 @@ static GENERATION_SEMAPHORE: Lazy<Semaphore> = Lazy::new(|| Semaphore::new(MAX_C
 
 /// Per-path locks so the worker and a stray direct call never hash or
 /// generate the same file twice at once.
-static PER_PATH_LOCKS: Lazy<StdMutex<HashMap<PathBuf, Arc<TokioMutex<()>>>>> =
-    Lazy::new(|| StdMutex::new(HashMap::new()));
+static PER_PATH_LOCKS: Lazy<StdMutex<HashMap<PathBuf, Arc<TokioMutex<()>>>>> = Lazy::new(|| StdMutex::new(HashMap::new()));
 
 const IMAGE_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "webp", "gif", "bmp", "tiff", "avif"];
 const VIDEO_EXTENSIONS: &[&str] = &["mp4", "m4v", "mov"];
@@ -76,13 +75,7 @@ pub struct LocalThumbnail {
 
 impl LocalThumbnail {
   fn without_thumbnail(file_path: &Path, status: LocalThumbnailStatus, maybe_file_hash: Option<String>) -> Self {
-    Self {
-      file_path: file_path.to_string_lossy().into_owned(),
-      status,
-      maybe_file_hash,
-      maybe_thumbnail_path: None,
-      maybe_animated_preview_path: None,
-    }
+    Self { file_path: file_path.to_string_lossy().into_owned(), status, maybe_file_hash, maybe_thumbnail_path: None, maybe_animated_preview_path: None }
   }
 
   fn ready(file_path: &Path, file_hash: String, thumbnail_jpg: &Path, animated_webp: Option<&Path>) -> Self {
@@ -123,7 +116,7 @@ pub fn needs_generation(record: &LocalFileRecord) -> bool {
         Some(jpg) => !Path::new(jpg).is_file(),
         None => true,
       }
-    }
+    },
   }
 }
 
@@ -141,39 +134,25 @@ pub async fn lookup_thumbnail(database: &LocalFilesDatabase, file_path: &Path) -
     Err(err) => {
       warn!("local_files lookup failed for {}: {}", path_string, err);
       return LocalThumbnail::without_thumbnail(file_path, LocalThumbnailStatus::Pending, None);
-    }
+    },
   };
 
   let file_hash = Some(record.file_hash_blake3.clone());
   match record.thumbnail_state() {
     ThumbnailState::Generated => match generated_thumbnail_paths(&record) {
-      Some((jpg, maybe_webp)) if Path::new(&jpg).is_file() => LocalThumbnail {
-        file_path: path_string,
-        status: LocalThumbnailStatus::Ready,
-        maybe_file_hash: file_hash,
-        maybe_thumbnail_path: Some(jpg),
-        maybe_animated_preview_path: maybe_webp,
-      },
+      Some((jpg, maybe_webp)) if Path::new(&jpg).is_file() => LocalThumbnail { file_path: path_string, status: LocalThumbnailStatus::Ready, maybe_file_hash: file_hash, maybe_thumbnail_path: Some(jpg), maybe_animated_preview_path: maybe_webp },
       // Cache file gone; the worker regenerates on its next scan.
       _ => LocalThumbnail::without_thumbnail(file_path, LocalThumbnailStatus::Pending, file_hash),
     },
     ThumbnailState::Unsupported => LocalThumbnail::without_thumbnail(file_path, LocalThumbnailStatus::Unsupported, file_hash),
-    ThumbnailState::Failed if record.thumbnail_attempts >= MAX_THUMBNAIL_ATTEMPTS => {
-      LocalThumbnail::without_thumbnail(file_path, LocalThumbnailStatus::Failed, file_hash)
-    }
-    ThumbnailState::Failed | ThumbnailState::Pending => {
-      LocalThumbnail::without_thumbnail(file_path, LocalThumbnailStatus::Pending, file_hash)
-    }
+    ThumbnailState::Failed if record.thumbnail_attempts >= MAX_THUMBNAIL_ATTEMPTS => LocalThumbnail::without_thumbnail(file_path, LocalThumbnailStatus::Failed, file_hash),
+    ThumbnailState::Failed | ThumbnailState::Pending => LocalThumbnail::without_thumbnail(file_path, LocalThumbnailStatus::Pending, file_hash),
   }
 }
 
 /// Produce (or confirm) the cached thumbnails for one file and record the
 /// outcome on its row. The worker thread's unit of work.
-pub async fn generate_thumbnail(
-  database: &LocalFilesDatabase,
-  app_data_root: &AppDataRoot,
-  file_path: &Path,
-) -> LocalThumbnail {
+pub async fn generate_thumbnail(database: &LocalFilesDatabase, app_data_root: &AppDataRoot, file_path: &Path) -> LocalThumbnail {
   // Serialize work per path; overlapping calls wait, then hit the cache.
   let path_lock = per_path_lock(file_path);
   let _path_guard = path_lock.lock().await;
@@ -187,7 +166,7 @@ pub async fn generate_thumbnail(
     Err(message) => {
       warn!("Could not hash {}: {}", file_path.display(), message);
       return LocalThumbnail::without_thumbnail(file_path, LocalThumbnailStatus::Failed, None);
-    }
+    },
   };
 
   let thumbnails_dir = match app_data_root.cache_dir().get_or_create_thumbnails_dir() {
@@ -195,7 +174,7 @@ pub async fn generate_thumbnail(
     Err(err) => {
       warn!("Could not create thumbnails cache dir: {}", err);
       return LocalThumbnail::without_thumbnail(file_path, LocalThumbnailStatus::Failed, Some(file_hash));
-    }
+    },
   };
   let thumbnail_jpg = thumbnails_dir.join(format!("{file_hash}.jpg"));
   let animated_webp = thumbnails_dir.join(format!("{file_hash}.webp"));
@@ -214,14 +193,13 @@ pub async fn generate_thumbnail(
   // run of this generator): just point the row at it. Videos count as
   // cached only with their animated preview, so an earlier partial result
   // gets completed; older generators' output is always redone.
-  let made_by_current_generator = get_local_file_by_path(database.get_connection(), &file_path.to_string_lossy()).await
-      .ok()
-      .flatten()
-      .is_some_and(|record| record.thumbnail_generator_version >= THUMBNAIL_GENERATOR_VERSION);
-  let cache_complete = made_by_current_generator && thumbnail_jpg.is_file() && match kind {
-    MediaKind::Image => true,
-    MediaKind::Video => animated_webp.is_file(),
-  };
+  let made_by_current_generator = get_local_file_by_path(database.get_connection(), &file_path.to_string_lossy()).await.ok().flatten().is_some_and(|record| record.thumbnail_generator_version >= THUMBNAIL_GENERATOR_VERSION);
+  let cache_complete = made_by_current_generator
+    && thumbnail_jpg.is_file()
+    && match kind {
+      MediaKind::Image => true,
+      MediaKind::Video => animated_webp.is_file(),
+    };
   if cache_complete {
     let has_webp = animated_webp.is_file();
     record_outcome(database, file_path, ThumbnailState::Generated, Some(&thumbnail_jpg), has_webp.then_some(&animated_webp), None).await;
@@ -241,22 +219,22 @@ pub async fn generate_thumbnail(
       info!("Generated thumbnail for {} -> {}", file_path.display(), thumbnail_jpg.display());
       record_outcome(database, file_path, ThumbnailState::Generated, Some(&thumbnail_jpg), wrote_animated_preview.then_some(&animated_webp), None).await;
       LocalThumbnail::ready(file_path, file_hash, &thumbnail_jpg, wrote_animated_preview.then_some(animated_webp.as_path()))
-    }
+    },
     Ok(Err(err)) if err.is_unsupported() => {
       info!("Media not thumbnailable ({}): {}", file_path.display(), err);
       record_outcome(database, file_path, ThumbnailState::Unsupported, None, None, Some(&err.to_string())).await;
       LocalThumbnail::without_thumbnail(file_path, LocalThumbnailStatus::Unsupported, Some(file_hash))
-    }
+    },
     Ok(Err(err)) => {
       warn!("Thumbnail generation failed for {}: {}", file_path.display(), err);
       record_outcome(database, file_path, ThumbnailState::Failed, None, None, Some(&err.to_string())).await;
       LocalThumbnail::without_thumbnail(file_path, LocalThumbnailStatus::Failed, Some(file_hash))
-    }
+    },
     Err(join_error) => {
       warn!("Thumbnail generation task panicked for {}: {}", file_path.display(), join_error);
       record_outcome(database, file_path, ThumbnailState::Failed, None, None, Some(&join_error.to_string())).await;
       LocalThumbnail::without_thumbnail(file_path, LocalThumbnailStatus::Failed, Some(file_hash))
-    }
+    },
   }
 }
 
@@ -274,22 +252,15 @@ fn generate(kind: MediaKind, source: &Path, jpg: &Path, webp: &Path) -> Result<b
     MediaKind::Image => {
       generate_image_thumbnail(source, jpg, STATIC_THUMBNAIL_MAX_DIMENSION)?;
       Ok(false)
-    }
+    },
     MediaKind::Video => {
       let outcome = generate_video_thumbnails(source, jpg, webp)?;
       Ok(outcome.wrote_animated_preview)
-    }
+    },
   }
 }
 
-async fn record_outcome(
-  database: &LocalFilesDatabase,
-  file_path: &Path,
-  state: ThumbnailState,
-  maybe_jpg: Option<&Path>,
-  maybe_webp: Option<&Path>,
-  maybe_error: Option<&str>,
-) {
+async fn record_outcome(database: &LocalFilesDatabase, file_path: &Path, state: ThumbnailState, maybe_jpg: Option<&Path>, maybe_webp: Option<&Path>, maybe_error: Option<&str>) {
   let path_string = file_path.to_string_lossy();
   let jpg = maybe_jpg.map(|path| path.to_string_lossy().into_owned());
   let webp = maybe_webp.map(|path| path.to_string_lossy().into_owned());
@@ -301,9 +272,10 @@ async fn record_outcome(
     maybe_thumbnail_jpg_path: jpg.as_deref(),
     maybe_animated_preview_webp_path: webp.as_deref(),
     maybe_error,
-  }).await;
+  })
+  .await;
   match result {
-    Ok(true) => {}
+    Ok(true) => {},
     Ok(false) => warn!("No local_files row to record thumbnail state for {}", path_string),
     Err(err) => warn!("Could not record thumbnail state for {}: {}", path_string, err),
   }
@@ -319,10 +291,7 @@ mod tests {
   use super::*;
 
   // The 4-second H.264 clip the higgsfield_client live tests upload.
-  const H264_FIXTURE: &str = concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../api_clients/higgsfield_client/test_assets/clip_4s.mp4",
-  );
+  const H264_FIXTURE: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../api_clients/higgsfield_client/test_assets/clip_4s.mp4",);
 
   /// The worker's write path against a throwaway data root and index.
   #[tokio::test]

@@ -18,10 +18,10 @@ pub async fn get_asset_upload(args: GetAssetUploadArgs<'_>) -> Result<Option<Ass
     WHERE service = ?1 AND account_id = ?2 AND file_hash_blake3 = ?3
     "#,
   )
-      .bind(args.service)
-      .bind(args.account_id)
-      .bind(args.file_hash_blake3)
-      .fetch_optional(args.db.get_pool())
-      .await?;
+  .bind(args.service)
+  .bind(args.account_id)
+  .bind(args.file_hash_blake3)
+  .fetch_optional(args.db.get_pool())
+  .await?;
   Ok(record)
 }

@@ -8,17 +8,12 @@ use reqwest::Url;
 
 const DESTINATION_HOSTNAMES: &[&str] = &["grok.com", "www.grok.com"];
 
-static WEBSITE_ENTRY_URL: Lazy<Url> = Lazy::new(|| {
-  Url::parse("https://grok.com/").expect("URL should parse")
-});
+static WEBSITE_ENTRY_URL: Lazy<Url> = Lazy::new(|| Url::parse("https://grok.com/").expect("URL should parse"));
 
 // The xAI SSO sign-in page that redirects back to grok.com once authenticated.
 // accounts.x.ai is in the default auth-flow hostnames, so time spent here counts
 // as "still logging in" until the webview returns to grok.com.
-static LOGIN_PAGE_URL: Lazy<Url> = Lazy::new(|| {
-  Url::parse("https://accounts.x.ai/sign-in?redirect=grok-com&return_to=%2F%3Fq%3D%26reasoningMode%3Dnone%26voice%3Dfalse")
-      .expect("URL should parse")
-});
+static LOGIN_PAGE_URL: Lazy<Url> = Lazy::new(|| Url::parse("https://accounts.x.ai/sign-in?redirect=grok-com&return_to=%2F%3Fq%3D%26reasoningMode%3Dnone%26voice%3Dfalse").expect("URL should parse"));
 
 /// The Grok website login (stored under the `xai` credential service).
 pub struct GrokLoginWindow;
@@ -33,9 +28,7 @@ impl LoginWindowSite for GrokLoginWindow {
   }
 
   fn journey(&self) -> LoginJourney {
-    LoginJourney::with_default_pre_navigation()
-        .website_entry(WEBSITE_ENTRY_URL.clone())
-        .login_page(LOGIN_PAGE_URL.clone())
+    LoginJourney::with_default_pre_navigation().website_entry(WEBSITE_ENTRY_URL.clone()).login_page(LOGIN_PAGE_URL.clone())
   }
 
   fn destination_hostnames(&self) -> &[&str] {

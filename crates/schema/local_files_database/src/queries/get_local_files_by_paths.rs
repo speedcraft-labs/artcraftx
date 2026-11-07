@@ -11,10 +11,7 @@ const MAX_PATHS_PER_QUERY: usize = 900;
 
 /// Batch lookup by path (one query per 900 paths). Paths with no row are
 /// simply absent from the map.
-pub async fn get_local_files_by_paths(
-  db: &LocalFilesDbConnection,
-  file_paths: &[String],
-) -> Result<HashMap<String, LocalFileRecord>, LocalFilesDbError> {
+pub async fn get_local_files_by_paths(db: &LocalFilesDbConnection, file_paths: &[String]) -> Result<HashMap<String, LocalFileRecord>, LocalFilesDbError> {
   let mut records = HashMap::with_capacity(file_paths.len());
 
   for chunk in file_paths.chunks(MAX_PATHS_PER_QUERY) {
@@ -25,10 +22,7 @@ pub async fn get_local_files_by_paths(
     }
     separated.push_unseparated(")");
 
-    let chunk_records = query_builder
-        .build_query_as::<LocalFileRecord>()
-        .fetch_all(db.get_pool())
-        .await?;
+    let chunk_records = query_builder.build_query_as::<LocalFileRecord>().fetch_all(db.get_pool()).await?;
     for record in chunk_records {
       records.insert(record.file_path.clone(), record);
     }

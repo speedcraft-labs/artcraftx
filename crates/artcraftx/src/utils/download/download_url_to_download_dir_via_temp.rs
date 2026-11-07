@@ -19,24 +19,16 @@ use url::Url;
 /// Returns the final path. If a file with the same name already exists in the
 /// download directory, nothing is downloaded and
 /// [`ArtcraftXError::CannotDownloadFilePathAlreadyExists`] is returned.
-pub async fn download_url_to_download_dir_via_temp(
-  url: &Url,
-  maybe_filename: Option<&str>,
-  app_data_root: &AppDataRoot,
-  app_prefs: &AppPreferences,
-) -> Result<PathBuf, ArtcraftXError> {
+pub async fn download_url_to_download_dir_via_temp(url: &Url, maybe_filename: Option<&str>, app_data_root: &AppDataRoot, app_prefs: &AppPreferences) -> Result<PathBuf, ArtcraftXError> {
   let url_file_name = match maybe_filename {
     Some(filename) => {
       check_download_file_name(filename)?;
       filename.to_string()
-    }
+    },
     None => download_file_name_from_url(url)?,
   };
 
-  let download_directory = app_prefs
-      .downloads
-      .preferred_download_directory
-      .download_directory(app_data_root);
+  let download_directory = app_prefs.downloads.preferred_download_directory.download_directory(app_data_root);
 
   let destination = {
     let mut destination = download_directory.clone();
@@ -61,9 +53,7 @@ pub async fn download_url_to_download_dir_via_temp(
   let response = reqwest::get(url.clone()).await?;
   let response_bytes = response.bytes().await?;
 
-  let mut temp_file = app_data_root
-      .temp_dir()
-      .new_named_temp_file_with_extension(extension)?;
+  let mut temp_file = app_data_root.temp_dir().new_named_temp_file_with_extension(extension)?;
   temp_file.write_all(&response_bytes)?;
   temp_file.flush()?;
 
@@ -75,14 +65,14 @@ pub async fn download_url_to_download_dir_via_temp(
   // the download directory is on another volume (cross-device rename) — fall
   // back to a copy.
   match temp_file.persist_noclobber(&destination) {
-    Ok(_file) => {}
+    Ok(_file) => {},
     Err(persist_error) => {
       let temp_file = persist_error.file;
       if !destination.exists() {
         std::fs::copy(temp_file.path(), &destination)?;
       }
       // NB: The temp file cleans itself up on drop.
-    }
+    },
   }
 
   Ok(destination)
@@ -102,9 +92,7 @@ mod tests {
     // A known completed generation output.
     let url = Url::parse("https://cdn-2.fakeyou.com/media/j/q/z/s/x/jqzsxxd8r20bnx42jw2dhdj6tq81q9xf/artcraft_jqzsxxd8r20bnx42jw2dhdj6tq81q9xf.png").unwrap();
 
-    let path = download_url_to_download_dir_via_temp(&url, None, &app_data_root, &app_prefs)
-        .await
-        .expect("download should succeed");
+    let path = download_url_to_download_dir_via_temp(&url, None, &app_data_root, &app_prefs).await.expect("download should succeed");
 
     println!("[live] downloaded to {:?}", path);
     assert!(path.exists());

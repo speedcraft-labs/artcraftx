@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::video::text::veo_3p1_fast::raw_request::{
-  Veo3p1FastTextToVideoInput, Veo3p1FastTextToVideoOutput,
-};
+use crate::requests::api::video::text::veo_3p1_fast::raw_request::{Veo3p1FastTextToVideoInput, Veo3p1FastTextToVideoOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 #[derive(Clone, Debug)]
@@ -232,17 +230,7 @@ mod tests {
 
   #[test]
   fn raw_request_omits_unset_optionals() {
-    let request = Veo3p1FastTextToVideoRequest {
-      prompt: "minimal".to_string(),
-      aspect_ratio: None,
-      duration: None,
-      resolution: None,
-      negative_prompt: None,
-      generate_audio: None,
-      seed: None,
-      auto_fix: None,
-      safety_tolerance: None,
-    };
+    let request = Veo3p1FastTextToVideoRequest { prompt: "minimal".to_string(), aspect_ratio: None, duration: None, resolution: None, negative_prompt: None, generate_audio: None, seed: None, auto_fix: None, safety_tolerance: None };
     let json = serde_json::to_value(request.to_raw_request().unwrap()).unwrap();
     // Minimal payload must be literally `{"prompt": "minimal"}`.
     assert_eq!(json, serde_json::json!({ "prompt": "minimal" }));
@@ -250,21 +238,14 @@ mod tests {
 
   #[test]
   fn every_aspect_ratio_maps_to_wire_string() {
-    for (variant, expected) in [
-      (Veo3p1FastTextToVideoAspectRatio::SixteenByNine, "16:9"),
-      (Veo3p1FastTextToVideoAspectRatio::NineBySixteen, "9:16"),
-    ] {
+    for (variant, expected) in [(Veo3p1FastTextToVideoAspectRatio::SixteenByNine, "16:9"), (Veo3p1FastTextToVideoAspectRatio::NineBySixteen, "9:16")] {
       assert_eq!(variant.to_str(), expected);
     }
   }
 
   #[test]
   fn every_duration_maps_to_wire_string_and_seconds() {
-    for (variant, s, secs) in [
-      (Veo3p1FastTextToVideoDuration::FourSeconds, "4s", 4),
-      (Veo3p1FastTextToVideoDuration::SixSeconds, "6s", 6),
-      (Veo3p1FastTextToVideoDuration::EightSeconds, "8s", 8),
-    ] {
+    for (variant, s, secs) in [(Veo3p1FastTextToVideoDuration::FourSeconds, "4s", 4), (Veo3p1FastTextToVideoDuration::SixSeconds, "6s", 6), (Veo3p1FastTextToVideoDuration::EightSeconds, "8s", 8)] {
       assert_eq!(variant.to_str(), s);
       assert_eq!(variant.to_seconds(), secs);
     }
@@ -272,11 +253,7 @@ mod tests {
 
   #[test]
   fn every_resolution_maps_to_wire_string() {
-    for (variant, expected, four_k) in [
-      (Veo3p1FastTextToVideoResolution::SevenTwentyP, "720p", false),
-      (Veo3p1FastTextToVideoResolution::TenEightyP, "1080p", false),
-      (Veo3p1FastTextToVideoResolution::FourK, "4k", true),
-    ] {
+    for (variant, expected, four_k) in [(Veo3p1FastTextToVideoResolution::SevenTwentyP, "720p", false), (Veo3p1FastTextToVideoResolution::TenEightyP, "1080p", false), (Veo3p1FastTextToVideoResolution::FourK, "4k", true)] {
       assert_eq!(variant.to_str(), expected);
       assert_eq!(variant.is_four_k(), four_k);
     }

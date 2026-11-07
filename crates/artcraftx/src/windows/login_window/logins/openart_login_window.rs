@@ -6,13 +6,9 @@ use reqwest::Url;
 
 const DESTINATION_HOSTNAMES: &[&str] = &["openart.ai", "www.openart.ai"];
 
-static WEBSITE_ENTRY_URL: Lazy<Url> = Lazy::new(|| {
-  Url::parse("https://openart.ai/").expect("URL should parse")
-});
+static WEBSITE_ENTRY_URL: Lazy<Url> = Lazy::new(|| Url::parse("https://openart.ai/").expect("URL should parse"));
 
-static LOGIN_PAGE_URL: Lazy<Url> = Lazy::new(|| {
-  Url::parse("https://openart.ai/home").expect("URL should parse")
-});
+static LOGIN_PAGE_URL: Lazy<Url> = Lazy::new(|| Url::parse("https://openart.ai/home").expect("URL should parse"));
 
 pub struct OpenArtLoginWindow;
 
@@ -26,9 +22,7 @@ impl LoginWindowSite for OpenArtLoginWindow {
   }
 
   fn journey(&self) -> LoginJourney {
-    LoginJourney::with_default_pre_navigation()
-        .website_entry(WEBSITE_ENTRY_URL.clone())
-        .login_page(LOGIN_PAGE_URL.clone())
+    LoginJourney::with_default_pre_navigation().website_entry(WEBSITE_ENTRY_URL.clone()).login_page(LOGIN_PAGE_URL.clone())
   }
 
   fn destination_hostnames(&self) -> &[&str] {

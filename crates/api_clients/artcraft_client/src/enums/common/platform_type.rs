@@ -18,7 +18,6 @@ use strum::EnumIter;
 #[serde(rename_all = "snake_case")]
 pub enum PlatformType {
   // ========== Our clients ==========
-
   /// Website users
   Web,
 
@@ -29,7 +28,6 @@ pub enum PlatformType {
   ApiKey,
 
   // ========== Other clients ==========
-
   Curl,
   PythonRequests,
   Postman,
@@ -63,14 +61,7 @@ impl PlatformType {
 
   pub fn all_variants() -> BTreeSet<Self> {
     // NB: BTreeSet is sorted
-    BTreeSet::from([
-      Self::Web,
-      Self::DesktopApp,
-      Self::ApiKey,
-      Self::Curl,
-      Self::PythonRequests,
-      Self::Postman,
-    ])
+    BTreeSet::from([Self::Web, Self::DesktopApp, Self::ApiKey, Self::Curl, Self::PythonRequests, Self::Postman])
   }
 }
 
@@ -159,7 +150,7 @@ mod tests {
 
     #[test]
     fn serialized_length_ok_for_database() {
-      const MAX_LENGTH : usize = 16;
+      const MAX_LENGTH: usize = 16;
       for variant in PlatformType::all_variants() {
         let serialized = variant.to_str();
         assert!(serialized.len() > 0, "variant {:?} is too short", variant);

@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::image::text::gpt_image_1_text_to_image::raw_request::{
-  GptImage1TextToImageInput, GptImage1TextToImageOutput,
-};
+use crate::requests::api::image::text::gpt_image_1_text_to_image::raw_request::{GptImage1TextToImageInput, GptImage1TextToImageOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 #[derive(Clone, Debug)]
@@ -79,40 +77,45 @@ impl FalEndpoint for GptImage1TextToImageRequest {
       GptImage1TextToImageNumImages::Four => 4,
     };
 
-    let image_size = self.image_size.map(|s| match s {
-      GptImage1TextToImageSize::Auto => "auto",
-      GptImage1TextToImageSize::Square => "1024x1024",
-      GptImage1TextToImageSize::Horizontal => "1536x1024",
-      GptImage1TextToImageSize::Vertical => "1024x1536",
-    }.to_string());
+    let image_size = self.image_size.map(|s| {
+      match s {
+        GptImage1TextToImageSize::Auto => "auto",
+        GptImage1TextToImageSize::Square => "1024x1024",
+        GptImage1TextToImageSize::Horizontal => "1536x1024",
+        GptImage1TextToImageSize::Vertical => "1024x1536",
+      }
+      .to_string()
+    });
 
-    let quality = self.quality.map(|q| match q {
-      GptImage1TextToImageQuality::Low => "low",
-      GptImage1TextToImageQuality::Medium => "medium",
-      GptImage1TextToImageQuality::High => "high",
-    }.to_string());
+    let quality = self.quality.map(|q| {
+      match q {
+        GptImage1TextToImageQuality::Low => "low",
+        GptImage1TextToImageQuality::Medium => "medium",
+        GptImage1TextToImageQuality::High => "high",
+      }
+      .to_string()
+    });
 
-    let background = self.background.map(|b| match b {
-      GptImage1TextToImageBackground::Auto => "auto",
-      GptImage1TextToImageBackground::Transparent => "transparent",
-      GptImage1TextToImageBackground::Opaque => "opaque",
-    }.to_string());
+    let background = self.background.map(|b| {
+      match b {
+        GptImage1TextToImageBackground::Auto => "auto",
+        GptImage1TextToImageBackground::Transparent => "transparent",
+        GptImage1TextToImageBackground::Opaque => "opaque",
+      }
+      .to_string()
+    });
 
-    let output_format = Some(match self.output_format {
-      Some(GptImage1TextToImageOutputFormat::Jpeg) => "jpeg",
-      Some(GptImage1TextToImageOutputFormat::Png) => "png",
-      Some(GptImage1TextToImageOutputFormat::Webp) => "webp",
-      None => "png",
-    }.to_string());
+    let output_format = Some(
+      match self.output_format {
+        Some(GptImage1TextToImageOutputFormat::Jpeg) => "jpeg",
+        Some(GptImage1TextToImageOutputFormat::Png) => "png",
+        Some(GptImage1TextToImageOutputFormat::Webp) => "webp",
+        None => "png",
+      }
+      .to_string(),
+    );
 
-    Ok(Self::RawRequest {
-      prompt: self.prompt.clone(),
-      num_images: Some(num_images),
-      image_size,
-      quality,
-      background,
-      output_format,
-    })
+    Ok(Self::RawRequest { prompt: self.prompt.clone(), num_images: Some(num_images), image_size, quality, background, output_format })
   }
 }
 
@@ -160,10 +163,7 @@ mod tests {
       output_format: Some(GptImage1TextToImageOutputFormat::Png),
     };
 
-    let result = request.send_webhook_request(
-      &api_key,
-      "https://example.com/webhook",
-    ).await?;
+    let result = request.send_webhook_request(&api_key, "https://example.com/webhook").await?;
     println!("Request ID: {:?}", result.request_id);
     assert!(result.request_id.is_some());
     Ok(())

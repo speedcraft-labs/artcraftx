@@ -27,7 +27,7 @@ impl_enum_display_and_debug_using_to_str!(ZsVoiceModelType);
 impl ZsVoiceModelType {
   pub fn to_str(&self) -> &'static str {
     match self {
-      Self::VallEX=> "vall-e-x",
+      Self::VallEX => "vall-e-x",
       Self::StyleTTS2 => "styletts2",
     }
   }
@@ -43,10 +43,7 @@ impl ZsVoiceModelType {
   pub fn all_variants() -> BTreeSet<Self> {
     // NB: BTreeSet is sorted
     // NB: BTreeSet::from() isn't const, but not worth using LazyStatic, etc.
-    BTreeSet::from([
-      Self::VallEX,
-      Self::StyleTTS2,
-    ])
+    BTreeSet::from([Self::VallEX, Self::StyleTTS2])
   }
 }
 

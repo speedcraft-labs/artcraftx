@@ -56,13 +56,13 @@ pub async fn upsert_local_file(args: UpsertLocalFileArgs<'_>) -> Result<(), Loca
       updated_at = excluded.updated_at
     "#,
   )
-      .bind(args.file_path)
-      .bind(args.maybe_file_type)
-      .bind(args.file_size_bytes)
-      .bind(args.file_mtime_ms)
-      .bind(args.file_hash_blake3)
-      .bind(now)
-      .execute(args.db.get_pool())
-      .await?;
+  .bind(args.file_path)
+  .bind(args.maybe_file_type)
+  .bind(args.file_size_bytes)
+  .bind(args.file_mtime_ms)
+  .bind(args.file_hash_blake3)
+  .bind(now)
+  .execute(args.db.get_pool())
+  .await?;
   Ok(())
 }

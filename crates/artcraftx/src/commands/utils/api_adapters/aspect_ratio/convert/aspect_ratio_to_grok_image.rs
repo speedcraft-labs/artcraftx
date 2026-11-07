@@ -7,27 +7,17 @@ pub fn aspect_ratio_to_grok_image(aspect_ratio: CommonAspectRatio) -> FastAspect
     CommonAspectRatio::Square => FastAspectRatio::Square,
     CommonAspectRatio::WideThreeByTwo => FastAspectRatio::WideThreeByTwo,
     CommonAspectRatio::TallTwoByThree => FastAspectRatio::TallTwoByThree,
-    
+
     // Close enough
     CommonAspectRatio::SquareHd => FastAspectRatio::Square,
 
     // Non-matching
-    CommonAspectRatio::Auto
-    | CommonAspectRatio::Auto2k
-    | CommonAspectRatio::Auto4k => FastAspectRatio::Square,
-    
+    CommonAspectRatio::Auto | CommonAspectRatio::Auto2k | CommonAspectRatio::Auto4k => FastAspectRatio::Square,
+
     // Mismatch - wide
-    CommonAspectRatio::Wide 
-    | CommonAspectRatio::WideFiveByFour 
-    | CommonAspectRatio::WideFourByThree 
-    | CommonAspectRatio::WideSixteenByNine 
-    | CommonAspectRatio::WideTwentyOneByNine => FastAspectRatio::WideThreeByTwo,
+    CommonAspectRatio::Wide | CommonAspectRatio::WideFiveByFour | CommonAspectRatio::WideFourByThree | CommonAspectRatio::WideSixteenByNine | CommonAspectRatio::WideTwentyOneByNine => FastAspectRatio::WideThreeByTwo,
 
     // Mismatch - tall
-    CommonAspectRatio::Tall 
-    | CommonAspectRatio::TallFourByFive 
-    | CommonAspectRatio::TallThreeByFour 
-    | CommonAspectRatio::TallNineBySixteen 
-    | CommonAspectRatio::TallNineByTwentyOne => FastAspectRatio::TallTwoByThree,
+    CommonAspectRatio::Tall | CommonAspectRatio::TallFourByFive | CommonAspectRatio::TallThreeByFour | CommonAspectRatio::TallNineBySixteen | CommonAspectRatio::TallNineByTwentyOne => FastAspectRatio::TallTwoByThree,
   }
 }

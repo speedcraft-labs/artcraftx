@@ -15,10 +15,7 @@ use crate::statsig_request::StatsigRequest;
 /// `mint` future should abandon the pending signature, not wedge the WebView.
 pub trait StatsigOracle {
   /// Produce a fresh signature for `request`, or explain why it could not.
-  fn mint(
-    &self,
-    request: &StatsigRequest,
-  ) -> impl std::future::Future<Output = Result<MintedStatsig, StatsigError>> + Send;
+  fn mint(&self, request: &StatsigRequest) -> impl std::future::Future<Output = Result<MintedStatsig, StatsigError>> + Send;
 }
 
 /// Why minting a signature failed.

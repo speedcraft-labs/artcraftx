@@ -1,9 +1,7 @@
 use crate::cost::kinovi_generation_cost::KinoviGenerationCost;
 use crate::creds::seedance2pro_session::Seedance2ProSession;
 use crate::error::seedance2pro_error::Seedance2ProError;
-use crate::requests::generate_image::generate_image::{
-  generate_image, GenerateImageArgs, KinoviGenerateImageRequest, KinoviMidjourneyModel,
-};
+use crate::requests::generate_image::generate_image::{generate_image, GenerateImageArgs, KinoviGenerateImageRequest, KinoviMidjourneyModel};
 use crate::requests::kinovi_host::KinoviHost;
 
 // `KinoviMidjourneyBatchCount` is shared across all Midjourney models, so we
@@ -140,21 +138,10 @@ pub struct GenerateMidjourneyV8Response {
 
 // ── Entry point ──
 
-pub async fn generate_midjourney_v8(
-  args: GenerateMidjourneyV8Args<'_>,
-) -> Result<GenerateMidjourneyV8Response, Seedance2ProError> {
+pub async fn generate_midjourney_v8(args: GenerateMidjourneyV8Args<'_>) -> Result<GenerateMidjourneyV8Response, Seedance2ProError> {
   let inner_request = args.request.to_inner_request();
-  let result = generate_image(GenerateImageArgs {
-    request: inner_request,
-    session: args.session,
-    host_override: args.host_override,
-  }).await?;
-  Ok(GenerateMidjourneyV8Response {
-    task_id: result.task_id,
-    order_id: result.order_id,
-    task_ids: result.task_ids,
-    order_ids: result.order_ids,
-  })
+  let result = generate_image(GenerateImageArgs { request: inner_request, session: args.session, host_override: args.host_override }).await?;
+  Ok(GenerateMidjourneyV8Response { task_id: result.task_id, order_id: result.order_id, task_ids: result.task_ids, order_ids: result.order_ids })
 }
 
 // ── Tests ──
@@ -250,11 +237,7 @@ mod tests {
 
     #[test]
     fn every_quality_maps_to_canonical_wire_string() {
-      let cases = [
-        (GenerateMidjourneyV8Quality::Quarter, "0.25"),
-        (GenerateMidjourneyV8Quality::Half, "0.5"),
-        (GenerateMidjourneyV8Quality::Full, "1"),
-      ];
+      let cases = [(GenerateMidjourneyV8Quality::Quarter, "0.25"), (GenerateMidjourneyV8Quality::Half, "0.5"), (GenerateMidjourneyV8Quality::Full, "1")];
       for (variant, expected) in cases {
         let req = GenerateMidjourneyV8Request { quality: Some(variant), ..make_request(KinoviMidjourneyBatchCount::One) };
         assert_eq!(req.to_inner_request().quality.as_deref(), Some(expected), "variant={:?}", variant);
@@ -304,12 +287,7 @@ mod tests {
     /// Pricing must match the inner module exactly.
     #[test]
     fn matches_inner_pricing_exactly() {
-      for batch in [
-        KinoviMidjourneyBatchCount::One,
-        KinoviMidjourneyBatchCount::Two,
-        KinoviMidjourneyBatchCount::Three,
-        KinoviMidjourneyBatchCount::Four,
-      ] {
+      for batch in [KinoviMidjourneyBatchCount::One, KinoviMidjourneyBatchCount::Two, KinoviMidjourneyBatchCount::Three, KinoviMidjourneyBatchCount::Four] {
         let outer = make_request(batch);
         let inner = outer.to_inner_request();
         assert_eq!(outer.calculate_costs().kinovi_credits, inner.calculate_costs().kinovi_credits, "batch={:?}", batch);
@@ -343,7 +321,8 @@ mod tests {
           batch_count: KinoviMidjourneyBatchCount::One,
           reference_image_urls: None,
         },
-      }).await?;
+      })
+      .await?;
       println!("v8 minimal — task_id={}, order_id={}", result.task_id, result.order_id);
       assert!(!result.task_id.is_empty());
       Ok(())
@@ -369,7 +348,8 @@ mod tests {
           batch_count: KinoviMidjourneyBatchCount::Four,
           reference_image_urls: None,
         },
-      }).await?;
+      })
+      .await?;
       println!("v8 batch-4 — task_id={}, order_id={}", result.task_id, result.order_id);
       assert_eq!(result.task_ids.as_ref().map(|v| v.len()), Some(4));
       Ok(())
@@ -393,11 +373,10 @@ mod tests {
           quality: Some(GenerateMidjourneyV8Quality::Full),
           raw_mode: false,
           batch_count: KinoviMidjourneyBatchCount::One,
-          reference_image_urls: Some(vec![
-            "https://static.seedance2-pro.com/materials/20260602/1780380104765-10cec276.jpg".to_string(),
-          ]),
+          reference_image_urls: Some(vec!["https://static.seedance2-pro.com/materials/20260602/1780380104765-10cec276.jpg".to_string()]),
         },
-      }).await?;
+      })
+      .await?;
       println!("v8 with ref image — task_id={}, order_id={}", result.task_id, result.order_id);
       assert!(!result.task_id.is_empty());
       Ok(())

@@ -35,18 +35,13 @@ pub fn classify_higgsfield_http_response(signals: &HttpResponseSignals<'_>) -> R
     return Ok(());
   }
 
-  let datadome_signals = DataDomeResponseSignals::new(status_code, body)
-      .with_x_datadome(signals.maybe_x_datadome)
-      .with_x_dd_b(signals.maybe_x_dd_b);
+  let datadome_signals = DataDomeResponseSignals::new(status_code, body).with_x_datadome(signals.maybe_x_datadome).with_x_dd_b(signals.maybe_x_dd_b);
   if let Some(err) = classify_datadome_response(&datadome_signals) {
     err.log(signals.context);
     return Err(HiggsfieldApiError::DataDome(err).into());
   }
 
-  let cloudflare_signals = CloudflareResponseSignals::new(status_code, body)
-      .with_server_header(signals.maybe_server_header)
-      .with_cf_ray(signals.maybe_cf_ray)
-      .with_cf_mitigated(signals.maybe_cf_mitigated);
+  let cloudflare_signals = CloudflareResponseSignals::new(status_code, body).with_server_header(signals.maybe_server_header).with_cf_ray(signals.maybe_cf_ray).with_cf_mitigated(signals.maybe_cf_mitigated);
   if let Some(err) = classify_cloudflare_response(&cloudflare_signals) {
     err.log(signals.context);
     return Err(HiggsfieldApiError::Cloudflare(err).into());
@@ -82,12 +77,7 @@ pub fn classify_higgsfield_http_response(signals: &HttpResponseSignals<'_>) -> R
 
 /// Status + body shortcut over [`classify_higgsfield_http_response`].
 pub fn classify_higgsfield_http_error(status_code: u16, maybe_body: Option<&str>) -> Result<(), HiggsfieldError> {
-  classify_higgsfield_http_response(&HttpResponseSignals {
-    status_code,
-    body: maybe_body.unwrap_or(""),
-    context: "higgsfield",
-    ..Default::default()
-  })
+  classify_higgsfield_http_response(&HttpResponseSignals { status_code, body: maybe_body.unwrap_or(""), context: "higgsfield", ..Default::default() })
 }
 
 /// The gateway is FastAPI-flavored: errors usually look like
@@ -98,34 +88,30 @@ fn extract_error_message(body: &str) -> Option<String> {
   let parsed: serde_json::Value = serde_json::from_str(body).ok()?;
 
   if let Some(errors) = parsed.get("errors").and_then(|v| v.as_array()) {
-    let messages = errors.iter()
-        .filter_map(|item| {
-          item.get("long_message").or_else(|| item.get("message")).and_then(|v| v.as_str())
-        })
-        .collect::<Vec<_>>();
+    let messages = errors.iter().filter_map(|item| item.get("long_message").or_else(|| item.get("message")).and_then(|v| v.as_str())).collect::<Vec<_>>();
     if !messages.is_empty() {
       return Some(messages.join("; "));
     }
   }
 
   for key in ["detail", "message", "error"] {
-    let Some(value) = parsed.get(key) else { continue };
+    let Some(value) = parsed.get(key) else {
+      continue;
+    };
     match value {
       serde_json::Value::String(s) => return Some(s.clone()),
       serde_json::Value::Object(obj) => {
         if let Some(msg) = obj.get("message").or_else(|| obj.get("msg")).and_then(|v| v.as_str()) {
           return Some(msg.to_string());
         }
-      }
+      },
       serde_json::Value::Array(items) => {
-        let messages = items.iter()
-            .filter_map(|item| item.get("msg").and_then(|v| v.as_str()))
-            .collect::<Vec<_>>();
+        let messages = items.iter().filter_map(|item| item.get("msg").and_then(|v| v.as_str())).collect::<Vec<_>>();
         if !messages.is_empty() {
           return Some(messages.join("; "));
         }
-      }
-      _ => {}
+      },
+      _ => {},
     }
   }
 
@@ -134,18 +120,12 @@ fn extract_error_message(body: &str) -> Option<String> {
 
 fn body_indicates_moderation(body: &str) -> bool {
   let lower = body.to_lowercase();
-  lower.contains("moderat")
-    || lower.contains("nsfw")
-    || lower.contains("content policy")
-    || lower.contains("content_policy")
-    || lower.contains("safety")
-    || lower.contains("prohibited")
+  lower.contains("moderat") || lower.contains("nsfw") || lower.contains("content policy") || lower.contains("content_policy") || lower.contains("safety") || lower.contains("prohibited")
 }
 
 fn body_indicates_insufficient_credits(body: &str) -> bool {
   let lower = body.to_lowercase();
-  (lower.contains("credit") || lower.contains("balance"))
-    && (lower.contains("insufficient") || lower.contains("not enough") || lower.contains("enough"))
+  (lower.contains("credit") || lower.contains("balance")) && (lower.contains("insufficient") || lower.contains("not enough") || lower.contains("enough"))
 }
 
 #[cfg(test)]
@@ -194,26 +174,13 @@ mod tests {
 
   #[test]
   fn cloudflare_challenge_by_header_beats_an_opaque_body() {
-    let err = classify_higgsfield_http_response(&HttpResponseSignals {
-      status_code: 403,
-      body: "",
-      maybe_cf_mitigated: Some("challenge"),
-      context: "test",
-      ..Default::default()
-    }).unwrap_err();
+    let err = classify_higgsfield_http_response(&HttpResponseSignals { status_code: 403, body: "", maybe_cf_mitigated: Some("challenge"), context: "test", ..Default::default() }).unwrap_err();
     assert!(matches!(err, HiggsfieldError::Api(HiggsfieldApiError::Cloudflare(CloudflareError::ChallengeInterstitial403))));
   }
 
   #[test]
   fn cloudflare_origin_failure_is_retryable() {
-    let err = classify_higgsfield_http_response(&HttpResponseSignals {
-      status_code: 502,
-      body: "",
-      maybe_server_header: Some("cloudflare"),
-      maybe_cf_ray: Some("8abc-SJC"),
-      context: "test",
-      ..Default::default()
-    }).unwrap_err();
+    let err = classify_higgsfield_http_response(&HttpResponseSignals { status_code: 502, body: "", maybe_server_header: Some("cloudflare"), maybe_cf_ray: Some("8abc-SJC"), context: "test", ..Default::default() }).unwrap_err();
     assert!(matches!(err, HiggsfieldError::Api(HiggsfieldApiError::Cloudflare(CloudflareError::BadGateway502))));
     assert!(err.is_retryable());
     assert!(!err.needs_browser_reauth());
@@ -265,7 +232,7 @@ mod tests {
     match err {
       HiggsfieldError::Api(HiggsfieldApiError::UnprocessableEntity { reason, .. }) => {
         assert_eq!(reason, "field required; ensure this value is less than or equal to 4");
-      }
+      },
       other => panic!("expected UnprocessableEntity, got {:?}", other),
     }
   }
@@ -301,7 +268,7 @@ mod tests {
       HiggsfieldError::Api(HiggsfieldApiError::BadRequest { reason, raw_http_body }) => {
         assert_eq!(reason, "Unknown aspect ratio");
         assert!(raw_http_body.contains("Unknown aspect ratio"));
-      }
+      },
       other => panic!("expected BadRequest, got {:?}", other),
     }
   }

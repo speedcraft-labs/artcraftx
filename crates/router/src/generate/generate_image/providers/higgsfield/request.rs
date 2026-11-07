@@ -15,21 +15,12 @@ pub struct HiggsfieldImageRequestState {
 
 impl HiggsfieldImageRequestState {
   pub async fn send(&self, client: &RouterHiggsfieldClient) -> Result<GenerateImageResponse, ArtcraftRouterError> {
-    info!(
-      "Enqueuing Higgsfield {} image job: batch={}, references={}",
-      self.request.model_label(), self.request.batch_size(), self.request.reference_images().len(),
-    );
+    info!("Enqueuing Higgsfield {} image job: batch={}, references={}", self.request.model_label(), self.request.batch_size(), self.request.reference_images().len(),);
 
-    let response = self.request.send(&client.session).await
-        .map_err(|err| ArtcraftRouterError::from(ProviderError::Higgsfield(err)))?;
+    let response = self.request.send(&client.session).await.map_err(|err| ArtcraftRouterError::from(ProviderError::Higgsfield(err)))?;
 
     let job_ids: Vec<String> = response.job_ids().into_iter().map(|id| id.into_string()).collect();
-    let job_set_id = response.first_job_set()
-        .map(|job_set| job_set.id.to_string())
-        .filter(|_| !job_ids.is_empty())
-        .ok_or_else(|| ArtcraftRouterError::ProviderResponseInvalid(
-          "Higgsfield accepted the request but returned no jobs".to_string(),
-        ))?;
+    let job_set_id = response.first_job_set().map(|job_set| job_set.id.to_string()).filter(|_| !job_ids.is_empty()).ok_or_else(|| ArtcraftRouterError::ProviderResponseInvalid("Higgsfield accepted the request but returned no jobs".to_string()))?;
 
     info!("Higgsfield enqueued job set {} with {} job(s)", job_set_id, job_ids.len());
 

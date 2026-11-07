@@ -9,10 +9,5 @@ pub async fn kling_3p0_standard_multi_function_video_gen(
   maybe_creds: Option<&StorytellerCredentialSet>,
   request: Kling3p0StandardMultiFunctionVideoGenRequest,
 ) -> Result<Kling3p0StandardMultiFunctionVideoGenResponse, StorytellerError> {
-  Ok(basic_json_post_request(
-    api_host,
-    KLING_3P0_STANDARD_MULTI_FUNCTION_VIDEO_PATH,
-    maybe_creds,
-    request,
-  ).await?)
+  Ok(basic_json_post_request(api_host, KLING_3P0_STANDARD_MULTI_FUNCTION_VIDEO_PATH, maybe_creds, request).await?)
 }

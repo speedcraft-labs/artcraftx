@@ -36,15 +36,7 @@ pub async fn handle_fal_complete(
 ) {
   info!("[FalComplete] Handling completed task {}", task.id.as_str());
 
-  let result = handle_fal_complete_inner(
-    app_handle,
-    app_data_root,
-    app_preferences,
-    task_database,
-    storyteller_creds_manager,
-    task,
-    job_response,
-  ).await;
+  let result = handle_fal_complete_inner(app_handle, app_data_root, app_preferences, task_database, storyteller_creds_manager, task, job_response).await;
 
   if let Err(err) = result {
     error!("[FalComplete] Failed to handle task {}: {:?}", task.id.as_str(), err);
@@ -80,7 +72,6 @@ async fn handle_fal_complete_inner(
     None => CompletionPrompt::None,
   };
 
-
   complete_task_with_local_files(CompleteTaskArgs {
     app_handle,
     app_data_root,
@@ -92,7 +83,8 @@ async fn handle_fal_complete_inner(
     prompt,
     fallback_model_slug: FAL_FALLBACK_MODEL_SLUG,
     local_files: &local_files,
-  }).await?;
+  })
+  .await?;
 
   Ok(())
 }
@@ -107,9 +99,7 @@ fn collect_media_urls(extracted: &Option<PollResponseExtractedContents>) -> (Vec
 
   // Images (batch)
   if let Some(images) = &extracted.images {
-    let urls: Vec<String> = images.iter()
-      .filter_map(|img| img.url.clone())
-      .collect();
+    let urls: Vec<String> = images.iter().filter_map(|img| img.url.clone()).collect();
     if !urls.is_empty() {
       return (urls, TaskMediaFileClass::Image);
     }
@@ -137,9 +127,7 @@ async fn download_file(url: &str, app_data_root: &AppDataRoot, index: usize) -> 
   let response = reqwest::get(url).await?;
   let bytes = response.bytes().await?;
 
-  let extension = extract_download_extension_from_url_str(url)
-    .map(|ext| ext.as_extension_without_period())
-    .unwrap_or("bin");
+  let extension = extract_download_extension_from_url_str(url).map(|ext| ext.as_extension_without_period()).unwrap_or("bin");
 
   let tempdir = app_data_root.temp_dir().path();
   let filename = format!("fal_{}_{}.{}", generate_random_uuid(), index, extension);

@@ -9,34 +9,23 @@ use ciborium::value::Value as CborValue;
 #[derive(Clone, Debug)]
 pub enum MidjourneyWsEvent {
   /// Reply to `subscribe_to_user`; the connection is now bound to this user.
-  UserSuccess {
-    user_id: String,
-  },
+  UserSuccess { user_id: String },
 
   /// A job was announced in the user's room (echo of `room_new_job`).
-  RoomNewJob {
-    job_id: Option<String>,
-  },
+  RoomNewJob { job_id: Option<String> },
 
   /// Reply to `subscribe_to_job`; progress frames for it will now arrive.
-  JobSuccess {
-    job_id: String,
-  },
+  JobSuccess { job_id: String },
 
   /// A progress update. Carries preview images when the frame includes them.
   Progress(JobProgress),
 
   /// The job finished. The full-resolution result is fetched over HTTP.
-  Completed {
-    job_id: String,
-    percentage_complete: f64,
-  },
+  Completed { job_id: String, percentage_complete: f64 },
 
   /// A frame we recognized as CBOR but do not model. `maybe_kind` is its
   /// `type` field when present.
-  Unknown {
-    maybe_kind: Option<String>,
-  },
+  Unknown { maybe_kind: Option<String> },
 }
 
 /// A single progress frame for a running job.
@@ -74,8 +63,7 @@ impl MidjourneyWsEvent {
 
   /// Decode one binary websocket frame (CBOR) into an event.
   pub fn from_cbor_frame(bytes: &[u8]) -> Result<Self, MidjourneyWsDecodeError> {
-    let value: CborValue = ciborium::from_reader(bytes)
-        .map_err(|err| MidjourneyWsDecodeError(err.to_string()))?;
+    let value: CborValue = ciborium::from_reader(bytes).map_err(|err| MidjourneyWsDecodeError(err.to_string()))?;
 
     let entries = match &value {
       CborValue::Map(entries) => entries,
@@ -87,21 +75,15 @@ impl MidjourneyWsEvent {
     if let Some(kind) = maybe_kind.as_deref() {
       match kind {
         "user_success" => {
-          return Ok(Self::UserSuccess {
-            user_id: get_str(entries, "user_id").unwrap_or_default(),
-          });
-        }
+          return Ok(Self::UserSuccess { user_id: get_str(entries, "user_id").unwrap_or_default() });
+        },
         "room_new_job" => {
-          return Ok(Self::RoomNewJob {
-            job_id: get_str(entries, "job_id"),
-          });
-        }
+          return Ok(Self::RoomNewJob { job_id: get_str(entries, "job_id") });
+        },
         "job_success" => {
-          return Ok(Self::JobSuccess {
-            job_id: get_str(entries, "job_id").unwrap_or_default(),
-          });
-        }
-        _ => {}
+          return Ok(Self::JobSuccess { job_id: get_str(entries, "job_id").unwrap_or_default() });
+        },
+        _ => {},
       }
     }
 
@@ -114,13 +96,7 @@ impl MidjourneyWsEvent {
         return Ok(Self::Completed { job_id, percentage_complete });
       }
 
-      return Ok(Self::Progress(JobProgress {
-        job_id,
-        maybe_user_id: get_str(entries, "user_id"),
-        current_status,
-        percentage_complete,
-        images: extract_images(entries),
-      }));
+      return Ok(Self::Progress(JobProgress { job_id, maybe_user_id: get_str(entries, "user_id"), current_status, percentage_complete, images: extract_images(entries) }));
     }
 
     Ok(Self::Unknown { maybe_kind })
@@ -159,10 +135,7 @@ fn extract_images(entries: &[(CborValue, CborValue)]) -> Vec<JobStepImage> {
 }
 
 fn map_get<'a>(entries: &'a [(CborValue, CborValue)], key: &str) -> Option<&'a CborValue> {
-  entries
-      .iter()
-      .find(|(k, _)| matches!(k, CborValue::Text(text) if text == key))
-      .map(|(_, value)| value)
+  entries.iter().find(|(k, _)| matches!(k, CborValue::Text(text) if text == key)).map(|(_, value)| value)
 }
 
 /// Read a string field, accepting both a plain text value and a CBOR
@@ -186,21 +159,14 @@ fn get_f64(entries: &[(CborValue, CborValue)], key: &str) -> Option<f64> {
     CborValue::Integer(integer) => {
       let as_i128: i128 = (*integer).into();
       Some(as_i128 as f64)
-    }
+    },
     _ => None,
   }
 }
 
 fn format_uuid(bytes: &[u8]) -> String {
   let hex: String = bytes.iter().map(|byte| format!("{:02x}", byte)).collect();
-  format!(
-    "{}-{}-{}-{}-{}",
-    &hex[0..8],
-    &hex[8..12],
-    &hex[12..16],
-    &hex[16..20],
-    &hex[20..32],
-  )
+  format!("{}-{}-{}-{}-{}", &hex[0..8], &hex[8..12], &hex[12..16], &hex[16..20], &hex[20..32],)
 }
 
 #[cfg(test)]
@@ -219,10 +185,7 @@ mod tests {
 
   #[test]
   fn decodes_user_success() {
-    let frame = encode(&CborValue::Map(vec![
-      (text("type"), text("user_success")),
-      (text("user_id"), text("26c9d38d-1f71-49c7-a356-b29dac58b54c")),
-    ]));
+    let frame = encode(&CborValue::Map(vec![(text("type"), text("user_success")), (text("user_id"), text("26c9d38d-1f71-49c7-a356-b29dac58b54c"))]));
 
     let event = MidjourneyWsEvent::from_cbor_frame(&frame).unwrap();
     let MidjourneyWsEvent::UserSuccess { user_id } = event else {
@@ -233,15 +196,8 @@ mod tests {
 
   #[test]
   fn decodes_tag37_uuid_job_id() {
-    let uuid_bytes = vec![
-      0x7d, 0xa8, 0xda, 0x16, 0x69, 0x64, 0x46, 0x5b,
-      0x92, 0x98, 0xa8, 0x45, 0xa7, 0xfe, 0xc1, 0xbb,
-    ];
-    let frame = encode(&CborValue::Map(vec![
-      (text("job_id"), CborValue::Tag(37, Box::new(CborValue::Bytes(uuid_bytes)))),
-      (text("current_status"), text("completed")),
-      (text("percentage_complete"), CborValue::Integer(100.into())),
-    ]));
+    let uuid_bytes = vec![0x7d, 0xa8, 0xda, 0x16, 0x69, 0x64, 0x46, 0x5b, 0x92, 0x98, 0xa8, 0x45, 0xa7, 0xfe, 0xc1, 0xbb];
+    let frame = encode(&CborValue::Map(vec![(text("job_id"), CborValue::Tag(37, Box::new(CborValue::Bytes(uuid_bytes)))), (text("current_status"), text("completed")), (text("percentage_complete"), CborValue::Integer(100.into()))]));
 
     let event = MidjourneyWsEvent::from_cbor_frame(&frame).unwrap();
     let MidjourneyWsEvent::Completed { job_id, percentage_complete } = event else {
@@ -259,10 +215,7 @@ mod tests {
       (text("percentage_complete"), CborValue::Float(5.0)),
       (text("job_id"), text("job-1")),
       (text("user_id"), text("user-1")),
-      (text("files"), CborValue::Map(vec![
-        (text("0_step_1.jpeg"), CborValue::Bytes(jpeg.clone())),
-        (text("1_step_1.jpeg"), CborValue::Bytes(jpeg.clone())),
-      ])),
+      (text("files"), CborValue::Map(vec![(text("0_step_1.jpeg"), CborValue::Bytes(jpeg.clone())), (text("1_step_1.jpeg"), CborValue::Bytes(jpeg.clone()))])),
     ]));
 
     let event = MidjourneyWsEvent::from_cbor_frame(&frame).unwrap();

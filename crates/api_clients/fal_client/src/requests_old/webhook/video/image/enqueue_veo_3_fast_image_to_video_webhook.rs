@@ -62,12 +62,9 @@ impl FalRequestCostCalculator for Veo3FastRequest {
   }
 }
 
-
 /// Veo 3 Fast Image-to-Video
 /// https://fal.ai/models/fal-ai/veo3/fast/image-to-video
-pub async fn enqueue_veo_3_fast_image_to_video_webhook<R: IntoUrl>(
-  args: Veo3FastArgs<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
+pub async fn enqueue_veo_3_fast_image_to_video_webhook<R: IntoUrl>(args: Veo3FastArgs<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
 
   let duration = match req.duration {
@@ -89,23 +86,12 @@ pub async fn enqueue_veo_3_fast_image_to_video_webhook<R: IntoUrl>(
     Veo3FastResolution::TenEightyP => Some("1080p".to_string()),
   };
 
-  let request = Veo3FastImageToVideoInput {
-    image_url: req.image_url,
-    prompt: req.prompt,
-    aspect_ratio,
-    resolution,
-    duration,
-    generate_audio: Some(req.generate_audio),
-  };
+  let request = Veo3FastImageToVideoInput { image_url: req.image_url, prompt: req.prompt, aspect_ratio, resolution, duration, generate_audio: Some(req.generate_audio) };
 
-  let result = veo_3_fast_image_to_video(request)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await;
+  let result = veo_3_fast_image_to_video(request).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await;
 
   result.map_err(|err| classify_fal_error(err))
 }
-
 
 #[cfg(test)]
 mod tests {

@@ -18,10 +18,7 @@ impl StatsigRequest {
   /// Build a request, normalizing the method to uppercase and trimming both
   /// fields so `(" post ", …)` and `("POST", …)` share a cache entry.
   pub fn new(method: impl AsRef<str>, path: impl Into<String>) -> Self {
-    Self {
-      method: method.as_ref().trim().to_ascii_uppercase(),
-      path: path.into().trim().to_string(),
-    }
+    Self { method: method.as_ref().trim().to_ascii_uppercase(), path: path.into().trim().to_string() }
   }
 
   /// The endpoint that starts every chat / media-generation stream, including

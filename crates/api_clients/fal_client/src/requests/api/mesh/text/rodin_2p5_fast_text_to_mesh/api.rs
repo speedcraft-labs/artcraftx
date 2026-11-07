@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::mesh::text::rodin_2p5_fast_text_to_mesh::raw_request::{
-  Rodin2p5FastBboxCondition, Rodin2p5FastTextToMeshInput, Rodin2p5FastTextToMeshOutput,
-};
+use crate::requests::api::mesh::text::rodin_2p5_fast_text_to_mesh::raw_request::{Rodin2p5FastBboxCondition, Rodin2p5FastTextToMeshInput, Rodin2p5FastTextToMeshOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 /// Hyper3D Rodin v2.5 Fast text-to-3D.
@@ -261,10 +259,7 @@ mod tests {
 
   #[test]
   fn raw_request_omits_unset_optionals() {
-    let request = Rodin2p5FastTextToMeshRequest {
-      prompt: "p".to_string(),
-      ..base_request()
-    };
+    let request = Rodin2p5FastTextToMeshRequest { prompt: "p".to_string(), ..base_request() };
     let json = serde_json::to_value(request.to_raw_request().unwrap()).unwrap();
     assert_eq!(json, serde_json::json!({ "prompt": "p" }));
   }
@@ -295,10 +290,7 @@ mod tests {
 
   #[test]
   fn endpoint_path_is_canonical() {
-    assert_eq!(
-      Rodin2p5FastTextToMeshRequest::ENDPOINT,
-      "fal-ai/hyper3d/rodin/v2.5/text-to-3d/fast",
-    );
+    assert_eq!(Rodin2p5FastTextToMeshRequest::ENDPOINT, "fal-ai/hyper3d/rodin/v2.5/text-to-3d/fast",);
   }
 
   // NB: Pricing tests are in cost.rs

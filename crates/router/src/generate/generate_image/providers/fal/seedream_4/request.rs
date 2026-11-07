@@ -1,22 +1,14 @@
 use std::fmt::Debug;
 use std::sync::Arc;
 
-use fal_client::requests_old::webhook::image::edit::enqueue_bytedance_seedream_v4_edit_image_webhook::{
-  enqueue_bytedance_seedream_v4_edit_image_webhook, EnqueueBytedanceSeedreamV4EditImageArgs,
-  EnqueueBytedanceSeedreamV4EditImageRequest,
-};
-use fal_client::requests_old::webhook::image::text::enqueue_bytedance_seedream_v4_text_to_image_webhook::{
-  enqueue_bytedance_seedream_v4_text_to_image_webhook, EnqueueBytedanceSeedreamV4TextToImageArgs,
-  EnqueueBytedanceSeedreamV4TextToImageRequest,
-};
+use fal_client::requests_old::webhook::image::edit::enqueue_bytedance_seedream_v4_edit_image_webhook::{enqueue_bytedance_seedream_v4_edit_image_webhook, EnqueueBytedanceSeedreamV4EditImageArgs, EnqueueBytedanceSeedreamV4EditImageRequest};
+use fal_client::requests_old::webhook::image::text::enqueue_bytedance_seedream_v4_text_to_image_webhook::{enqueue_bytedance_seedream_v4_text_to_image_webhook, EnqueueBytedanceSeedreamV4TextToImageArgs, EnqueueBytedanceSeedreamV4TextToImageRequest};
 
 use crate::client::router_fal_client::RouterFalClient;
 use crate::errors::artcraft_router_error::ArtcraftRouterError;
 use crate::errors::client_error::ClientError;
 use crate::errors::provider_error::ProviderError;
-use crate::generate::generate_image::generate_image_response::{
-  FalImageResponsePayload, GenerateImageResponse,
-};
+use crate::generate::generate_image::generate_image_response::{FalImageResponsePayload, GenerateImageResponse};
 
 #[derive(Clone, Debug)]
 pub enum FalSeedream4RequestState {
@@ -26,39 +18,23 @@ pub enum FalSeedream4RequestState {
 
 impl FalSeedream4RequestState {
   pub async fn send(&self, client: &RouterFalClient) -> Result<GenerateImageResponse, ArtcraftRouterError> {
-    let webhook_url = client.webhook_url.as_deref()
-      .ok_or(ArtcraftRouterError::Client(ClientError::WebhookUrlRequired))?;
+    let webhook_url = client.webhook_url.as_deref().ok_or(ArtcraftRouterError::Client(ClientError::WebhookUrlRequired))?;
     let (webhook_response, outbound): (_, Arc<dyn Debug + Send + Sync>) = match self {
       Self::TextToImage(request) => {
         let outbound: Arc<dyn Debug + Send + Sync> = Arc::new(request.clone());
-        let args = EnqueueBytedanceSeedreamV4TextToImageArgs {
-          request: request.clone(),
-          webhook_url,
-          api_key: &client.api_key,
-        };
+        let args = EnqueueBytedanceSeedreamV4TextToImageArgs { request: request.clone(), webhook_url, api_key: &client.api_key };
         (enqueue_bytedance_seedream_v4_text_to_image_webhook(args).await, outbound)
-      }
+      },
       Self::EditImage(request) => {
         let outbound: Arc<dyn Debug + Send + Sync> = Arc::new(request.clone());
-        let args = EnqueueBytedanceSeedreamV4EditImageArgs {
-          request: request.clone(),
-          webhook_url,
-          api_key: &client.api_key,
-        };
+        let args = EnqueueBytedanceSeedreamV4EditImageArgs { request: request.clone(), webhook_url, api_key: &client.api_key };
         (enqueue_bytedance_seedream_v4_edit_image_webhook(args).await, outbound)
-      }
+      },
     };
 
-    let webhook_response = webhook_response
-      .map_err(|e| ArtcraftRouterError::Provider(ProviderError::Fal(e)))?;
+    let webhook_response = webhook_response.map_err(|e| ArtcraftRouterError::Provider(ProviderError::Fal(e)))?;
 
-    Ok(GenerateImageResponse::Fal(FalImageResponsePayload {
-      request_id: webhook_response.request_id,
-      gateway_request_id: webhook_response.gateway_request_id,
-      maybe_status_url: None,
-      maybe_response_url: None,
-      maybe_outbound_request: Some(outbound),
-    }))
+    Ok(GenerateImageResponse::Fal(FalImageResponsePayload { request_id: webhook_response.request_id, gateway_request_id: webhook_response.gateway_request_id, maybe_status_url: None, maybe_response_url: None, maybe_outbound_request: Some(outbound) }))
   }
 }
 
@@ -71,16 +47,12 @@ mod tests {
   use test_data::web::image_urls::JUNO_AT_LAKE_IMAGE_URL;
 
   fn read_fal_api_key() -> FalApiKey {
-    let secret = std::fs::read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt")
-      .expect("Failed to read fal_api_key.txt");
+    let secret = std::fs::read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt").expect("Failed to read fal_api_key.txt");
     FalApiKey::from_str(secret.trim())
   }
 
   fn client_with_webhook() -> RouterFalClient {
-    RouterFalClient::new_with_webhook(
-      read_fal_api_key(),
-      "https://example.com/fal-webhook-test".to_string(),
-    )
+    RouterFalClient::new_with_webhook(read_fal_api_key(), "https://example.com/fal-webhook-test".to_string())
   }
 
   #[tokio::test]

@@ -86,10 +86,7 @@ mod tests {
 
   #[tokio::test]
   async fn rejects_before_network() {
-    let err = upload_media_bytes(UploadMediaBytesArgs {
-      request: UploadMediaBytesRequest::for_slot(&slot(), vec![]),
-      maybe_user_agent: None,
-    }).await.unwrap_err();
+    let err = upload_media_bytes(UploadMediaBytesArgs { request: UploadMediaBytesRequest::for_slot(&slot(), vec![]), maybe_user_agent: None }).await.unwrap_err();
     assert!(matches!(err, HiggsfieldError::Client(HiggsfieldClientError::InvalidRequest(_))));
   }
 }

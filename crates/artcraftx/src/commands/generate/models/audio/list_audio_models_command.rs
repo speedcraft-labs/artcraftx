@@ -26,8 +26,5 @@ impl SerializeMarker for ListAudioModelsResponse {}
 #[tauri::command]
 pub async fn list_audio_models_command() -> ResponseOrErrorMessage<ListAudioModelsResponse> {
   info!("list_audio_models_command called");
-  Ok(ListAudioModelsResponse {
-    models: AUDIO_MODELS.clone(),
-    providers: AUDIO_PROVIDERS.clone(),
-  }.into())
+  Ok(ListAudioModelsResponse { models: AUDIO_MODELS.clone(), providers: AUDIO_PROVIDERS.clone() }.into())
 }

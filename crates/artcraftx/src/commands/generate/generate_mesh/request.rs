@@ -5,9 +5,7 @@ use artcraft_client::enums::common::generation::common_mesh_quality::CommonMeshQ
 use artcraft_client::enums::common::generation::common_polygon_type::CommonPolygonType;
 use sqlite_identifiers::ids::media_file_token::MediaFileToken;
 
-use crate::commands::generate::common::tauri_media_source::{
-  merge_source_with_legacy_token, merge_sources_with_legacy_tokens, TauriMediaSource,
-};
+use crate::commands::generate::common::tauri_media_source::{merge_source_with_legacy_token, merge_sources_with_legacy_tokens, TauriMediaSource};
 use crate::commands::utils::response::success_response_wrapper::SerializeMarker;
 
 // ── Request ──
@@ -68,7 +66,6 @@ pub struct TauriGenerateMeshRequest {
   pub geometry_quality: Option<CommonMeshQuality>,
 
   // ── Frontend metadata ──
-
   /// Name of the frontend caller.
   pub frontend_caller: Option<TauriCommandCaller>,
 
@@ -94,9 +91,7 @@ pub struct MeshRequestMediaSources {
 impl TauriGenerateMeshRequest {
   pub fn media_sources(&self) -> MeshRequestMediaSources {
     MeshRequestMediaSources {
-      reference_images: merge_sources_with_legacy_tokens(
-        self.reference_image_sources.clone(), self.reference_image_media_tokens.clone(),
-      ),
+      reference_images: merge_sources_with_legacy_tokens(self.reference_image_sources.clone(), self.reference_image_media_tokens.clone()),
       front_image: merge_source_with_legacy_token(self.front_image_source.clone(), self.front_image_media_token.clone()),
       back_image: merge_source_with_legacy_token(self.back_image_source.clone(), self.back_image_media_token.clone()),
       left_image: merge_source_with_legacy_token(self.left_image_source.clone(), self.left_image_media_token.clone()),
@@ -109,12 +104,7 @@ impl TauriGenerateMeshRequest {
 impl MeshRequestMediaSources {
   /// Every source the request carries, for up-front validation.
   pub fn iter(&self) -> impl Iterator<Item = &TauriMediaSource> {
-    self.reference_images.iter().flatten()
-        .chain(self.front_image.iter())
-        .chain(self.back_image.iter())
-        .chain(self.left_image.iter())
-        .chain(self.right_image.iter())
-        .chain(self.input_mesh.iter())
+    self.reference_images.iter().flatten().chain(self.front_image.iter()).chain(self.back_image.iter()).chain(self.left_image.iter()).chain(self.right_image.iter()).chain(self.input_mesh.iter())
   }
 }
 
@@ -149,8 +139,7 @@ pub enum TauriMeshModel {
 // ── Response ──
 
 #[derive(Serialize)]
-pub struct TauriGenerateMeshResponse {
-}
+pub struct TauriGenerateMeshResponse {}
 
 impl SerializeMarker for TauriGenerateMeshResponse {}
 

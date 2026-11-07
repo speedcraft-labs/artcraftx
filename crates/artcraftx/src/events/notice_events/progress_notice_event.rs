@@ -49,21 +49,13 @@ pub struct ProgressNotice {
 impl ProgressNotice {
   pub fn start(app: &AppHandle, message: impl Into<String>) -> Self {
     let notice_id = generate_random_uuid();
-    ProgressNoticeEvent {
-      notice_id: notice_id.clone(),
-      state: ProgressNoticeState::Started,
-      maybe_message: Some(message.into()),
-    }.send_infallible(app);
+    ProgressNoticeEvent { notice_id: notice_id.clone(), state: ProgressNoticeState::Started, maybe_message: Some(message.into()) }.send_infallible(app);
     Self { app: app.clone(), notice_id }
   }
 }
 
 impl Drop for ProgressNotice {
   fn drop(&mut self) {
-    ProgressNoticeEvent {
-      notice_id: self.notice_id.clone(),
-      state: ProgressNoticeState::Finished,
-      maybe_message: None,
-    }.send_infallible(&self.app);
+    ProgressNoticeEvent { notice_id: self.notice_id.clone(), state: ProgressNoticeState::Finished, maybe_message: None }.send_infallible(&self.app);
   }
 }

@@ -56,7 +56,8 @@ const PROMPT_START_FRAME: &str = "The red panda on the branch turns its head to 
 
 const PROMPT_KEYFRAMES: &str = "The red panda hops off the branch and trots to the right; the camera follows it out into bright Florida sunshine and cranes up to reveal the Sarasota Square shopping mall sign standing among tall palm trees.";
 
-const PROMPT_EDIT: &str = "Keep the red panda exactly as it is, but replace the background with the cozy brick living room and lit Christmas tree from the reference photo, and put the sunlit Sarasota Square mall sign with palm trees outside the window behind it.";
+const PROMPT_EDIT: &str =
+  "Keep the red panda exactly as it is, but replace the background with the cozy brick living room and lit Christmas tree from the reference photo, and put the sunlit Sarasota Square mall sign with palm trees outside the window behind it.";
 
 /// The three uploaded photos.
 struct Photos {
@@ -86,8 +87,7 @@ async fn upload_photos(session: &HiggsfieldSession) -> anyhow::Result<Photos> {
   let mut uploaded = Vec::with_capacity(3);
   for name in [character.as_str(), "christmas_tree.jpg", "mall_1980s.jpg"] {
     let bytes = read(media_path(name)).map_err(|err| anyhow::anyhow!("read {}: {err} (see external/test_media/SOURCES.md)", media_path(name).display()))?;
-    let input = session.upload_reference_media(ReferenceMediaFile::from_file_name(name, bytes)?.with_ip_check())
-        .await.map_err(|err| anyhow::anyhow!("{name}: {err}"))?;
+    let input = session.upload_reference_media(ReferenceMediaFile::from_file_name(name, bytes)?.with_ip_check()).await.map_err(|err| anyhow::anyhow!("{name}: {err}"))?;
     println!("uploaded {name} => {} {}", input.id, input.url);
     uploaded.push(input);
   }
@@ -116,10 +116,7 @@ where
     let response = enqueue(session).await.map_err(|err| anyhow::anyhow!("{err}"))?;
     let job_set = response.first_job_set().ok_or_else(|| anyhow::anyhow!("no job set"))?;
     let echoed: Vec<MediaRole> = job_set.params.medias.iter().map(|m| m.role.clone()).collect();
-    println!(
-      "\n##### {model} / {modality} (attempt {attempt}): job set {} cost={:?} server size={:?}x{:?} aspect={:?} medias={:?}",
-      job_set.id, job_set.cost, job_set.params.width, job_set.params.height, job_set.params.aspect_ratio, echoed,
-    );
+    println!("\n##### {model} / {modality} (attempt {attempt}): job set {} cost={:?} server size={:?}x{:?} aspect={:?} medias={:?}", job_set.id, job_set.cost, job_set.params.width, job_set.params.height, job_set.params.aspect_ratio, echoed,);
     assert_eq!(echoed, expected_roles, "server should echo the reference roles");
 
     let job_id = response.job_ids().into_iter().next().ok_or_else(|| anyhow::anyhow!("no job"))?;
@@ -127,7 +124,7 @@ where
       Ok(job) => {
         record(model, modality, job_id.as_str(), &format!("completed (attempt {attempt})"), job.result_url().unwrap_or(""));
         return Ok(job);
-      }
+      },
       Err(err) => {
         let reason = err.to_string().replace(['\t', '\n'], " ");
         record(model, modality, job_id.as_str(), &format!("failed (attempt {attempt})"), &reason);
@@ -137,7 +134,7 @@ where
           continue;
         }
         return Err(err);
-      }
+      },
     }
   }
   unreachable!("the loop returns on the second attempt")
@@ -175,7 +172,11 @@ async fn live_i2v_seedance_2p5_1_references() -> anyhow::Result<()> {
   let photos = upload_photos(&session).await?;
   let mut request = Seedance2p5Request::text_to_video(PROMPT_REFERENCES, SeedanceVideoAspectRatio::Landscape16x9, Seedance2p5Resolution::P480, FOUR_SECONDS);
   request.medias = photos.references().to_vec();
-  run(&session, "seedance_2p5", "references", &[MediaRole::Image, MediaRole::Image, MediaRole::Image], |session| { let request = request.clone(); Box::pin(async move { session.seedance_2p5(request).await }) }).await?;
+  run(&session, "seedance_2p5", "references", &[MediaRole::Image, MediaRole::Image, MediaRole::Image], |session| {
+    let request = request.clone();
+    Box::pin(async move { session.seedance_2p5(request).await })
+  })
+  .await?;
   Ok(())
 }
 
@@ -184,9 +185,12 @@ async fn live_i2v_seedance_2p5_1_references() -> anyhow::Result<()> {
 async fn live_i2v_seedance_2p5_2_start_frame() -> anyhow::Result<()> {
   let session = session()?;
   let photos = upload_photos(&session).await?;
-  let request = Seedance2p5Request::text_to_video(PROMPT_START_FRAME, SeedanceVideoAspectRatio::Landscape4x3, Seedance2p5Resolution::P480, FOUR_SECONDS)
-      .with_media(MediaReference::start_frame(photos.character));
-  run(&session, "seedance_2p5", "start_frame", &[MediaRole::StartImage], |session| { let request = request.clone(); Box::pin(async move { session.seedance_2p5(request).await }) }).await?;
+  let request = Seedance2p5Request::text_to_video(PROMPT_START_FRAME, SeedanceVideoAspectRatio::Landscape4x3, Seedance2p5Resolution::P480, FOUR_SECONDS).with_media(MediaReference::start_frame(photos.character));
+  run(&session, "seedance_2p5", "start_frame", &[MediaRole::StartImage], |session| {
+    let request = request.clone();
+    Box::pin(async move { session.seedance_2p5(request).await })
+  })
+  .await?;
   Ok(())
 }
 
@@ -195,10 +199,13 @@ async fn live_i2v_seedance_2p5_2_start_frame() -> anyhow::Result<()> {
 async fn live_i2v_seedance_2p5_3_keyframes() -> anyhow::Result<()> {
   let session = session()?;
   let photos = upload_photos(&session).await?;
-  let request = Seedance2p5Request::text_to_video(PROMPT_KEYFRAMES, SeedanceVideoAspectRatio::Landscape4x3, Seedance2p5Resolution::P480, FOUR_SECONDS)
-      .with_media(MediaReference::start_frame(photos.character))
-      .with_media(MediaReference::end_frame(photos.mall));
-  run(&session, "seedance_2p5", "keyframes", &[MediaRole::StartImage, MediaRole::EndImage], |session| { let request = request.clone(); Box::pin(async move { session.seedance_2p5(request).await }) }).await?;
+  let request =
+    Seedance2p5Request::text_to_video(PROMPT_KEYFRAMES, SeedanceVideoAspectRatio::Landscape4x3, Seedance2p5Resolution::P480, FOUR_SECONDS).with_media(MediaReference::start_frame(photos.character)).with_media(MediaReference::end_frame(photos.mall));
+  run(&session, "seedance_2p5", "keyframes", &[MediaRole::StartImage, MediaRole::EndImage], |session| {
+    let request = request.clone();
+    Box::pin(async move { session.seedance_2p5(request).await })
+  })
+  .await?;
   Ok(())
 }
 
@@ -211,7 +218,11 @@ async fn live_i2v_seedance_2p0_1_references() -> anyhow::Result<()> {
   let photos = upload_photos(&session).await?;
   let mut request = Seedance2p0Request::text_to_video(PROMPT_REFERENCES, SeedanceVideoAspectRatio::Landscape16x9, Seedance2p0Resolution::P480, FOUR_SECONDS);
   request.medias = photos.references().to_vec();
-  run(&session, "seedance_2p0", "references", &[MediaRole::Image, MediaRole::Image, MediaRole::Image], |session| { let request = request.clone(); Box::pin(async move { session.seedance_2p0(request).await }) }).await?;
+  run(&session, "seedance_2p0", "references", &[MediaRole::Image, MediaRole::Image, MediaRole::Image], |session| {
+    let request = request.clone();
+    Box::pin(async move { session.seedance_2p0(request).await })
+  })
+  .await?;
   Ok(())
 }
 
@@ -220,9 +231,12 @@ async fn live_i2v_seedance_2p0_1_references() -> anyhow::Result<()> {
 async fn live_i2v_seedance_2p0_2_start_frame() -> anyhow::Result<()> {
   let session = session()?;
   let photos = upload_photos(&session).await?;
-  let request = Seedance2p0Request::text_to_video(PROMPT_START_FRAME, SeedanceVideoAspectRatio::Landscape4x3, Seedance2p0Resolution::P480, FOUR_SECONDS)
-      .with_media(MediaReference::start_frame(photos.character));
-  run(&session, "seedance_2p0", "start_frame", &[MediaRole::StartImage], |session| { let request = request.clone(); Box::pin(async move { session.seedance_2p0(request).await }) }).await?;
+  let request = Seedance2p0Request::text_to_video(PROMPT_START_FRAME, SeedanceVideoAspectRatio::Landscape4x3, Seedance2p0Resolution::P480, FOUR_SECONDS).with_media(MediaReference::start_frame(photos.character));
+  run(&session, "seedance_2p0", "start_frame", &[MediaRole::StartImage], |session| {
+    let request = request.clone();
+    Box::pin(async move { session.seedance_2p0(request).await })
+  })
+  .await?;
   Ok(())
 }
 
@@ -231,10 +245,13 @@ async fn live_i2v_seedance_2p0_2_start_frame() -> anyhow::Result<()> {
 async fn live_i2v_seedance_2p0_3_keyframes() -> anyhow::Result<()> {
   let session = session()?;
   let photos = upload_photos(&session).await?;
-  let request = Seedance2p0Request::text_to_video(PROMPT_KEYFRAMES, SeedanceVideoAspectRatio::Landscape4x3, Seedance2p0Resolution::P480, FOUR_SECONDS)
-      .with_media(MediaReference::start_frame(photos.character))
-      .with_media(MediaReference::end_frame(photos.mall));
-  run(&session, "seedance_2p0", "keyframes", &[MediaRole::StartImage, MediaRole::EndImage], |session| { let request = request.clone(); Box::pin(async move { session.seedance_2p0(request).await }) }).await?;
+  let request =
+    Seedance2p0Request::text_to_video(PROMPT_KEYFRAMES, SeedanceVideoAspectRatio::Landscape4x3, Seedance2p0Resolution::P480, FOUR_SECONDS).with_media(MediaReference::start_frame(photos.character)).with_media(MediaReference::end_frame(photos.mall));
+  run(&session, "seedance_2p0", "keyframes", &[MediaRole::StartImage, MediaRole::EndImage], |session| {
+    let request = request.clone();
+    Box::pin(async move { session.seedance_2p0(request).await })
+  })
+  .await?;
   Ok(())
 }
 
@@ -247,7 +264,11 @@ async fn live_i2v_seedance_2p0_mini_1_references() -> anyhow::Result<()> {
   let photos = upload_photos(&session).await?;
   let mut request = Seedance2p0MiniRequest::text_to_video(PROMPT_REFERENCES, SeedanceVideoAspectRatio::Landscape16x9, Seedance2p0MiniResolution::P480, FOUR_SECONDS);
   request.medias = photos.references().to_vec();
-  run(&session, "seedance_2p0_mini", "references", &[MediaRole::Image, MediaRole::Image, MediaRole::Image], |session| { let request = request.clone(); Box::pin(async move { session.seedance_2p0_mini(request).await }) }).await?;
+  run(&session, "seedance_2p0_mini", "references", &[MediaRole::Image, MediaRole::Image, MediaRole::Image], |session| {
+    let request = request.clone();
+    Box::pin(async move { session.seedance_2p0_mini(request).await })
+  })
+  .await?;
   Ok(())
 }
 
@@ -256,9 +277,12 @@ async fn live_i2v_seedance_2p0_mini_1_references() -> anyhow::Result<()> {
 async fn live_i2v_seedance_2p0_mini_2_start_frame() -> anyhow::Result<()> {
   let session = session()?;
   let photos = upload_photos(&session).await?;
-  let request = Seedance2p0MiniRequest::text_to_video(PROMPT_START_FRAME, SeedanceVideoAspectRatio::Landscape4x3, Seedance2p0MiniResolution::P480, FOUR_SECONDS)
-      .with_media(MediaReference::start_frame(photos.character));
-  run(&session, "seedance_2p0_mini", "start_frame", &[MediaRole::StartImage], |session| { let request = request.clone(); Box::pin(async move { session.seedance_2p0_mini(request).await }) }).await?;
+  let request = Seedance2p0MiniRequest::text_to_video(PROMPT_START_FRAME, SeedanceVideoAspectRatio::Landscape4x3, Seedance2p0MiniResolution::P480, FOUR_SECONDS).with_media(MediaReference::start_frame(photos.character));
+  run(&session, "seedance_2p0_mini", "start_frame", &[MediaRole::StartImage], |session| {
+    let request = request.clone();
+    Box::pin(async move { session.seedance_2p0_mini(request).await })
+  })
+  .await?;
   Ok(())
 }
 
@@ -268,9 +292,13 @@ async fn live_i2v_seedance_2p0_mini_3_keyframes() -> anyhow::Result<()> {
   let session = session()?;
   let photos = upload_photos(&session).await?;
   let request = Seedance2p0MiniRequest::text_to_video(PROMPT_KEYFRAMES, SeedanceVideoAspectRatio::Landscape4x3, Seedance2p0MiniResolution::P480, FOUR_SECONDS)
-      .with_media(MediaReference::start_frame(photos.character))
-      .with_media(MediaReference::end_frame(photos.mall));
-  run(&session, "seedance_2p0_mini", "keyframes", &[MediaRole::StartImage, MediaRole::EndImage], |session| { let request = request.clone(); Box::pin(async move { session.seedance_2p0_mini(request).await }) }).await?;
+    .with_media(MediaReference::start_frame(photos.character))
+    .with_media(MediaReference::end_frame(photos.mall));
+  run(&session, "seedance_2p0_mini", "keyframes", &[MediaRole::StartImage, MediaRole::EndImage], |session| {
+    let request = request.clone();
+    Box::pin(async move { session.seedance_2p0_mini(request).await })
+  })
+  .await?;
   Ok(())
 }
 
@@ -283,7 +311,11 @@ async fn live_i2v_minimax_h3_1_references() -> anyhow::Result<()> {
   let photos = upload_photos(&session).await?;
   let mut request = MinimaxH3Request::text_to_video(PROMPT_REFERENCES, FIVE_SECONDS);
   request.medias = photos.references().to_vec();
-  run(&session, "minimax_h3", "references", &[MediaRole::Image, MediaRole::Image, MediaRole::Image], |session| { let request = request.clone(); Box::pin(async move { session.minimax_h3(request).await }) }).await?;
+  run(&session, "minimax_h3", "references", &[MediaRole::Image, MediaRole::Image, MediaRole::Image], |session| {
+    let request = request.clone();
+    Box::pin(async move { session.minimax_h3(request).await })
+  })
+  .await?;
   Ok(())
 }
 
@@ -292,9 +324,12 @@ async fn live_i2v_minimax_h3_1_references() -> anyhow::Result<()> {
 async fn live_i2v_minimax_h3_2_start_frame() -> anyhow::Result<()> {
   let session = session()?;
   let photos = upload_photos(&session).await?;
-  let request = MinimaxH3Request::text_to_video(PROMPT_START_FRAME, FIVE_SECONDS)
-      .with_media(MediaReference::start_frame(photos.character));
-  run(&session, "minimax_h3", "start_frame", &[MediaRole::StartImage], |session| { let request = request.clone(); Box::pin(async move { session.minimax_h3(request).await }) }).await?;
+  let request = MinimaxH3Request::text_to_video(PROMPT_START_FRAME, FIVE_SECONDS).with_media(MediaReference::start_frame(photos.character));
+  run(&session, "minimax_h3", "start_frame", &[MediaRole::StartImage], |session| {
+    let request = request.clone();
+    Box::pin(async move { session.minimax_h3(request).await })
+  })
+  .await?;
   Ok(())
 }
 
@@ -303,10 +338,12 @@ async fn live_i2v_minimax_h3_2_start_frame() -> anyhow::Result<()> {
 async fn live_i2v_minimax_h3_3_keyframes() -> anyhow::Result<()> {
   let session = session()?;
   let photos = upload_photos(&session).await?;
-  let request = MinimaxH3Request::text_to_video(PROMPT_KEYFRAMES, FIVE_SECONDS)
-      .with_media(MediaReference::start_frame(photos.character))
-      .with_media(MediaReference::end_frame(photos.mall));
-  run(&session, "minimax_h3", "keyframes", &[MediaRole::StartImage, MediaRole::EndImage], |session| { let request = request.clone(); Box::pin(async move { session.minimax_h3(request).await }) }).await?;
+  let request = MinimaxH3Request::text_to_video(PROMPT_KEYFRAMES, FIVE_SECONDS).with_media(MediaReference::start_frame(photos.character)).with_media(MediaReference::end_frame(photos.mall));
+  run(&session, "minimax_h3", "keyframes", &[MediaRole::StartImage, MediaRole::EndImage], |session| {
+    let request = request.clone();
+    Box::pin(async move { session.minimax_h3(request).await })
+  })
+  .await?;
   Ok(())
 }
 
@@ -321,6 +358,10 @@ async fn live_i2v_z_seedance_2p5_edit_references() -> anyhow::Result<()> {
   let photos = upload_photos(&session).await?;
   let mut request = Seedance2p5EditRequest::new(PROMPT_EDIT, source, Seedance2p5Resolution::P480);
   request.references = photos.references().to_vec();
-  run(&session, "seedance_2p5_edit", "references", &[MediaRole::Video, MediaRole::Image, MediaRole::Image, MediaRole::Image], |session| { let request = request.clone(); Box::pin(async move { session.seedance_2p5_edit(request).await }) }).await?;
+  run(&session, "seedance_2p5_edit", "references", &[MediaRole::Video, MediaRole::Image, MediaRole::Image, MediaRole::Image], |session| {
+    let request = request.clone();
+    Box::pin(async move { session.seedance_2p5_edit(request).await })
+  })
+  .await?;
   Ok(())
 }

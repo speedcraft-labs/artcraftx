@@ -17,8 +17,5 @@ pub fn preview_video_models() -> Vec<VideoModelConfig> {
     is_disabled: true,
     ..Default::default()
   };
-  vec![
-    preview(VideoModel::PreviewModel, "Preview Model"),
-    preview(VideoModel::PreviewModelFast, "Preview Model Fast"),
-  ]
+  vec![preview(VideoModel::PreviewModel, "Preview Model"), preview(VideoModel::PreviewModelFast, "Preview Model Fast")]
 }

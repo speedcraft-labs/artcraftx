@@ -26,8 +26,5 @@ impl SerializeMarker for ListMeshModelsResponse {}
 #[tauri::command]
 pub async fn list_mesh_models_command() -> ResponseOrErrorMessage<ListMeshModelsResponse> {
   info!("list_mesh_models_command called");
-  Ok(ListMeshModelsResponse {
-    models: MESH_MODELS.clone(),
-    providers: MESH_PROVIDERS.clone(),
-  }.into())
+  Ok(ListMeshModelsResponse { models: MESH_MODELS.clone(), providers: MESH_PROVIDERS.clone() }.into())
 }

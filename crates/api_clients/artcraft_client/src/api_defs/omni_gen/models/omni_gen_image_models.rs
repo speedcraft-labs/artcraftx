@@ -69,7 +69,6 @@ pub struct OmniGenImageModelDetails {
 
   // TODO: sub-features like inpainting masking,
   // TODO: angle edit models
-
   #[serde(skip_serializing_if = "Option::is_none")]
   pub text_prompt_supported: Option<bool>,
 

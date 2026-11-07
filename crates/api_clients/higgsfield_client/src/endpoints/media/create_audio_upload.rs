@@ -122,11 +122,7 @@ mod tests {
     setup_test_logging();
 
     let auth = load_higgsfield_test_auth().await?;
-    let slot = create_audio_upload(CreateAudioUploadArgs {
-      request: CreateAudioUploadRequest::new(AudioUploadExtension::Wav, "tone_1s.wav"),
-      auth: &auth,
-      host: &HiggsfieldHost::Higgsfield,
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let slot = create_audio_upload(CreateAudioUploadArgs { request: CreateAudioUploadRequest::new(AudioUploadExtension::Wav, "tone_1s.wav"), auth: &auth, host: &HiggsfieldHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
     println!("Allocated audio slot {} at {} ({})", slot.id, slot.url, slot.content_type);
     assert!(slot.content_type.is_audio());
     Ok(())

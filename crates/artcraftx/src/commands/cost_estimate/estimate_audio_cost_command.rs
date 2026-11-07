@@ -19,27 +19,13 @@ pub struct EstimateAudioCostError {
 /// Estimate the cost of a audio generation via the omni cost endpoint.
 /// Anonymous: no credentials are needed for a baseline estimate.
 #[tauri::command]
-pub async fn estimate_audio_cost_command(
-  request: OmniGenAudioCostAndGenerateRequest,
-) -> ResponseOrError<OmniGenAudioCostResponse, EstimateAudioCostError> {
+pub async fn estimate_audio_cost_command(request: OmniGenAudioCostAndGenerateRequest) -> ResponseOrError<OmniGenAudioCostResponse, EstimateAudioCostError> {
   debug!("estimate_audio_cost_command called");
 
-  let result = omni_gen_audio_cost(OmniGenAudioCostArgs {
-    api_host: &ApiHost::Storyteller,
-    api_or_web_creds: None,
-    request: &request,
-  }).await;
+  let result = omni_gen_audio_cost(OmniGenAudioCostArgs { api_host: &ApiHost::Storyteller, api_or_web_creds: None, request: &request }).await;
 
   match result {
     Ok(response) => Ok(response.into()),
-    Err(err) => Err(CommandErrorResponseWrapper {
-      status: CommandErrorStatus::BadRequest,
-      error_message: None,
-      error_type: None,
-      error_details: Some(EstimateAudioCostError {
-        success: false,
-        error_message: err.to_string(),
-      }),
-    }),
+    Err(err) => Err(CommandErrorResponseWrapper { status: CommandErrorStatus::BadRequest, error_message: None, error_type: None, error_details: Some(EstimateAudioCostError { success: false, error_message: err.to_string() }) }),
   }
 }

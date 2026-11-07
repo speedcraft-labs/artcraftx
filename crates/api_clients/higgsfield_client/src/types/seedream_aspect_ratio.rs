@@ -17,10 +17,7 @@ pub enum SeedreamAspectRatio {
 
 impl SeedreamAspectRatio {
   pub fn all() -> [Self; 8] {
-    [
-      Self::Square1x1, Self::Landscape4x3, Self::Portrait3x4, Self::Landscape16x9,
-      Self::Landscape21x9, Self::Portrait9x16, Self::Portrait2x3, Self::Landscape3x2,
-    ]
+    [Self::Square1x1, Self::Landscape4x3, Self::Portrait3x4, Self::Landscape16x9, Self::Landscape21x9, Self::Portrait9x16, Self::Portrait2x3, Self::Landscape3x2]
   }
 
   /// The wire vocabulary value.

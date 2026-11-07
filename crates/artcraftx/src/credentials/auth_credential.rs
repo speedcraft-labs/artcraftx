@@ -96,10 +96,7 @@ impl AuthCredential {
   /// (e.g. `fal_api_2.toml`). Informational — the stable identifier is
   /// [`AuthCredential::id`]; users can rename files freely.
   pub fn file_name(&self) -> String {
-    self.source_path
-        .file_name()
-        .map(|name| name.to_string_lossy().to_string())
-        .unwrap_or_default()
+    self.source_path.file_name().map(|name| name.to_string_lossy().to_string()).unwrap_or_default()
   }
 
   pub fn cookies(&self) -> Option<&CookieCredential> {
@@ -152,14 +149,7 @@ mod tests {
 
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("grok_cookies.toml");
-    let credential = AuthCredential {
-      id: CredentialId::generate(),
-      service: GenerationSource::GrokCookies,
-      name: None,
-      secret: CredentialSecret::Cookies(cookie),
-      user_info: None,
-      source_path: path.clone(),
-    };
+    let credential = AuthCredential { id: CredentialId::generate(), service: GenerationSource::GrokCookies, name: None, secret: CredentialSecret::Cookies(cookie), user_info: None, source_path: path.clone() };
     credential.save().unwrap();
 
     let loaded = AuthCredential::load_from_file(&path).unwrap();
@@ -180,14 +170,8 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("fal_api_key.toml");
 
-    let credential = AuthCredential {
-      id: CredentialId::generate(),
-      service: GenerationSource::FalApi,
-      name: Some("work account".to_string()),
-      secret: CredentialSecret::ApiKey(ApiKeyCredential::new("fal-secret-key-12345")),
-      user_info: None,
-      source_path: path.clone(),
-    };
+    let credential =
+      AuthCredential { id: CredentialId::generate(), service: GenerationSource::FalApi, name: Some("work account".to_string()), secret: CredentialSecret::ApiKey(ApiKeyCredential::new("fal-secret-key-12345")), user_info: None, source_path: path.clone() };
     credential.save().unwrap();
 
     let loaded = AuthCredential::load_from_file(&path).unwrap();

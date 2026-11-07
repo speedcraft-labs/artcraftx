@@ -1,10 +1,7 @@
 use crate::creds::gmicloud_api_key::GmiCloudApiKey;
 use crate::error::gmicloud_error::GmiCloudError;
 use crate::requests::api::video::seedance_2_0_260128::raw_request::Seedance20Payload;
-use crate::requests::common::create_request::{
-  create_gmicloud_request, create_gmicloud_request_with_context,
-  GmiCloudCreateRequest, GmiCloudCreateResponse,
-};
+use crate::requests::common::create_request::{create_gmicloud_request, create_gmicloud_request_with_context, GmiCloudCreateRequest, GmiCloudCreateResponse};
 use crate::requests::context::request_context::RequestContext;
 
 const MODEL_ID: &str = "seedance-2-0-260128";
@@ -85,20 +82,26 @@ impl Seedance20Request {
     Seedance20Payload {
       prompt: self.prompt.clone(),
       duration: self.duration,
-      resolution: self.resolution.map(|r| match r {
-        Seedance20Resolution::FourEightyP => "480p",
-        Seedance20Resolution::SevenTwentyP => "720p",
-        Seedance20Resolution::TenEightyP => "1080p",
-      }.to_string()),
-      ratio: self.ratio.map(|r| match r {
-        Seedance20Ratio::Landscape16x9 => "16:9",
-        Seedance20Ratio::Standard4x3 => "4:3",
-        Seedance20Ratio::Square => "1:1",
-        Seedance20Ratio::Portrait3x4 => "3:4",
-        Seedance20Ratio::Portrait9x16 => "9:16",
-        Seedance20Ratio::UltraWide21x9 => "21:9",
-        Seedance20Ratio::Adaptive => "adaptive",
-      }.to_string()),
+      resolution: self.resolution.map(|r| {
+        match r {
+          Seedance20Resolution::FourEightyP => "480p",
+          Seedance20Resolution::SevenTwentyP => "720p",
+          Seedance20Resolution::TenEightyP => "1080p",
+        }
+        .to_string()
+      }),
+      ratio: self.ratio.map(|r| {
+        match r {
+          Seedance20Ratio::Landscape16x9 => "16:9",
+          Seedance20Ratio::Standard4x3 => "4:3",
+          Seedance20Ratio::Square => "1:1",
+          Seedance20Ratio::Portrait3x4 => "3:4",
+          Seedance20Ratio::Portrait9x16 => "9:16",
+          Seedance20Ratio::UltraWide21x9 => "21:9",
+          Seedance20Ratio::Adaptive => "adaptive",
+        }
+        .to_string()
+      }),
       seed: self.seed,
       watermark: self.watermark,
       generate_audio: self.generate_audio,
@@ -112,25 +115,13 @@ impl Seedance20Request {
     }
   }
 
-  pub async fn send_request(
-    &self,
-    api_key: &GmiCloudApiKey,
-  ) -> Result<GmiCloudCreateResponse, GmiCloudError> {
-    let context = RequestContext {
-      api_key,
-      maybe_timeout: None,
-    };
+  pub async fn send_request(&self, api_key: &GmiCloudApiKey) -> Result<GmiCloudCreateResponse, GmiCloudError> {
+    let context = RequestContext { api_key, maybe_timeout: None };
     self.send_request_with_context(&context).await
   }
 
-  pub async fn send_request_with_context(
-    &self,
-    context: &RequestContext<'_>,
-  ) -> Result<GmiCloudCreateResponse, GmiCloudError> {
-    let body = GmiCloudCreateRequest {
-      model: MODEL_ID.to_string(),
-      payload: self.to_raw_payload(),
-    };
+  pub async fn send_request_with_context(&self, context: &RequestContext<'_>) -> Result<GmiCloudCreateResponse, GmiCloudError> {
+    let body = GmiCloudCreateRequest { model: MODEL_ID.to_string(), payload: self.to_raw_payload() };
     create_gmicloud_request_with_context(context, &body).await
   }
 
@@ -247,11 +238,7 @@ mod tests {
 
     #[test]
     fn all_resolutions_serialize() {
-      let cases = [
-        (Seedance20Resolution::FourEightyP, "480p"),
-        (Seedance20Resolution::SevenTwentyP, "720p"),
-        (Seedance20Resolution::TenEightyP, "1080p"),
-      ];
+      let cases = [(Seedance20Resolution::FourEightyP, "480p"), (Seedance20Resolution::SevenTwentyP, "720p"), (Seedance20Resolution::TenEightyP, "1080p")];
       for (resolution, expected) in cases {
         let mut request = minimal_request();
         request.resolution = Some(resolution);
@@ -275,10 +262,7 @@ mod tests {
       request.prompt = "test".to_string();
       request.duration = Some(5);
       request.ratio = Some(Seedance20Ratio::Square);
-      let body = GmiCloudCreateRequest {
-        model: Seedance20Request::model_id().to_string(),
-        payload: request.to_raw_payload(),
-      };
+      let body = GmiCloudCreateRequest { model: Seedance20Request::model_id().to_string(), payload: request.to_raw_payload() };
       let json = serde_json::to_value(&body).unwrap();
       assert_eq!(json["model"], "seedance-2-0-260128");
       assert_eq!(json["payload"]["prompt"], "test");

@@ -21,27 +21,13 @@ pub struct EstimateSplatCostError {
 /// not know the Marble 1.x models.)
 /// Anonymous: no credentials are needed for a baseline estimate.
 #[tauri::command]
-pub async fn estimate_splat_cost_command(
-  request: OmniGenSplatCostAndGenerateRequest,
-) -> ResponseOrError<OmniGenSplatCostResponse, EstimateSplatCostError> {
+pub async fn estimate_splat_cost_command(request: OmniGenSplatCostAndGenerateRequest) -> ResponseOrError<OmniGenSplatCostResponse, EstimateSplatCostError> {
   debug!("estimate_splat_cost_command called");
 
-  let result = omni_gen_splat_cost(OmniGenSplatCostArgs {
-    api_host: &ApiHost::Storyteller,
-    api_or_web_creds: None,
-    request: &request,
-  }).await;
+  let result = omni_gen_splat_cost(OmniGenSplatCostArgs { api_host: &ApiHost::Storyteller, api_or_web_creds: None, request: &request }).await;
 
   match result {
     Ok(response) => Ok(response.into()),
-    Err(err) => Err(CommandErrorResponseWrapper {
-      status: CommandErrorStatus::BadRequest,
-      error_message: None,
-      error_type: None,
-      error_details: Some(EstimateSplatCostError {
-        success: false,
-        error_message: err.to_string(),
-      }),
-    }),
+    Err(err) => Err(CommandErrorResponseWrapper { status: CommandErrorStatus::BadRequest, error_message: None, error_type: None, error_details: Some(EstimateSplatCostError { success: false, error_message: err.to_string() }) }),
   }
 }

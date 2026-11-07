@@ -39,9 +39,7 @@ impl ZsVoiceModelCategory {
   pub fn all_variants() -> BTreeSet<Self> {
     // NB: BTreeSet is sorted
     // NB: BTreeSet::from() isn't const, but not worth using LazyStatic, etc.
-    BTreeSet::from([
-      Self::Tts,
-    ])
+    BTreeSet::from([Self::Tts])
   }
 }
 

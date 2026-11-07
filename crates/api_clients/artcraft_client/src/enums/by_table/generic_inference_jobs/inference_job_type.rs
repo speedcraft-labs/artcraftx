@@ -359,8 +359,8 @@ mod tests {
     #[test]
     fn all_variants() {
       // Static check
-      const EXPECTED_COUNT : usize = 29;
-      
+      const EXPECTED_COUNT: usize = 29;
+
       assert_eq!(InferenceJobType::all_variants().len(), EXPECTED_COUNT);
       assert_eq!(InferenceJobType::iter().len(), EXPECTED_COUNT);
 
@@ -390,7 +390,7 @@ mod tests {
 
     #[test]
     fn serialized_length_ok_for_database() {
-      const MAX_LENGTH : usize = 32;
+      const MAX_LENGTH: usize = 32;
       for variant in InferenceJobType::all_variants() {
         let serialized = variant.to_str();
         assert!(serialized.len() > 0, "variant {:?} is too short", variant);

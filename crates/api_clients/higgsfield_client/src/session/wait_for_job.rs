@@ -19,10 +19,7 @@ pub struct WaitForJobOptions {
 
 impl Default for WaitForJobOptions {
   fn default() -> Self {
-    Self {
-      poll_interval: Duration::from_secs(3),
-      timeout: Duration::from_secs(10 * 60),
-    }
+    Self { poll_interval: Duration::from_secs(3), timeout: Duration::from_secs(10 * 60) }
   }
 }
 
@@ -45,9 +42,7 @@ impl HiggsfieldSession {
         return Err(HiggsfieldClientError::JobNotFound(job_id.clone()).into());
       }
 
-      let status = batch.find(job_id)
-          .map(|item| item.status.clone())
-          .unwrap_or_else(|| JobStatus::Other("<absent from batch response>".to_string()));
+      let status = batch.find(job_id).map(|item| item.status.clone()).unwrap_or_else(|| JobStatus::Other("<absent from batch response>".to_string()));
 
       info!("Higgsfield job {} status: {} ({}s elapsed)", job_id, status, started.elapsed().as_secs());
 

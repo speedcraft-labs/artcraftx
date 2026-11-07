@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::video::text::vidu_q3::raw_request::{
-  ViduQ3TextToVideoInput, ViduQ3TextToVideoOutput,
-};
+use crate::requests::api::video::text::vidu_q3::raw_request::{ViduQ3TextToVideoInput, ViduQ3TextToVideoOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 #[derive(Clone, Debug)]
@@ -78,14 +76,7 @@ impl FalEndpoint for ViduQ3TextToVideoRequest {
   type RawResponse = ViduQ3TextToVideoOutput;
 
   fn to_raw_request(&self) -> Result<Self::RawRequest, FalErrorPlus> {
-    Ok(Self::RawRequest {
-      prompt: self.prompt.clone(),
-      duration: self.duration,
-      seed: self.seed,
-      aspect_ratio: self.aspect_ratio.map(|ar| ar.to_str().to_string()),
-      resolution: self.resolution.map(|r| r.to_str().to_string()),
-      audio: self.audio,
-    })
+    Ok(Self::RawRequest { prompt: self.prompt.clone(), duration: self.duration, seed: self.seed, aspect_ratio: self.aspect_ratio.map(|ar| ar.to_str().to_string()), resolution: self.resolution.map(|r| r.to_str().to_string()), audio: self.audio })
   }
 }
 
@@ -145,14 +136,7 @@ mod tests {
 
   #[test]
   fn raw_request_maps_all_fields() {
-    let request = ViduQ3TextToVideoRequest {
-      prompt: "p".to_string(),
-      duration: Some(12),
-      seed: Some(42),
-      aspect_ratio: Some(ViduQ3TextToVideoAspectRatio::FourByThree),
-      resolution: Some(ViduQ3TextToVideoResolution::TenEightyP),
-      audio: Some(false),
-    };
+    let request = ViduQ3TextToVideoRequest { prompt: "p".to_string(), duration: Some(12), seed: Some(42), aspect_ratio: Some(ViduQ3TextToVideoAspectRatio::FourByThree), resolution: Some(ViduQ3TextToVideoResolution::TenEightyP), audio: Some(false) };
     let raw = request.to_raw_request().unwrap();
     assert_eq!(raw.prompt, "p");
     assert_eq!(raw.duration, Some(12));
@@ -164,28 +148,14 @@ mod tests {
 
   #[test]
   fn raw_request_omits_unset_optionals() {
-    let request = ViduQ3TextToVideoRequest {
-      prompt: "minimal".to_string(),
-      duration: None,
-      seed: None,
-      aspect_ratio: None,
-      resolution: None,
-      audio: None,
-    };
+    let request = ViduQ3TextToVideoRequest { prompt: "minimal".to_string(), duration: None, seed: None, aspect_ratio: None, resolution: None, audio: None };
     let json = serde_json::to_value(request.to_raw_request().unwrap()).unwrap();
     assert_eq!(json, serde_json::json!({ "prompt": "minimal" }));
   }
 
   #[test]
   fn seed_serializes_when_set() {
-    let request = ViduQ3TextToVideoRequest {
-      prompt: "p".to_string(),
-      duration: None,
-      seed: Some(777),
-      aspect_ratio: None,
-      resolution: None,
-      audio: None,
-    };
+    let request = ViduQ3TextToVideoRequest { prompt: "p".to_string(), duration: None, seed: Some(777), aspect_ratio: None, resolution: None, audio: None };
     let json = serde_json::to_value(request.to_raw_request().unwrap()).unwrap();
     assert_eq!(json.get("seed").and_then(|s| s.as_i64()), Some(777));
   }
@@ -205,12 +175,9 @@ mod tests {
 
   #[test]
   fn every_resolution_maps_to_wire_string() {
-    for (variant, expected, high) in [
-      (ViduQ3TextToVideoResolution::ThreeSixtyP, "360p", false),
-      (ViduQ3TextToVideoResolution::FiveFortyP, "540p", false),
-      (ViduQ3TextToVideoResolution::SevenTwentyP, "720p", true),
-      (ViduQ3TextToVideoResolution::TenEightyP, "1080p", true),
-    ] {
+    for (variant, expected, high) in
+      [(ViduQ3TextToVideoResolution::ThreeSixtyP, "360p", false), (ViduQ3TextToVideoResolution::FiveFortyP, "540p", false), (ViduQ3TextToVideoResolution::SevenTwentyP, "720p", true), (ViduQ3TextToVideoResolution::TenEightyP, "1080p", true)]
+    {
       assert_eq!(variant.to_str(), expected);
       assert_eq!(variant.is_high_res(), high);
     }

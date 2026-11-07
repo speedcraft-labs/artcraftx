@@ -12,9 +12,7 @@ pub struct GetAppPreferencesResponse {
 }
 
 #[tauri::command]
-pub async fn get_app_preferences_command(
-  app_prefs: State<'_, AppPreferencesManager>,
-) -> Result<GetAppPreferencesResponse, String> {
+pub async fn get_app_preferences_command(app_prefs: State<'_, AppPreferencesManager>) -> Result<GetAppPreferencesResponse, String> {
   info!("get_app_preferences_command called");
 
   let preferences = app_prefs.get().map_err(|err| {

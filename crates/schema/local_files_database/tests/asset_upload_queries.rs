@@ -65,22 +65,11 @@ async fn reupload_replaces_and_delete_forgets() {
 // ── Helpers ──
 
 async fn test_db(dir: &tempfile::TempDir) -> LocalFilesDbConnection {
-  LocalFilesDbConnection::connect_and_migrate(dir.path().join("local_files.sqlite"))
-      .await
-      .expect("connect and migrate")
+  LocalFilesDbConnection::connect_and_migrate(dir.path().join("local_files.sqlite")).await.expect("connect and migrate")
 }
 
 async fn record(db: &LocalFilesDbConnection, service: &str, account_id: &str, hash: &str, service_id: &str, url: Option<&str>) {
-  upsert_asset_upload(UpsertAssetUploadArgs {
-    db,
-    service,
-    account_id,
-    file_hash_blake3: hash,
-    service_id,
-    origin: "upload",
-    maybe_service_url: url,
-    maybe_file_size_bytes: Some(1234),
-  }).await.expect("upsert");
+  upsert_asset_upload(UpsertAssetUploadArgs { db, service, account_id, file_hash_blake3: hash, service_id, origin: "upload", maybe_service_url: url, maybe_file_size_bytes: Some(1234) }).await.expect("upsert");
 }
 
 async fn lookup(db: &LocalFilesDbConnection, service: &str, account_id: &str, hash: &str) -> Option<local_files_database::queries::asset_upload_record::AssetUploadRecord> {

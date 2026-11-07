@@ -8,10 +8,7 @@ use browser_emulation::browser_profile::BrowserProfile;
 ///
 /// When the capturing UA wasn't recorded, fall back to the profile the
 /// integration pins on both sides.
-pub fn profile_for_captured_user_agent(
-  maybe_captured_user_agent: Option<&str>,
-  fallback: BrowserProfile,
-) -> BrowserProfile {
+pub fn profile_for_captured_user_agent(maybe_captured_user_agent: Option<&str>, fallback: BrowserProfile) -> BrowserProfile {
   match maybe_captured_user_agent.map(str::trim).filter(|ua| !ua.is_empty()) {
     Some(user_agent) => BrowserProfile::matching_user_agent(user_agent),
     None => fallback,

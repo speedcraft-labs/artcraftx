@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::video::reference::vidu_q3_reference_to_video::raw_request::{
-  ViduQ3ReferenceToVideoInput, ViduQ3ReferenceToVideoOutput,
-};
+use crate::requests::api::video::reference::vidu_q3_reference_to_video::raw_request::{ViduQ3ReferenceToVideoInput, ViduQ3ReferenceToVideoOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 #[derive(Clone, Debug)]
@@ -112,10 +110,7 @@ mod tests {
 
     let request = ViduQ3ReferenceToVideoRequest {
       prompt: "the two dogs run side by side across a sunlit meadow".to_string(),
-      reference_image_urls: vec![
-        TALL_MOCHI_WITH_GLASSES_IMAGE_URL.to_string(),
-        JUNO_AT_LAKE_IMAGE_URL.to_string(),
-      ],
+      reference_image_urls: vec![TALL_MOCHI_WITH_GLASSES_IMAGE_URL.to_string(), JUNO_AT_LAKE_IMAGE_URL.to_string()],
       duration: Some(5),
       seed: None,
       aspect_ratio: Some(ViduQ3ReferenceToVideoAspectRatio::SixteenByNine),
@@ -176,33 +171,14 @@ mod tests {
 
   #[test]
   fn raw_request_omits_unset_optionals() {
-    let request = ViduQ3ReferenceToVideoRequest {
-      prompt: "p".to_string(),
-      reference_image_urls: vec!["https://example.com/a.png".to_string()],
-      duration: None,
-      seed: None,
-      aspect_ratio: None,
-      resolution: None,
-      audio: None,
-    };
+    let request = ViduQ3ReferenceToVideoRequest { prompt: "p".to_string(), reference_image_urls: vec!["https://example.com/a.png".to_string()], duration: None, seed: None, aspect_ratio: None, resolution: None, audio: None };
     let json = serde_json::to_value(request.to_raw_request().unwrap()).unwrap();
-    assert_eq!(
-      json,
-      serde_json::json!({ "prompt": "p", "reference_image_urls": ["https://example.com/a.png"] }),
-    );
+    assert_eq!(json, serde_json::json!({ "prompt": "p", "reference_image_urls": ["https://example.com/a.png"] }),);
   }
 
   #[test]
   fn seed_serializes_when_set() {
-    let request = ViduQ3ReferenceToVideoRequest {
-      prompt: "p".to_string(),
-      reference_image_urls: vec!["https://example.com/a.png".to_string()],
-      duration: None,
-      seed: Some(777),
-      aspect_ratio: None,
-      resolution: None,
-      audio: None,
-    };
+    let request = ViduQ3ReferenceToVideoRequest { prompt: "p".to_string(), reference_image_urls: vec!["https://example.com/a.png".to_string()], duration: None, seed: Some(777), aspect_ratio: None, resolution: None, audio: None };
     let json = serde_json::to_value(request.to_raw_request().unwrap()).unwrap();
     assert_eq!(json.get("seed").and_then(|s| s.as_i64()), Some(777));
   }
@@ -222,10 +198,7 @@ mod tests {
 
   #[test]
   fn endpoint_path_is_canonical() {
-    assert_eq!(
-      ViduQ3ReferenceToVideoRequest::ENDPOINT,
-      "fal-ai/vidu/q3/reference-to-video",
-    );
+    assert_eq!(ViduQ3ReferenceToVideoRequest::ENDPOINT, "fal-ai/vidu/q3/reference-to-video",);
   }
 
   // NB: Pricing tests are in cost.rs

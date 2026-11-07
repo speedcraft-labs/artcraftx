@@ -1,7 +1,4 @@
-use seedance2pro_client::generate::video::generate_seedance_2p0_fast::{
-  GenerateSeedance2p0FastRequest, KinoviSeedance2p0FastAspectRatio, KinoviSeedance2p0FastBitrate,
-  KinoviSeedance2p0FastBatchCount, KinoviSeedance2p0FastOutputResolution,
-};
+use seedance2pro_client::generate::video::generate_seedance_2p0_fast::{GenerateSeedance2p0FastRequest, KinoviSeedance2p0FastAspectRatio, KinoviSeedance2p0FastBitrate, KinoviSeedance2p0FastBatchCount, KinoviSeedance2p0FastOutputResolution};
 
 use crate::api::audio_list_ref::AudioListRef;
 use crate::api::character_list_ref::CharacterListRef;
@@ -9,9 +6,7 @@ use crate::api::image_list_ref::ImageListRef;
 use crate::api::image_ref::ImageRef;
 use crate::api::video_list_ref::VideoListRef;
 use crate::errors::artcraft_router_error::ArtcraftRouterError;
-use crate::generate::generate_video::providers::kinovi::resolve::{
-  resolve_and_upload_list, resolve_and_upload_single, resolve_character_tokens,
-};
+use crate::generate::generate_video::providers::kinovi::resolve::{resolve_and_upload_list, resolve_and_upload_single, resolve_character_tokens};
 use crate::utils::media_source_ref::MediaSourceRef;
 use crate::generate::generate_video::providers::kinovi::seedance_2p0_fast::request::KinoviSeedance2p0FastRequestState;
 use crate::generate::generate_video::video_generation_draft_context::VideoGenerationDraftContext;
@@ -39,10 +34,7 @@ pub struct KinoviSeedance2p0FastRemainingItems {
 }
 
 impl KinoviSeedance2p0FastDraftState {
-  pub async fn to_request(
-    &mut self,
-    draft_context: &VideoGenerationDraftContext<'_>,
-  ) -> Result<KinoviSeedance2p0FastRequestState, ArtcraftRouterError> {
+  pub async fn to_request(&mut self, draft_context: &VideoGenerationDraftContext<'_>) -> Result<KinoviSeedance2p0FastRequestState, ArtcraftRouterError> {
     let client = draft_context.get_seedance2pro_client_ref()?;
     let session = &client.session;
 
@@ -59,22 +51,13 @@ impl KinoviSeedance2p0FastDraftState {
       start_frame_url = resolve_and_upload_single(session, remaining.start_frame, map).await?;
       end_frame_url = resolve_and_upload_single(session, remaining.end_frame, map).await?;
 
-      reference_image_urls = resolve_and_upload_list(
-        session, remaining.reference_images.map(MediaSourceRef::list_from_images), map,
-      ).await?;
+      reference_image_urls = resolve_and_upload_list(session, remaining.reference_images.map(MediaSourceRef::list_from_images), map).await?;
 
-      reference_video_urls = resolve_and_upload_list(
-        session, remaining.reference_videos.map(MediaSourceRef::list_from_videos), map,
-      ).await?;
+      reference_video_urls = resolve_and_upload_list(session, remaining.reference_videos.map(MediaSourceRef::list_from_videos), map).await?;
 
-      reference_audio_urls = resolve_and_upload_list(
-        session, remaining.reference_audio.map(MediaSourceRef::list_from_audios), map,
-      ).await?;
+      reference_audio_urls = resolve_and_upload_list(session, remaining.reference_audio.map(MediaSourceRef::list_from_audios), map).await?;
 
-      character_ids = resolve_character_tokens(
-        remaining.reference_character_tokens.as_ref(),
-        draft_context,
-      )?;
+      character_ids = resolve_character_tokens(remaining.reference_character_tokens.as_ref(), draft_context)?;
     }
 
     let request = GenerateSeedance2p0FastRequest {

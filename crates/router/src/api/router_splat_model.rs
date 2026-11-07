@@ -62,8 +62,7 @@ mod tests {
     ];
     for (router_model, expected_common) in cases {
       let json = serde_json::to_string(&router_model).unwrap();
-      let common: CommonSplatModel = serde_json::from_str(&json)
-        .unwrap_or_else(|e| panic!("CommonSplatModel failed to parse {json}: {e}"));
+      let common: CommonSplatModel = serde_json::from_str(&json).unwrap_or_else(|e| panic!("CommonSplatModel failed to parse {json}: {e}"));
       assert_eq!(common, expected_common, "for {router_model:?}");
     }
   }

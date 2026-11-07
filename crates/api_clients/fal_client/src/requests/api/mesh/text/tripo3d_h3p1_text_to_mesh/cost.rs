@@ -1,6 +1,4 @@
-use crate::requests::api::mesh::text::tripo3d_h3p1_text_to_mesh::api::{
-  Tripo3dH3p1GeometryQuality, Tripo3dH3p1TextToMeshRequest, Tripo3dH3p1TextureQuality,
-};
+use crate::requests::api::mesh::text::tripo3d_h3p1_text_to_mesh::api::{Tripo3dH3p1GeometryQuality, Tripo3dH3p1TextToMeshRequest, Tripo3dH3p1TextureQuality};
 use crate::requests::traits::fal_request_cost_calculator_trait::{FalRequestCostCalculator, UsdCents};
 
 impl FalRequestCostCalculator for Tripo3dH3p1TextToMeshRequest {

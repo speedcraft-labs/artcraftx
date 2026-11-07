@@ -5,11 +5,7 @@ use crate::enums::common_resolution::CommonResolution;
 use crate::enums::model_creator::ModelCreator;
 use crate::enums::video_model::VideoModel;
 
-const VEO_ASPECT_RATIOS: &[CommonAspectRatio] = &[
-  CommonAspectRatio::Auto,
-  CommonAspectRatio::WideSixteenByNine,
-  CommonAspectRatio::TallNineBySixteen,
-];
+const VEO_ASPECT_RATIOS: &[CommonAspectRatio] = &[CommonAspectRatio::Auto, CommonAspectRatio::WideSixteenByNine, CommonAspectRatio::TallNineBySixteen];
 
 /// Google Veo video models.
 pub fn veo_video_models() -> Vec<VideoModelConfig> {

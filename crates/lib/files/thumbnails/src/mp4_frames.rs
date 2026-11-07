@@ -28,30 +28,17 @@ pub struct DecodedFrame {
 /// are returned sorted by presentation time.
 ///
 /// Blocking CPU work — call from `spawn_blocking` in async contexts.
-pub fn decode_mp4_leading_frames<P: AsRef<Path>>(
-  path: P,
-  max_duration_ms: u32,
-  max_frames: usize,
-) -> Result<Vec<DecodedFrame>, ThumbnailError> {
+pub fn decode_mp4_leading_frames<P: AsRef<Path>>(path: P, max_duration_ms: u32, max_frames: usize) -> Result<Vec<DecodedFrame>, ThumbnailError> {
   let file = File::open(path.as_ref())?;
   let size = file.metadata()?.len();
-  let mut mp4 = Mp4Reader::read_header(BufReader::new(file), size)
-      .map_err(|err| ThumbnailError::Unsupported(format!("not a readable MP4: {}", err)))?;
+  let mut mp4 = Mp4Reader::read_header(BufReader::new(file), size).map_err(|err| ThumbnailError::Unsupported(format!("not a readable MP4: {}", err)))?;
 
   let (track_id, timescale, nal_length_size, sps, pps) = {
-    let track = mp4.tracks().values()
-        .find(|track| {
-          track.track_type().is_ok_and(|kind| kind == TrackType::Video)
-              && track.media_type().is_ok_and(|media| media == MediaType::H264)
-        })
-        .ok_or_else(|| ThumbnailError::Unsupported("no H.264 video track".to_string()))?;
+    let track =
+      mp4.tracks().values().find(|track| track.track_type().is_ok_and(|kind| kind == TrackType::Video) && track.media_type().is_ok_and(|media| media == MediaType::H264)).ok_or_else(|| ThumbnailError::Unsupported("no H.264 video track".to_string()))?;
 
-    let sps = track.sequence_parameter_set()
-        .map_err(|err| ThumbnailError::Unsupported(format!("missing SPS: {}", err)))?
-        .to_vec();
-    let pps = track.picture_parameter_set()
-        .map_err(|err| ThumbnailError::Unsupported(format!("missing PPS: {}", err)))?
-        .to_vec();
+    let sps = track.sequence_parameter_set().map_err(|err| ThumbnailError::Unsupported(format!("missing SPS: {}", err)))?.to_vec();
+    let pps = track.picture_parameter_set().map_err(|err| ThumbnailError::Unsupported(format!("missing PPS: {}", err)))?.to_vec();
     (track.track_id(), track.timescale(), nal_length_size_for(track), sps, pps)
   };
 
@@ -60,8 +47,7 @@ pub fn decode_mp4_leading_frames<P: AsRef<Path>>(
   // High-profile output) start erroring a handful of samples in and never
   // recover. Let the decoder keep its reorder buffer and drain it at the end.
   let config = DecoderConfig::new().flush_after_decode(Flush::NoFlush);
-  let mut decoder = Decoder::with_api_config(OpenH264API::from_source(), config)
-      .map_err(|err| ThumbnailError::Decode(format!("could not create H.264 decoder: {}", err)))?;
+  let mut decoder = Decoder::with_api_config(OpenH264API::from_source(), config).map_err(|err| ThumbnailError::Decode(format!("could not create H.264 decoder: {}", err)))?;
 
   // Prime the decoder with the parameter sets.
   let mut parameter_sets = Vec::with_capacity(sps.len() + pps.len() + 8);
@@ -75,8 +61,7 @@ pub fn decode_mp4_leading_frames<P: AsRef<Path>>(
   // k-th output frame gets the k-th smallest pts fed — exact regardless of
   // B-frame depth.
   let mut fed_pts_ms: Vec<u32> = Vec::new();
-  let sample_count = mp4.sample_count(track_id)
-      .map_err(|err| ThumbnailError::Decode(format!("could not count samples: {}", err)))?;
+  let sample_count = mp4.sample_count(track_id).map_err(|err| ThumbnailError::Decode(format!("could not count samples: {}", err)))?;
 
   for sample_id in 1..=sample_count {
     if frames.len() >= max_frames {
@@ -101,13 +86,13 @@ pub fn decode_mp4_leading_frames<P: AsRef<Path>>(
       Ok(Some(yuv)) => {
         let output_pts_ms = fed_pts_ms[frames.len()];
         frames.push(DecodedFrame { pts_ms: output_pts_ms, image: yuv_to_rgb(&yuv)? });
-      }
-      Ok(None) => {} // Decoder delay; frame not ready yet.
+      },
+      Ok(None) => {}, // Decoder delay; frame not ready yet.
       Err(err) => {
         // A corrupt tail sample shouldn't discard the frames we have.
         log::warn!("H.264 decode error at sample {}: {}", sample_id, err);
         break;
-      }
+      },
     }
 
     // Samples arrive in decode order, so a B-frame with an earlier pts can
@@ -132,7 +117,7 @@ pub fn decode_mp4_leading_frames<P: AsRef<Path>>(
           }
           frames.push(DecodedFrame { pts_ms: output_pts_ms, image: yuv_to_rgb(&yuv)? });
         }
-      }
+      },
       Err(err) => log::warn!("H.264 flush error: {}", err),
     }
   }
@@ -147,9 +132,7 @@ pub fn decode_mp4_leading_frames<P: AsRef<Path>>(
 
 /// The avcC NAL length-prefix size (1, 2, or 4 bytes; 4 is ubiquitous).
 fn nal_length_size_for(track: &mp4::Mp4Track) -> usize {
-  track.trak.mdia.minf.stbl.stsd.avc1.as_ref()
-      .map(|avc1| (avc1.avcc.length_size_minus_one as usize & 0b11) + 1)
-      .unwrap_or(4)
+  track.trak.mdia.minf.stbl.stsd.avc1.as_ref().map(|avc1| (avc1.avcc.length_size_minus_one as usize & 0b11) + 1).unwrap_or(4)
 }
 
 fn length_prefixed_to_annex_b(sample_bytes: &[u8], length_size: usize) -> Result<Vec<u8>, ThumbnailError> {
@@ -161,9 +144,7 @@ fn length_prefixed_to_annex_b(sample_bytes: &[u8], length_size: usize) -> Result
       nal_length = (nal_length << 8) | *byte as usize;
     }
     offset += length_size;
-    let end = offset.checked_add(nal_length)
-        .filter(|end| *end <= sample_bytes.len())
-        .ok_or_else(|| ThumbnailError::Decode("NAL length overruns sample".to_string()))?;
+    let end = offset.checked_add(nal_length).filter(|end| *end <= sample_bytes.len()).ok_or_else(|| ThumbnailError::Decode("NAL length overruns sample".to_string()))?;
     append_annex_b(&mut annex_b, &sample_bytes[offset..end]);
     offset = end;
   }
@@ -180,6 +161,5 @@ fn yuv_to_rgb(yuv: &openh264::decoder::DecodedYUV<'_>) -> Result<RgbImage, Thumb
   let (width, height) = yuv.dimensions();
   let mut rgb = vec![0u8; width * height * 3];
   yuv.write_rgb8(&mut rgb);
-  RgbImage::from_raw(width as u32, height as u32, rgb)
-      .ok_or_else(|| ThumbnailError::Decode("YUV → RGB buffer size mismatch".to_string()))
+  RgbImage::from_raw(width as u32, height as u32, rgb).ok_or_else(|| ThumbnailError::Decode("YUV → RGB buffer size mismatch".to_string()))
 }

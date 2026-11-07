@@ -74,63 +74,63 @@ impl FalRequestCostCalculator for EnqueuePixverseV5ImageToVideoRequest {
     let resolution = self.resolution.unwrap_or(EnqueuePixverseV5ImageToVideoResolution::SevenTwentyP);
     match (duration, resolution) {
       // Five seconds
-      (EnqueuePixverseV5ImageToVideoDurationSeconds::Five, EnqueuePixverseV5ImageToVideoResolution::ThreeSixtyP) => 15, // $0.15
-      (EnqueuePixverseV5ImageToVideoDurationSeconds::Five, EnqueuePixverseV5ImageToVideoResolution::FiveFortyP) => 15, // $0.15
+      (EnqueuePixverseV5ImageToVideoDurationSeconds::Five, EnqueuePixverseV5ImageToVideoResolution::ThreeSixtyP) => 15,  // $0.15
+      (EnqueuePixverseV5ImageToVideoDurationSeconds::Five, EnqueuePixverseV5ImageToVideoResolution::FiveFortyP) => 15,   // $0.15
       (EnqueuePixverseV5ImageToVideoDurationSeconds::Five, EnqueuePixverseV5ImageToVideoResolution::SevenTwentyP) => 20, // $0.20
-      (EnqueuePixverseV5ImageToVideoDurationSeconds::Five, EnqueuePixverseV5ImageToVideoResolution::TenEightyP) => 40, // $0.40
+      (EnqueuePixverseV5ImageToVideoDurationSeconds::Five, EnqueuePixverseV5ImageToVideoResolution::TenEightyP) => 40,   // $0.40
       // Ten seconds
       (EnqueuePixverseV5ImageToVideoDurationSeconds::Eight, EnqueuePixverseV5ImageToVideoResolution::ThreeSixtyP) => 30, // NB: Doubling since unclear
-      (EnqueuePixverseV5ImageToVideoDurationSeconds::Eight, EnqueuePixverseV5ImageToVideoResolution::FiveFortyP) => 30, // NB: Doubling since unclear
+      (EnqueuePixverseV5ImageToVideoDurationSeconds::Eight, EnqueuePixverseV5ImageToVideoResolution::FiveFortyP) => 30,  // NB: Doubling since unclear
       (EnqueuePixverseV5ImageToVideoDurationSeconds::Eight, EnqueuePixverseV5ImageToVideoResolution::SevenTwentyP) => 40, // NB: Doubling since unclear
-      (EnqueuePixverseV5ImageToVideoDurationSeconds::Eight, EnqueuePixverseV5ImageToVideoResolution::TenEightyP) => 80, // NB: Doubling since unclear
+      (EnqueuePixverseV5ImageToVideoDurationSeconds::Eight, EnqueuePixverseV5ImageToVideoResolution::TenEightyP) => 80,  // NB: Doubling since unclear
     }
   }
 }
 
-
 /// Pixverse 5 Image-to-Video
 /// https://fal.ai/models/fal-ai/pixverse/v5/image-to-video
-pub async fn enqueue_pixverse_v5_image_to_video_webhook<R: IntoUrl>(
-  args: EnqueuePixverseV5ImageToVideoArgs<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
-
+pub async fn enqueue_pixverse_v5_image_to_video_webhook<R: IntoUrl>(args: EnqueuePixverseV5ImageToVideoArgs<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
 
-  let duration = req.duration
-      .map(|resolution| match resolution {
-        EnqueuePixverseV5ImageToVideoDurationSeconds::Five => "5",
-        EnqueuePixverseV5ImageToVideoDurationSeconds::Eight=> "8",
-      })
-      .map(|s| s.to_string());
+  let duration = req
+    .duration
+    .map(|resolution| match resolution {
+      EnqueuePixverseV5ImageToVideoDurationSeconds::Five => "5",
+      EnqueuePixverseV5ImageToVideoDurationSeconds::Eight => "8",
+    })
+    .map(|s| s.to_string());
 
-  let aspect_ratio = req.aspect_ratio
-      .map(|aspect_ratio| match aspect_ratio {
-        EnqueuePixverseV5ImageToVideoAspectRatio::Square => "1:1",
-        EnqueuePixverseV5ImageToVideoAspectRatio::SixteenByNine => "16:9",
-        EnqueuePixverseV5ImageToVideoAspectRatio::FourByThree => "4:3",
-        EnqueuePixverseV5ImageToVideoAspectRatio::NineBySixteen => "9:16",
-        EnqueuePixverseV5ImageToVideoAspectRatio::ThreeByFour => "3:4",
-      })
-      .map(|s| s.to_string());
+  let aspect_ratio = req
+    .aspect_ratio
+    .map(|aspect_ratio| match aspect_ratio {
+      EnqueuePixverseV5ImageToVideoAspectRatio::Square => "1:1",
+      EnqueuePixverseV5ImageToVideoAspectRatio::SixteenByNine => "16:9",
+      EnqueuePixverseV5ImageToVideoAspectRatio::FourByThree => "4:3",
+      EnqueuePixverseV5ImageToVideoAspectRatio::NineBySixteen => "9:16",
+      EnqueuePixverseV5ImageToVideoAspectRatio::ThreeByFour => "3:4",
+    })
+    .map(|s| s.to_string());
 
-  let resolution = req.resolution
-      .map(|resolution| match resolution {
-        EnqueuePixverseV5ImageToVideoResolution::ThreeSixtyP => "360p",
-        EnqueuePixverseV5ImageToVideoResolution::FiveFortyP => "540p",
-        EnqueuePixverseV5ImageToVideoResolution::SevenTwentyP => "720p",
-        EnqueuePixverseV5ImageToVideoResolution::TenEightyP => "1080p",
-      })
-      .map(|s| s.to_string());
+  let resolution = req
+    .resolution
+    .map(|resolution| match resolution {
+      EnqueuePixverseV5ImageToVideoResolution::ThreeSixtyP => "360p",
+      EnqueuePixverseV5ImageToVideoResolution::FiveFortyP => "540p",
+      EnqueuePixverseV5ImageToVideoResolution::SevenTwentyP => "720p",
+      EnqueuePixverseV5ImageToVideoResolution::TenEightyP => "1080p",
+    })
+    .map(|s| s.to_string());
 
-  let style = req.style
-      .map(|style| match style {
-        EnqueuePixverseV5ImageToVideoStyle::Anime => "anime",
-        EnqueuePixverseV5ImageToVideoStyle::Animation3d => "3d_animation",
-        EnqueuePixverseV5ImageToVideoStyle::Clay => "clay",
-        EnqueuePixverseV5ImageToVideoStyle::Comic => "comic",
-        EnqueuePixverseV5ImageToVideoStyle::Cyberpunk => "cyberpunk",
-      })
-      .map(|s| s.to_string());
+  let style = req
+    .style
+    .map(|style| match style {
+      EnqueuePixverseV5ImageToVideoStyle::Anime => "anime",
+      EnqueuePixverseV5ImageToVideoStyle::Animation3d => "3d_animation",
+      EnqueuePixverseV5ImageToVideoStyle::Clay => "clay",
+      EnqueuePixverseV5ImageToVideoStyle::Comic => "comic",
+      EnqueuePixverseV5ImageToVideoStyle::Cyberpunk => "cyberpunk",
+    })
+    .map(|s| s.to_string());
 
   let request = PixverseV5ImageToVideoInput {
     prompt: req.prompt,
@@ -145,10 +145,7 @@ pub async fn enqueue_pixverse_v5_image_to_video_webhook<R: IntoUrl>(
     seed: None,
   };
 
-  let result = pixverse_v5_image_to_video(request)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await;
+  let result = pixverse_v5_image_to_video(request).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await;
 
   result.map_err(|err| classify_fal_error(err))
 }
@@ -156,7 +153,10 @@ pub async fn enqueue_pixverse_v5_image_to_video_webhook<R: IntoUrl>(
 #[cfg(test)]
 mod tests {
   use crate::creds::fal_api_key::FalApiKey;
-  use crate::requests_old::webhook::video::image::enqueue_pixverse_v5_image_to_video_webhook::{enqueue_pixverse_v5_image_to_video_webhook, EnqueuePixverseV5ImageToVideoArgs, EnqueuePixverseV5ImageToVideoAspectRatio, EnqueuePixverseV5ImageToVideoDurationSeconds, EnqueuePixverseV5ImageToVideoRequest, EnqueuePixverseV5ImageToVideoResolution, EnqueuePixverseV5ImageToVideoStyle};
+  use crate::requests_old::webhook::video::image::enqueue_pixverse_v5_image_to_video_webhook::{
+    enqueue_pixverse_v5_image_to_video_webhook, EnqueuePixverseV5ImageToVideoArgs, EnqueuePixverseV5ImageToVideoAspectRatio, EnqueuePixverseV5ImageToVideoDurationSeconds, EnqueuePixverseV5ImageToVideoRequest, EnqueuePixverseV5ImageToVideoResolution,
+    EnqueuePixverseV5ImageToVideoStyle,
+  };
   use errors::AnyhowResult;
   use std::fs::read_to_string;
   use test_data::web::image_urls::TREX_SKELETON_IMAGE_URL;

@@ -229,11 +229,7 @@ mod tests {
     let auth = session.auth().await.map_err(|err| anyhow::anyhow!("minting a session token failed: {err}"))?;
 
     for job_id in load_higgsfield_test_job_ids()? {
-      let response = job_status(JobStatusArgs {
-        request: JobStatusRequest { job_id: job_id.clone() },
-        auth: &auth,
-        host: &HiggsfieldHost::Higgsfield,
-      }).await.map_err(|err| anyhow::anyhow!("job {job_id}: {err}"))?;
+      let response = job_status(JobStatusArgs { request: JobStatusRequest { job_id: job_id.clone() }, auth: &auth, host: &HiggsfieldHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("job {job_id}: {err}"))?;
 
       println!("\n===== /fnf/jobs/{job_id} =====\n{:#?}", response);
       println!("result_url = {:?}", response.result_url());
@@ -256,11 +252,7 @@ mod tests {
 
     let auth = load_higgsfield_test_auth().await?;
     let job_id = load_higgsfield_test_job_id()?;
-    let response = job_status(JobStatusArgs {
-      request: JobStatusRequest { job_id },
-      auth: &auth,
-      host: &HiggsfieldHost::Higgsfield,
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let response = job_status(JobStatusArgs { request: JobStatusRequest { job_id }, auth: &auth, host: &HiggsfieldHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
     println!("Job {} status={} results={:?}", response.id, response.status, response.results);
     Ok(())

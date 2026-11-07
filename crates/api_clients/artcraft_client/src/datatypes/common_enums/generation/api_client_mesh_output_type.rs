@@ -57,11 +57,7 @@ mod tests {
 
   #[test]
   fn every_known_variant_round_trips() {
-    let all = [
-      (ApiClientMeshOutputType::Normal, "normal"),
-      (ApiClientMeshOutputType::LowPoly, "low_poly"),
-      (ApiClientMeshOutputType::Geometry, "geometry")
-    ];
+    let all = [(ApiClientMeshOutputType::Normal, "normal"), (ApiClientMeshOutputType::LowPoly, "low_poly"), (ApiClientMeshOutputType::Geometry, "geometry")];
     for (variant, wire) in all {
       let json = format!("\"{}\"", wire);
       let parsed: ApiClientMeshOutputType = serde_json::from_str(&json).unwrap();

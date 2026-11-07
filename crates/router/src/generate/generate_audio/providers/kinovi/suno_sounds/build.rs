@@ -1,26 +1,19 @@
 use artcraft_client::enums::common::generation::common_musical_key::CommonMusicalKey;
-use seedance2pro_client::generate::audio::generate_suno_sound::{
-  GenerateSunoSoundRequest, KinoviSunoSoundKey, KinoviSunoSoundType,
-};
+use seedance2pro_client::generate::audio::generate_suno_sound::{GenerateSunoSoundRequest, KinoviSunoSoundKey, KinoviSunoSoundType};
 
 use crate::errors::artcraft_router_error::ArtcraftRouterError;
 use crate::generate::generate_audio::audio_generation_draft_or_request::AudioGenerationDraftOrRequest;
 use crate::generate::generate_audio::audio_generation_request::AudioGenerationRequest;
 use crate::generate::generate_audio::generate_audio_request_builder::GenerateAudioRequestBuilder;
 use crate::generate::generate_audio::providers::kinovi::suno_sounds::request::KinoviSunoSoundsRequestState;
-use crate::generate::generate_audio::providers::reject_unsupported::{
-  reject_unsupported_audio_references, reject_unsupported_image_references,
-  reject_unsupported_option,
-};
+use crate::generate::generate_audio::providers::reject_unsupported::{reject_unsupported_audio_references, reject_unsupported_image_references, reject_unsupported_option};
 
 pub fn build_kinovi_suno_sounds(builder: GenerateAudioRequestBuilder) -> Result<AudioGenerationDraftOrRequest, ArtcraftRouterError> {
   let state = build_kinovi_suno_sounds_state(builder)?;
   Ok(AudioGenerationDraftOrRequest::Request(AudioGenerationRequest::KinoviSunoSounds(state)))
 }
 
-pub(crate) fn build_kinovi_suno_sounds_state(
-  mut builder: GenerateAudioRequestBuilder,
-) -> Result<KinoviSunoSoundsRequestState, ArtcraftRouterError> {
+pub(crate) fn build_kinovi_suno_sounds_state(mut builder: GenerateAudioRequestBuilder) -> Result<KinoviSunoSoundsRequestState, ArtcraftRouterError> {
   let strategy = builder.request_mismatch_mitigation_strategy;
 
   // Options Suno Sounds has no equivalent for.
@@ -34,16 +27,9 @@ pub(crate) fn build_kinovi_suno_sounds_state(
   reject_unsupported_audio_references(builder.audio_references.as_ref(), strategy)?;
   reject_unsupported_image_references(builder.image_references.as_ref(), strategy)?;
 
-  let prompt = builder.prompt.take().ok_or_else(|| {
-    ArtcraftRouterError::InvalidInput("A prompt is required for Suno Sounds".to_string())
-  })?;
+  let prompt = builder.prompt.take().ok_or_else(|| ArtcraftRouterError::InvalidInput("A prompt is required for Suno Sounds".to_string()))?;
 
-  let request = GenerateSunoSoundRequest {
-    prompt,
-    sound_type: plan_sound_type(builder.is_loopable),
-    bpm: builder.bpm,
-    key: plan_key(builder.musical_key),
-  };
+  let request = GenerateSunoSoundRequest { prompt, sound_type: plan_sound_type(builder.is_loopable), bpm: builder.bpm, key: plan_key(builder.musical_key) };
 
   Ok(KinoviSunoSoundsRequestState { request })
 }
@@ -150,10 +136,7 @@ mod tests {
       for (common_key, expected) in cases {
         let builder = GenerateAudioRequestBuilder { musical_key: common_key, ..base_builder() };
         let state = build_kinovi_suno_sounds_state(builder).expect("build");
-        assert!(
-          matches!(state.request.key, k if format!("{k:?}") == format!("{expected:?}")),
-          "expected {expected:?} for {common_key:?}, got {:?}", state.request.key,
-        );
+        assert!(matches!(state.request.key, k if format!("{k:?}") == format!("{expected:?}")), "expected {expected:?} for {common_key:?}, got {:?}", state.request.key,);
       }
     }
 
@@ -186,12 +169,7 @@ mod tests {
 
     #[test]
     fn unsupported_options_are_dropped_under_lenient_strategies() {
-      let builder = GenerateAudioRequestBuilder {
-        style_prompt: Some("EDM".to_string()),
-        is_instrumental: Some(true),
-        request_mismatch_mitigation_strategy: RequestMismatchMitigationStrategy::PayLessDowngrade,
-        ..base_builder()
-      };
+      let builder = GenerateAudioRequestBuilder { style_prompt: Some("EDM".to_string()), is_instrumental: Some(true), request_mismatch_mitigation_strategy: RequestMismatchMitigationStrategy::PayLessDowngrade, ..base_builder() };
       assert!(build_kinovi_suno_sounds_state(builder).is_ok());
     }
   }
@@ -199,11 +177,6 @@ mod tests {
   // ── Helpers ──
 
   fn base_builder() -> GenerateAudioRequestBuilder {
-    GenerateAudioRequestBuilder {
-      model: RouterAudioModel::SunoSounds,
-      provider: RouterProvider::Seedance2Pro,
-      prompt: Some("rain sound effects".to_string()),
-      ..Default::default()
-    }
+    GenerateAudioRequestBuilder { model: RouterAudioModel::SunoSounds, provider: RouterProvider::Seedance2Pro, prompt: Some("rain sound effects".to_string()), ..Default::default() }
   }
 }

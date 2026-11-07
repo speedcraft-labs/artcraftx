@@ -1,10 +1,6 @@
-use crate::services::midjourney::completion::finalize_midjourney_job::{
-  finalize_midjourney_job, FinalizeMidjourneyJobArgs,
-};
+use crate::services::midjourney::completion::finalize_midjourney_job::{finalize_midjourney_job, FinalizeMidjourneyJobArgs};
 use crate::services::midjourney::state::midjourney_live_session::MidjourneyLiveSession;
-use crate::services::midjourney::threads::midjourney_long_polling_thread::{
-  midjourney_cookie_header, resolve_user_id,
-};
+use crate::services::midjourney::threads::midjourney_long_polling_thread::{midjourney_cookie_header, resolve_user_id};
 use crate::services::midjourney::utils::midjourney_browser_profile::midjourney_browser_profile;
 use crate::services::storyteller::state::storyteller_credential_manager::StorytellerCredentialManager;
 use crate::state::app_preferences::app_preferences_manager::AppPreferencesManager;
@@ -17,13 +13,9 @@ use errors::AnyhowResult;
 use log::{error, info, warn};
 use midjourney_client::client::websocket::midjourney_websocket::MidjourneyWebSocket;
 use midjourney_client::client::websocket::midjourney_ws_event::MidjourneyWsEvent;
-use midjourney_client::client::websocket::open_midjourney_websocket::{
-  open_midjourney_websocket, OpenMidjourneyWebSocketRequest,
-};
+use midjourney_client::client::websocket::open_midjourney_websocket::{open_midjourney_websocket, OpenMidjourneyWebSocketRequest};
 use midjourney_client::utils::image_downloader_client::ImageDownloaderClient;
-use sqlite_database::queries::read::list_tasks_by_provider_and_status::{
-  list_tasks_by_provider_and_status, ListTasksByProviderAndStatusArgs,
-};
+use sqlite_database::queries::read::list_tasks_by_provider_and_status::{list_tasks_by_provider_and_status, ListTasksByProviderAndStatusArgs};
 use sqlite_database::queries::task::Task;
 use std::collections::{HashMap, HashSet};
 use tauri::AppHandle;
@@ -48,14 +40,7 @@ pub async fn midjourney_websocket_thread(
   storyteller_creds_manager: StorytellerCredentialManager,
 ) -> ! {
   loop {
-    let res = run_once(
-      &app_handle,
-      &app_data_root,
-      &app_preferences,
-      &task_database,
-      &mj_session,
-      &storyteller_creds_manager,
-    ).await;
+    let res = run_once(&app_handle, &app_data_root, &app_preferences, &task_database, &mj_session, &storyteller_creds_manager).await;
 
     // The socket closed (or never opened). Drop the handle so we re-open next
     // pass, and let the long-poller cover the gap.
@@ -82,7 +67,6 @@ async fn run_once(
     None => return sleep_not_ready().await,
   };
 
-
   // Resolves and caches user_id + websocket_token in the session.
   let user_id = match resolve_user_id(mj_session, &cookie_header).await {
     Some(user_id) => user_id,
@@ -94,44 +78,25 @@ async fn run_once(
     None => {
       // No token available (index page didn't expose one); leave it to the poller.
       return sleep_not_ready().await;
-    }
+    },
   };
 
   let websocket = match mj_session.connected_websocket() {
     Some(ws) => ws,
     None => {
-      let ws = open_midjourney_websocket(OpenMidjourneyWebSocketRequest {
-        websocket_token: &websocket_token,
-        user_id,
-        hostname: None,
-        browser: Some(midjourney_browser_profile()),
-      }).await?;
+      let ws = open_midjourney_websocket(OpenMidjourneyWebSocketRequest { websocket_token: &websocket_token, user_id, hostname: None, browser: Some(midjourney_browser_profile()) }).await?;
       mj_session.set_websocket(ws.clone());
       info!("Midjourney websocket opened for fast completion.");
       ws
-    }
+    },
   };
 
-  drive_websocket(
-    app_handle,
-    app_data_root,
-    app_preferences,
-    task_database,
-    mj_session,
-    websocket,
-  ).await
+  drive_websocket(app_handle, app_data_root, app_preferences, task_database, mj_session, websocket).await
 }
 
 /// Subscribe to pending jobs and finalize them as `completed` frames arrive,
 /// returning when the socket closes.
-async fn drive_websocket(
-  app_handle: &AppHandle,
-  app_data_root: &AppDataRoot,
-  app_preferences: &AppPreferencesManager,
-  task_database: &TaskDatabase,
-  mj_session: &MidjourneyLiveSession,
-  websocket: MidjourneyWebSocket,
-) -> AnyhowResult<()> {
+async fn drive_websocket(app_handle: &AppHandle, app_data_root: &AppDataRoot, app_preferences: &AppPreferencesManager, task_database: &TaskDatabase, mj_session: &MidjourneyLiveSession, websocket: MidjourneyWebSocket) -> AnyhowResult<()> {
   let image_downloader = ImageDownloaderClient::create(Some(midjourney_browser_profile()))?;
   let mut events = websocket.events();
   let mut subscribed: HashSet<String> = HashSet::new();
@@ -202,17 +167,8 @@ async fn drive_websocket(
 
 /// List currently-pending Midjourney tasks, subscribe to any we haven't yet,
 /// and refresh the job-id → task lookup used to finalize completions.
-async fn refresh_subscriptions(
-  task_database: &TaskDatabase,
-  websocket: &MidjourneyWebSocket,
-  subscribed: &mut HashSet<String>,
-  pending_tasks_by_job_id: &mut HashMap<String, Task>,
-) -> AnyhowResult<()> {
-  let pending = list_tasks_by_provider_and_status(ListTasksByProviderAndStatusArgs {
-    db: task_database.get_connection(),
-    provider: GenerationSource::Midjourney,
-    task_statuses: &TASK_DATABASE_PENDING_STATUSES,
-  }).await?;
+async fn refresh_subscriptions(task_database: &TaskDatabase, websocket: &MidjourneyWebSocket, subscribed: &mut HashSet<String>, pending_tasks_by_job_id: &mut HashMap<String, Task>) -> AnyhowResult<()> {
+  let pending = list_tasks_by_provider_and_status(ListTasksByProviderAndStatusArgs { db: task_database.get_connection(), provider: GenerationSource::Midjourney, task_statuses: &TASK_DATABASE_PENDING_STATUSES }).await?;
 
   pending_tasks_by_job_id.clear();
   for task in pending.tasks {

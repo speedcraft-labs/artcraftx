@@ -47,15 +47,7 @@ pub struct CookieCredential {
 
 impl CookieCredential {
   pub fn new(cookies: CookieStore) -> Self {
-    Self {
-      updated_at: None,
-      failed_at: None,
-      succeeded_at: None,
-      relogin_required_since: None,
-      user_agent: None,
-      grok_data: None,
-      cookies,
-    }
+    Self { updated_at: None, failed_at: None, succeeded_at: None, relogin_required_since: None, user_agent: None, grok_data: None, cookies }
   }
 
   /// Whether the session is known-dead and the user has to log in again

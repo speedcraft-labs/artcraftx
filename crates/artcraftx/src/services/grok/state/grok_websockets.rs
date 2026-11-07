@@ -25,19 +25,13 @@ impl GrokWebsockets {
   }
 
   /// The account's live socket, connecting (and storing) one if absent.
-  pub async fn get_or_connect(
-    &self,
-    credential_id: &CredentialId,
-    cookie_header: &str,
-  ) -> Result<GrokImageWebsocket, ArtcraftXError> {
+  pub async fn get_or_connect(&self, credential_id: &CredentialId, cookie_header: &str) -> Result<GrokImageWebsocket, ArtcraftXError> {
     if let Some(websocket) = self.get(credential_id)? {
       return Ok(websocket);
     }
 
     info!("Opening Grok image websocket for credential {}", credential_id.as_str());
-    let websocket = GrokImageWebsocket::connect(cookie_header)
-        .await
-        .map_err(|err: GrokError| ArtcraftXError::from(err))?;
+    let websocket = GrokImageWebsocket::connect(cookie_header).await.map_err(|err: GrokError| ArtcraftXError::from(err))?;
 
     // NB: two concurrent first enqueues for one account can race here; the
     // later insert wins and the earlier socket is dropped (its handle stays

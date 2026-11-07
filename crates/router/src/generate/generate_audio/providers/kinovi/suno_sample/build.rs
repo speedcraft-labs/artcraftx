@@ -4,9 +4,7 @@ use crate::generate::generate_audio::audio_generation_draft_or_request::AudioGen
 use crate::generate::generate_audio::generate_audio_request_builder::GenerateAudioRequestBuilder;
 use crate::generate::generate_audio::providers::kinovi::resolve::require_single_audio_ref;
 use crate::generate::generate_audio::providers::kinovi::suno_sample::draft::KinoviSunoSampleDraftState;
-use crate::generate::generate_audio::providers::reject_unsupported::{
-  reject_unsupported_image_references, reject_unsupported_option,
-};
+use crate::generate::generate_audio::providers::reject_unsupported::{reject_unsupported_image_references, reject_unsupported_option};
 
 /// The omni audio API doesn't carry a sample window yet, so every sample
 /// generation chops the first 30 seconds of the source audio.
@@ -18,9 +16,7 @@ pub fn build_kinovi_suno_sample(builder: GenerateAudioRequestBuilder) -> Result<
   Ok(AudioGenerationDraftOrRequest::Draft(AudioGenerationDraftRequest::KinoviSunoSample(draft)))
 }
 
-pub(crate) fn build_kinovi_suno_sample_draft(
-  mut builder: GenerateAudioRequestBuilder,
-) -> Result<KinoviSunoSampleDraftState, ArtcraftRouterError> {
+pub(crate) fn build_kinovi_suno_sample_draft(mut builder: GenerateAudioRequestBuilder) -> Result<KinoviSunoSampleDraftState, ArtcraftRouterError> {
   let strategy = builder.request_mismatch_mitigation_strategy;
 
   // Options Suno Sample has no equivalent for.
@@ -34,9 +30,7 @@ pub(crate) fn build_kinovi_suno_sample_draft(
   reject_unsupported_option("pitch", builder.pitch.as_ref(), strategy)?;
   reject_unsupported_image_references(builder.image_references.as_ref(), strategy)?;
 
-  let prompt = builder.prompt.take().ok_or_else(|| {
-    ArtcraftRouterError::InvalidInput("A prompt is required for Suno Sample".to_string())
-  })?;
+  let prompt = builder.prompt.take().ok_or_else(|| ArtcraftRouterError::InvalidInput("A prompt is required for Suno Sample".to_string()))?;
 
   let audio_source = require_single_audio_ref(builder.audio_references.take())?;
 
@@ -114,13 +108,7 @@ mod tests {
 
     #[test]
     fn two_references_are_rejected() {
-      let builder = GenerateAudioRequestBuilder {
-        audio_references: Some(AudioListRef::Urls(vec![
-          "https://example.com/a.mp3".to_string(),
-          "https://example.com/b.mp3".to_string(),
-        ])),
-        ..base_builder()
-      };
+      let builder = GenerateAudioRequestBuilder { audio_references: Some(AudioListRef::Urls(vec!["https://example.com/a.mp3".to_string(), "https://example.com/b.mp3".to_string()])), ..base_builder() };
       assert!(build_kinovi_suno_sample_draft(builder).is_err());
     }
   }
@@ -147,12 +135,7 @@ mod tests {
 
     #[test]
     fn unsupported_options_are_dropped_under_lenient_strategies() {
-      let builder = GenerateAudioRequestBuilder {
-        keep_lyrics: Some(true),
-        speed: Some(1.5),
-        request_mismatch_mitigation_strategy: RequestMismatchMitigationStrategy::PayMoreUpgrade,
-        ..base_builder()
-      };
+      let builder = GenerateAudioRequestBuilder { keep_lyrics: Some(true), speed: Some(1.5), request_mismatch_mitigation_strategy: RequestMismatchMitigationStrategy::PayMoreUpgrade, ..base_builder() };
       assert!(build_kinovi_suno_sample_draft(builder).is_ok());
     }
   }

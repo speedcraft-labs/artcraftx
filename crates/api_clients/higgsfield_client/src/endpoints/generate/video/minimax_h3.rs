@@ -65,13 +65,7 @@ impl MinimaxH3Request {
 
   /// A text-to-video request with the web app's defaults (credits).
   pub fn text_to_video(prompt: impl Into<String>, duration: VideoDurationSeconds) -> Self {
-    Self {
-      prompt: prompt.into(),
-      duration,
-      medias: Vec::new(),
-      use_unlim: false,
-      maybe_dimensions: None,
-    }
+    Self { prompt: prompt.into(), duration, medias: Vec::new(), use_unlim: false, maybe_dimensions: None }
   }
 
   fn validate(&self) -> Result<(), HiggsfieldClientError> {
@@ -90,19 +84,9 @@ impl MinimaxH3Request {
   }
 
   fn to_body(&self) -> MinimaxH3RequestBody {
-    let dimensions = self.maybe_dimensions
-        .or_else(|| VideoDimensions::for_aspect_ratio(&ImageAspectRatio::Auto, &RESOLUTION))
-        .expect("2K auto dimensions are derivable");
+    let dimensions = self.maybe_dimensions.or_else(|| VideoDimensions::for_aspect_ratio(&ImageAspectRatio::Auto, &RESOLUTION)).expect("2K auto dimensions are derivable");
     MinimaxH3RequestBody {
-      params: MinimaxH3Params {
-        prompt: self.prompt.clone(),
-        duration: self.duration,
-        aspect_ratio: ImageAspectRatio::Auto,
-        resolution: RESOLUTION,
-        width: dimensions.width,
-        height: dimensions.height,
-        medias: self.medias.clone(),
-      },
+      params: MinimaxH3Params { prompt: self.prompt.clone(), duration: self.duration, aspect_ratio: ImageAspectRatio::Auto, resolution: RESOLUTION, width: dimensions.width, height: dimensions.height, medias: self.medias.clone() },
       use_unlim: self.use_unlim,
     }
   }
@@ -158,8 +142,8 @@ mod tests {
     // Captured from the web app 2026-08-31 (ids scrubbed): with square
     // frames the web app sent 2048x2048; pass `maybe_dimensions` to match.
     let mut request = MinimaxH3Request::text_to_video("a shiba inu skateboarding down a hill", VideoDurationSeconds::new(5))
-        .with_media(MediaReference::start_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b1", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png")))
-        .with_media(MediaReference::end_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b2", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png")));
+      .with_media(MediaReference::start_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b1", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png")))
+      .with_media(MediaReference::end_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b2", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png")));
     request.maybe_dimensions = Some(VideoDimensions::new(2048, 2048));
     let actual: Value = serde_json::to_value(request.to_body()).unwrap();
     let expected: Value = serde_json::from_str(r#"{"params":{"prompt":"a shiba inu skateboarding down a hill","duration":5,"aspect_ratio":"auto","resolution":"2K","width":2048,"height":2048,"medias":[{"role":"start_image","data":{"id":"00000000-0000-4000-8000-0000000000b1","type":"media_input","url":"https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png"}},{"role":"end_image","data":{"id":"00000000-0000-4000-8000-0000000000b2","type":"media_input","url":"https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png"}}]},"use_unlim":false}"#).unwrap();
@@ -170,8 +154,16 @@ mod tests {
   fn media_roles() {
     assert_eq!(MinimaxH3Request::MEDIA_ROLES, &[MediaRole::StartImage, MediaRole::EndImage, MediaRole::Image, MediaRole::Video, MediaRole::Audio]);
     let base = || MinimaxH3Request::text_to_video("p", VideoDurationSeconds::new(5));
-    assert!(base().with_media(MediaReference::video(MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png"))).with_media(MediaReference::audio(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b2", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png"))).validate().is_ok());
-    let two_ends = base().with_media(MediaReference::end_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b1", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png"))).with_media(MediaReference::end_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b2", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png")));
+    assert!(
+      base()
+        .with_media(MediaReference::video(MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png")))
+        .with_media(MediaReference::audio(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b2", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png")))
+        .validate()
+        .is_ok()
+    );
+    let two_ends = base()
+      .with_media(MediaReference::end_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b1", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png")))
+      .with_media(MediaReference::end_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b2", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png")));
     assert!(matches!(two_ends.validate(), Err(HiggsfieldClientError::InvalidRequest(_))));
   }
 

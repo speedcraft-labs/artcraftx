@@ -22,37 +22,24 @@ pub type SingleAudioRef = MediaSourceRef;
 /// Extract exactly one audio reference from the builder's audio list.
 /// The Kinovi remix/sample models operate on a single source track, so zero
 /// or multiple references are rejected regardless of mitigation strategy.
-pub(crate) fn require_single_audio_ref(
-  audio_references: Option<AudioListRef>,
-) -> Result<SingleAudioRef, ArtcraftRouterError> {
+pub(crate) fn require_single_audio_ref(audio_references: Option<AudioListRef>) -> Result<SingleAudioRef, ArtcraftRouterError> {
   let refs: Vec<MediaSourceRef> = match audio_references {
     None => {
-      return Err(ArtcraftRouterError::InvalidInput(
-        "Exactly one audio reference is required, but none was provided".to_string(),
-      ));
-    }
+      return Err(ArtcraftRouterError::InvalidInput("Exactly one audio reference is required, but none was provided".to_string()));
+    },
     Some(list) => MediaSourceRef::list_from_audios(list),
   };
 
   match refs.len() {
-    0 => Err(ArtcraftRouterError::InvalidInput(
-      "Exactly one audio reference is required, but none was provided".to_string(),
-    )),
+    0 => Err(ArtcraftRouterError::InvalidInput("Exactly one audio reference is required, but none was provided".to_string())),
     1 => Ok(refs.into_iter().next().expect("length checked above")),
-    count => Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption {
-      field: "audio_references",
-      value: format!("Exactly one audio reference is required, got {}", count),
-    })),
+    count => Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "audio_references", value: format!("Exactly one audio reference is required, got {}", count) })),
   }
 }
 
 /// Resolve a single audio reference and re-upload it to the Kinovi CDN,
 /// returning the Kinovi CDN URL.
-pub(crate) async fn resolve_and_upload_audio_ref(
-  session: &Seedance2ProSession,
-  audio_ref: &SingleAudioRef,
-  draft_context: &AudioGenerationDraftContext<'_>,
-) -> Result<String, ArtcraftRouterError> {
+pub(crate) async fn resolve_and_upload_audio_ref(session: &Seedance2ProSession, audio_ref: &SingleAudioRef, draft_context: &AudioGenerationDraftContext<'_>) -> Result<String, ArtcraftRouterError> {
   upload_source_to_seedance2pro(session, audio_ref.clone(), draft_context.media_file_to_artcraft_url_map).await
 }
 
@@ -84,44 +71,32 @@ mod tests {
 
     #[test]
     fn single_url_is_accepted() {
-      let result = require_single_audio_ref(Some(AudioListRef::Urls(vec![
-        "https://example.com/a.mp3".to_string(),
-      ]))).expect("should accept a single URL");
+      let result = require_single_audio_ref(Some(AudioListRef::Urls(vec!["https://example.com/a.mp3".to_string()]))).expect("should accept a single URL");
       assert!(matches!(result, SingleAudioRef::Url(url) if url == "https://example.com/a.mp3"));
     }
 
     #[test]
     fn single_token_is_accepted() {
-      let result = require_single_audio_ref(Some(AudioListRef::MediaFileTokens(vec![
-        MediaFileToken::new("mf_test123".to_string()),
-      ]))).expect("should accept a single token");
+      let result = require_single_audio_ref(Some(AudioListRef::MediaFileTokens(vec![MediaFileToken::new("mf_test123".to_string())]))).expect("should accept a single token");
       assert!(matches!(result, SingleAudioRef::MediaFileToken(t) if t.as_str() == "mf_test123"));
     }
 
     #[test]
     fn single_local_path_is_accepted() {
       use crate::api::audio_ref::AudioRef;
-      let result = require_single_audio_ref(Some(AudioListRef::Sources(vec![
-        AudioRef::LocalPath(PathBuf::from("/tmp/track.mp3")),
-      ]))).expect("should accept a single local path");
+      let result = require_single_audio_ref(Some(AudioListRef::Sources(vec![AudioRef::LocalPath(PathBuf::from("/tmp/track.mp3"))]))).expect("should accept a single local path");
       assert!(matches!(result, SingleAudioRef::LocalPath(path) if path == PathBuf::from("/tmp/track.mp3")));
     }
 
     #[test]
     fn two_urls_are_rejected() {
-      let result = require_single_audio_ref(Some(AudioListRef::Urls(vec![
-        "https://example.com/a.mp3".to_string(),
-        "https://example.com/b.mp3".to_string(),
-      ])));
+      let result = require_single_audio_ref(Some(AudioListRef::Urls(vec!["https://example.com/a.mp3".to_string(), "https://example.com/b.mp3".to_string()])));
       assert!(result.is_err());
     }
 
     #[test]
     fn two_tokens_are_rejected() {
-      let result = require_single_audio_ref(Some(AudioListRef::MediaFileTokens(vec![
-        MediaFileToken::new("mf_a".to_string()),
-        MediaFileToken::new("mf_b".to_string()),
-      ])));
+      let result = require_single_audio_ref(Some(AudioListRef::MediaFileTokens(vec![MediaFileToken::new("mf_a".to_string()), MediaFileToken::new("mf_b".to_string())])));
       assert!(result.is_err());
     }
   }

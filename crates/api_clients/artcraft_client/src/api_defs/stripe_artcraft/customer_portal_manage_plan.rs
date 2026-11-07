@@ -13,4 +13,3 @@ pub struct StripeArtcraftCustomerPortalManagePlanResponse {
   pub success: bool,
   pub stripe_portal_url: String,
 }
-

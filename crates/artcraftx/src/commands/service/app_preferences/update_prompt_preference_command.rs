@@ -20,21 +20,17 @@ pub struct UpdatePromptPreferenceResponse {
 }
 
 #[tauri::command]
-pub async fn update_prompt_preference_command(
-  request: UpdatePromptPreferenceRequest,
-  app: AppHandle,
-  app_prefs: State<'_, AppPreferencesManager>,
-) -> Result<UpdatePromptPreferenceResponse, String> {
+pub async fn update_prompt_preference_command(request: UpdatePromptPreferenceRequest, app: AppHandle, app_prefs: State<'_, AppPreferencesManager>) -> Result<UpdatePromptPreferenceResponse, String> {
   info!("update_prompt_preference_command called: {:?}", request);
 
   let prefs = app_prefs
-      .update(|prefs| match request {
-        UpdatePromptPreferenceRequest::EnterToGenerate(enabled) => prefs.prompt.enter_to_generate = enabled,
-      })
-      .map_err(|err| {
-        error!("Error updating prompt preference: {:?}", err);
-        format!("Error updating prompt preference: {:?}", err)
-      })?;
+    .update(|prefs| match request {
+      UpdatePromptPreferenceRequest::EnterToGenerate(enabled) => prefs.prompt.enter_to_generate = enabled,
+    })
+    .map_err(|err| {
+      error!("Error updating prompt preference: {:?}", err);
+      format!("Error updating prompt preference: {:?}", err)
+    })?;
 
   notify_app_preferences_changed(&app);
 
@@ -48,10 +44,7 @@ mod tests {
   /// Pin the wire format the frontend sends (`UpdatePromptPreference.ts`).
   #[test]
   fn decodes_enter_to_generate() {
-    assert!(matches!(
-      serde_json::from_str::<UpdatePromptPreferenceRequest>(r#"{"preference":"enter_to_generate","value":false}"#).unwrap(),
-      UpdatePromptPreferenceRequest::EnterToGenerate(false),
-    ));
+    assert!(matches!(serde_json::from_str::<UpdatePromptPreferenceRequest>(r#"{"preference":"enter_to_generate","value":false}"#).unwrap(), UpdatePromptPreferenceRequest::EnterToGenerate(false),));
     assert!(serde_json::from_str::<UpdatePromptPreferenceRequest>(r#"{"preference":"enter_to_generate","value":"yes"}"#).is_err());
     assert!(serde_json::from_str::<UpdatePromptPreferenceRequest>(r#"{"preference":"tab_to_generate","value":true}"#).is_err());
   }

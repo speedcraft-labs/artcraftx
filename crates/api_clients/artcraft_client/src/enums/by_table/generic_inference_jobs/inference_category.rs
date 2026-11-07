@@ -81,7 +81,7 @@ pub enum InferenceCategory {
   #[serde(rename = "live_portrait")]
   LivePortrait,
 
-  #[serde(rename="seed_vc")]
+  #[serde(rename = "seed_vc")]
   SeedVc,
 
   /// DEPRECATED. Do not use.
@@ -260,7 +260,7 @@ mod tests {
     #[test]
     fn all_variants() {
       // Static check
-      const EXPECTED_COUNT : usize = 19;
+      const EXPECTED_COUNT: usize = 19;
 
       assert_eq!(InferenceCategory::all_variants().len(), EXPECTED_COUNT);
       assert_eq!(InferenceCategory::iter().len(), EXPECTED_COUNT);
@@ -291,7 +291,7 @@ mod tests {
 
     #[test]
     fn serialized_length_ok_for_database() {
-      const MAX_LENGTH : usize = 32;
+      const MAX_LENGTH: usize = 32;
       for variant in InferenceCategory::all_variants() {
         let serialized = variant.to_str();
         assert!(serialized.len() > 0, "variant {:?} is too short", variant);

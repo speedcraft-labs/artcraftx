@@ -55,6 +55,6 @@ pub fn task_failure_type_from_frontend_failure_category_for_api(category: &Front
     FrontendFailureCategoryForApiClients::Unknown(ref value) => {
       log::debug!("Unknown FrontendFailureCategoryForApiClients variant: {}", value);
       TaskFailureType::Unknown
-    }
+    },
   }
 }

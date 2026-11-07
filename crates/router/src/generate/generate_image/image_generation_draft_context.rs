@@ -43,14 +43,12 @@ pub struct ImageGenerationDraftContext<'a> {
 impl<'a> ImageGenerationDraftContext<'a> {
   pub fn get_seedance2pro_client_ref(&self) -> Result<&RouterSeedance2ProClient, ArtcraftRouterError> {
     let client = self.client.ok_or(ArtcraftRouterError::Client(ClientError::RouterClientNotProvided))?;
-    client.get_seedance2pro_client_ref()
-      .map_err(ArtcraftRouterError::Client)
+    client.get_seedance2pro_client_ref().map_err(ArtcraftRouterError::Client)
   }
 
   pub fn get_higgsfield_client_ref(&self) -> Result<&RouterHiggsfieldClient, ArtcraftRouterError> {
     let client = self.client.ok_or(ArtcraftRouterError::Client(ClientError::RouterClientNotProvided))?;
-    client.get_higgsfield_client_ref()
-      .map_err(ArtcraftRouterError::Client)
+    client.get_higgsfield_client_ref().map_err(ArtcraftRouterError::Client)
   }
 }
 

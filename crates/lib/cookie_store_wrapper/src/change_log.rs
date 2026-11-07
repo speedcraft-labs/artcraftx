@@ -38,19 +38,8 @@ pub enum CookieChangeAction {
 }
 
 impl CookieChangeLog {
-  pub fn record(
-    &mut self,
-    action: CookieChangeAction,
-    cookie_name: &str,
-    maybe_domain: Option<String>,
-  ) {
-    self.records.push_back(CookieChangeRecord {
-      sequence_number: self.next_sequence_number,
-      timestamp: SystemTime::now(),
-      action,
-      cookie_name: cookie_name.to_owned(),
-      maybe_domain,
-    });
+  pub fn record(&mut self, action: CookieChangeAction, cookie_name: &str, maybe_domain: Option<String>) {
+    self.records.push_back(CookieChangeRecord { sequence_number: self.next_sequence_number, timestamp: SystemTime::now(), action, cookie_name: cookie_name.to_owned(), maybe_domain });
     self.next_sequence_number += 1;
     while self.records.len() > MAX_CHANGE_LOG_RECORDS {
       self.records.pop_front();

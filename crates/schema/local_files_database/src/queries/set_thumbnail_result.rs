@@ -41,16 +41,16 @@ pub async fn set_thumbnail_result(args: SetThumbnailResultArgs<'_>) -> Result<bo
     WHERE file_path = ?1
     "#,
   )
-      .bind(args.file_path)
-      .bind(args.state.to_str())
-      .bind(args.maybe_error)
-      .bind(args.maybe_thumbnail_jpg_path)
-      .bind(args.maybe_animated_preview_webp_path)
-      .bind(args.maybe_thumbnail_jpg_path.is_some())
-      .bind(args.maybe_animated_preview_webp_path.is_some())
-      .bind(now)
-      .bind(args.generator_version)
-      .execute(args.db.get_pool())
-      .await?;
+  .bind(args.file_path)
+  .bind(args.state.to_str())
+  .bind(args.maybe_error)
+  .bind(args.maybe_thumbnail_jpg_path)
+  .bind(args.maybe_animated_preview_webp_path)
+  .bind(args.maybe_thumbnail_jpg_path.is_some())
+  .bind(args.maybe_animated_preview_webp_path.is_some())
+  .bind(now)
+  .bind(args.generator_version)
+  .execute(args.db.get_pool())
+  .await?;
   Ok(result.rows_affected() > 0)
 }

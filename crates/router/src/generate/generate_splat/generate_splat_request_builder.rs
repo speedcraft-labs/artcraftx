@@ -69,7 +69,6 @@ impl Default for GenerateSplatRequestBuilder {
 }
 
 impl GenerateSplatRequestBuilder {
-
   pub fn build2(self) -> Result<SplatGenerationRequest, ArtcraftRouterError> {
     match (self.provider, self.model) {
       // Artcraft
@@ -85,14 +84,11 @@ impl GenerateSplatRequestBuilder {
   }
 
   pub fn get_or_generate_idempotency_token(&self) -> String {
-    self.idempotency_token.clone()
-        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string())
+    self.idempotency_token.clone().unwrap_or_else(|| uuid::Uuid::new_v4().to_string())
   }
 
   fn unsupported_provider_and_model(&self) -> Result<SplatGenerationRequest, ArtcraftRouterError> {
-    Err(ArtcraftRouterError::UnsupportedProviderAndModelForNewApi(
-      format!("Splat generation for model `{:?}` is not supported for provider {:?}", self.model, self.provider)
-    ))
+    Err(ArtcraftRouterError::UnsupportedProviderAndModelForNewApi(format!("Splat generation for model `{:?}` is not supported for provider {:?}", self.model, self.provider)))
   }
 }
 
@@ -105,15 +101,9 @@ mod tests {
 
     #[test]
     fn all_models_dispatch_to_requests() {
-      let cases = [
-        RouterSplatModel::Marble1p0,
-        RouterSplatModel::Marble1p0Draft,
-        RouterSplatModel::Marble1p1,
-        RouterSplatModel::Marble1p1Plus,
-      ];
+      let cases = [RouterSplatModel::Marble1p0, RouterSplatModel::Marble1p0Draft, RouterSplatModel::Marble1p1, RouterSplatModel::Marble1p1Plus];
       for model in cases {
-        let result = artcraft_builder(model).build2()
-          .unwrap_or_else(|e| panic!("build should succeed for {model:?}: {e}"));
+        let result = artcraft_builder(model).build2().unwrap_or_else(|e| panic!("build should succeed for {model:?}: {e}"));
         let request = result;
         let matches = matches!(
           (model, &request),
@@ -129,19 +119,13 @@ mod tests {
     #[test]
     fn legacy_marble_0p1_mini_is_treated_as_marble_1p0_draft() {
       let result = artcraft_builder(RouterSplatModel::Marble0p1Mini).build2().expect("build");
-      assert!(matches!(
-        result,
-        SplatGenerationRequest::ArtcraftMarble1p0Draft(_)
-      ));
+      assert!(matches!(result, SplatGenerationRequest::ArtcraftMarble1p0Draft(_)));
     }
 
     #[test]
     fn legacy_marble_0p1_plus_is_treated_as_marble_1p0() {
       let result = artcraft_builder(RouterSplatModel::Marble0p1Plus).build2().expect("build");
-      assert!(matches!(
-        result,
-        SplatGenerationRequest::ArtcraftMarble1p0(_)
-      ));
+      assert!(matches!(result, SplatGenerationRequest::ArtcraftMarble1p0(_)));
     }
   }
 
@@ -150,22 +134,9 @@ mod tests {
 
     #[test]
     fn non_splat_providers_are_unsupported() {
-      for provider in [
-        RouterProvider::Fal,
-        RouterProvider::GmiCloud,
-        RouterProvider::GrokApi,
-        RouterProvider::Seedance2Pro,
-      ] {
-        let result = GenerateSplatRequestBuilder {
-          provider,
-          model: RouterSplatModel::Marble1p0,
-          prompt: Some("a cozy cabin".to_string()),
-          ..Default::default()
-        }.build2();
-        assert!(
-          matches!(result, Err(ArtcraftRouterError::UnsupportedProviderAndModelForNewApi(_))),
-          "expected unsupported error for {provider:?}",
-        );
+      for provider in [RouterProvider::Fal, RouterProvider::GmiCloud, RouterProvider::GrokApi, RouterProvider::Seedance2Pro] {
+        let result = GenerateSplatRequestBuilder { provider, model: RouterSplatModel::Marble1p0, prompt: Some("a cozy cabin".to_string()), ..Default::default() }.build2();
+        assert!(matches!(result, Err(ArtcraftRouterError::UnsupportedProviderAndModelForNewApi(_))), "expected unsupported error for {provider:?}",);
       }
     }
   }
@@ -173,11 +144,6 @@ mod tests {
   // ── Helpers ──
 
   fn artcraft_builder(model: RouterSplatModel) -> GenerateSplatRequestBuilder {
-    GenerateSplatRequestBuilder {
-      provider: RouterProvider::Artcraft,
-      model,
-      prompt: Some("a cozy cabin in the snowy mountains".to_string()),
-      ..Default::default()
-    }
+    GenerateSplatRequestBuilder { provider: RouterProvider::Artcraft, model, prompt: Some("a cozy cabin in the snowy mountains".to_string()), ..Default::default() }
   }
 }

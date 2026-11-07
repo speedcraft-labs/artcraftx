@@ -27,10 +27,7 @@ pub enum FluxDevJuggernautInfillNumImages {
   Four,
 }
 
-pub async fn enqueue_flux_dev_juggernaut_infill_webhook<R: IntoUrl>(
-  args: FluxDevJuggernautInfillArgs<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
-
+pub async fn enqueue_flux_dev_juggernaut_infill_webhook<R: IntoUrl>(args: FluxDevJuggernautInfillArgs<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
 
   let num_images = match req.num_images {
@@ -59,10 +56,7 @@ pub async fn enqueue_flux_dev_juggernaut_infill_webhook<R: IntoUrl>(
     sync_mode: None, // Synchronous / slow
   };
 
-  let result = flux_dev_juggernaut_infill(request)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await;
+  let result = flux_dev_juggernaut_infill(request).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await;
 
   result.map_err(|err| classify_fal_error(err))
 }

@@ -24,10 +24,7 @@ fn main() -> AnyhowResult<()> {
   let output_path = args.next().unwrap_or_else(|| DEFAULT_OUTPUT.to_string());
   let capture_secs = args.next().and_then(|s| s.parse().ok()).unwrap_or(90);
 
-  let captures = harvest_statsigs(HarvestConfig {
-    capture_secs,
-    ..Default::default()
-  })?;
+  let captures = harvest_statsigs(HarvestConfig { capture_secs, ..Default::default() })?;
 
   let now = chrono::Utc::now().timestamp();
   let mut file = StatsigCacheFile::new(now);

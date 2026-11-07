@@ -162,17 +162,18 @@ pub async fn generate_video(args: GenerateVideoArgs<'_>) -> Result<GenerateVideo
   let domain = args.domain_override.unwrap_or(&GrokDomain::DefaultDomain);
   let client = create_firefox_client()?;
 
-  let mut request_builder = client.post(request_url(domain))
-      .header(USER_AGENT, FIREFOX_143_MAC_USER_AGENT)
-      .header(ACCEPT, "*/*")
-      .header(ACCEPT_LANGUAGE, "en-US,en;q=0.5")
-      .header(CONTENT_TYPE, "application/json")
-      .header(ORIGIN, "https://grok.com")
-      .header(REFERER, "https://grok.com/imagine")
-      .header(COOKIE, args.credentials.to_string())
-      .header("sec-fetch-dest", "empty")
-      .header("sec-fetch-mode", "cors")
-      .header("sec-fetch-site", "same-origin");
+  let mut request_builder = client
+    .post(request_url(domain))
+    .header(USER_AGENT, FIREFOX_143_MAC_USER_AGENT)
+    .header(ACCEPT, "*/*")
+    .header(ACCEPT_LANGUAGE, "en-US,en;q=0.5")
+    .header(CONTENT_TYPE, "application/json")
+    .header(ORIGIN, "https://grok.com")
+    .header(REFERER, "https://grok.com/imagine")
+    .header(COOKIE, args.credentials.to_string())
+    .header("sec-fetch-dest", "empty")
+    .header("sec-fetch-mode", "cors")
+    .header("sec-fetch-site", "same-origin");
 
   if let Some(headers) = args.request_headers {
     request_builder = headers.apply(request_builder);
@@ -184,30 +185,24 @@ pub async fn generate_video(args: GenerateVideoArgs<'_>) -> Result<GenerateVideo
 
   let wire = GenerateVideoWireRequest::from_request(&args.request);
 
-  let http_request = request_builder.json(&wire)
-      .build()
-      .map_err(|err| {
-        error!("Error building generate_video request: {:?}", err);
-        GrokClientError::WreqClientError(err)
-      })?;
+  let http_request = request_builder.json(&wire).build().map_err(|err| {
+    error!("Error building generate_video request: {:?}", err);
+    GrokClientError::WreqClientError(err)
+  })?;
 
-  let response = client.execute(http_request)
-      .await
-      .map_err(|err| {
-        error!("Error sending generate_video request: {:?}", err);
-        GrokGenericApiError::WreqError(err)
-      })?;
+  let response = client.execute(http_request).await.map_err(|err| {
+    error!("Error sending generate_video request: {:?}", err);
+    GrokGenericApiError::WreqError(err)
+  })?;
 
   let status = response.status();
   info!("generate_video enqueue status: {}", status.as_u16());
 
   // Reading the body waits for the whole stream, i.e. until generation is done.
-  let body = response.text()
-      .await
-      .map_err(|err| {
-        error!("Error reading generate_video response body: {:?}", err);
-        GrokGenericApiError::WreqError(err)
-      })?;
+  let body = response.text().await.map_err(|err| {
+    error!("Error reading generate_video response body: {:?}", err);
+    GrokGenericApiError::WreqError(err)
+  })?;
 
   if !status.is_success() {
     error!("generate_video returned an error (code {}): {:?}", status.as_u16(), body);
@@ -368,27 +363,9 @@ impl GenerateVideoWireRequest {
     let message = flags.apply_to(base_prompt);
 
     let media_gen_input = match &request.source {
-      VideoSource::Text { prompt } => MediaGenInput {
-        image_to_video: None,
-        text_to_video: Some(TextToVideo {
-          prompt: prompt.to_string(),
-          aspect_ratio,
-          duration,
-          resolution_name,
-          skip_audio,
-        }),
-      },
-      VideoSource::Image { input_asset_id, prompt } => MediaGenInput {
-        image_to_video: Some(ImageToVideo {
-          prompt: prompt.map(str::to_string),
-          input_assets: vec![input_asset_id.to_string()],
-          aspect_ratio,
-          duration,
-          resolution_name,
-          mode: mode.as_flag_value(),
-          skip_audio,
-        }),
-        text_to_video: None,
+      VideoSource::Text { prompt } => MediaGenInput { image_to_video: None, text_to_video: Some(TextToVideo { prompt: prompt.to_string(), aspect_ratio, duration, resolution_name, skip_audio }) },
+      VideoSource::Image { input_asset_id, prompt } => {
+        MediaGenInput { image_to_video: Some(ImageToVideo { prompt: prompt.map(str::to_string), input_assets: vec![input_asset_id.to_string()], aspect_ratio, duration, resolution_name, mode: mode.as_flag_value(), skip_audio }), text_to_video: None }
       },
     };
 
@@ -398,10 +375,7 @@ impl GenerateVideoWireRequest {
       enable_image_streaming: true,
       enable_side_by_side: true,
       send_final_metadata: true,
-      response_metadata: ResponseMetadata {
-        experiments: Vec::new(),
-        model_config_override: ModelConfigOverride { model_map: ModelMap {} },
-      },
+      response_metadata: ResponseMetadata { experiments: Vec::new(), model_config_override: ModelConfigOverride { model_map: ModelMap {} } },
       media_gen_input,
       kind: CONVERSATION_KIND_IMAGINE,
     }
@@ -462,10 +436,7 @@ mod tests {
 
     #[test]
     fn url_uses_domain() {
-      assert_eq!(
-        request_url(&GrokDomain::DefaultDomain),
-        "https://grok.com/rest/app-chat/conversations/new",
-      );
+      assert_eq!(request_url(&GrokDomain::DefaultDomain), "https://grok.com/rest/app-chat/conversations/new",);
       let custom = GrokDomain::Custom("http://localhost:8080".to_string());
       assert_eq!(request_url(&custom), "http://localhost:8080/rest/app-chat/conversations/new");
     }
@@ -488,14 +459,8 @@ mod tests {
     // Audio off adds `skipAudio: true`; audio on omits the field entirely.
     #[test]
     fn skip_audio_only_serialized_when_audio_off() {
-      let no_audio = GenerateVideoRequest {
-        source: VideoSource::Text { prompt: "x" },
-        aspect_ratio: VideoAspectRatio::WideThreeByTwo,
-        resolution: VideoResolution::FullHd1080p,
-        duration: VideoDuration::TenSeconds,
-        enable_audio: false,
-        flags: PromptFlags::default(),
-      };
+      let no_audio =
+        GenerateVideoRequest { source: VideoSource::Text { prompt: "x" }, aspect_ratio: VideoAspectRatio::WideThreeByTwo, resolution: VideoResolution::FullHd1080p, duration: VideoDuration::TenSeconds, enable_audio: false, flags: PromptFlags::default() };
       let value = serde_json::to_value(GenerateVideoWireRequest::from_request(&no_audio)).unwrap();
       let text_to_video = &value["mediaGenInput"]["textToVideo"];
       assert_eq!(text_to_video["skipAudio"], serde_json::json!(true));
@@ -543,10 +508,7 @@ mod tests {
     #[test]
     fn image_to_video_normal_mode_matches_capture() {
       let request = GenerateVideoRequest {
-        source: VideoSource::Image {
-          input_asset_id: "11111111-1111-4111-8111-111111111111",
-          prompt: None,
-        },
+        source: VideoSource::Image { input_asset_id: "11111111-1111-4111-8111-111111111111", prompt: None },
         aspect_ratio: VideoAspectRatio::WideThreeByTwo,
         resolution: VideoResolution::Sd480p,
         duration: VideoDuration::SixSeconds,
@@ -554,8 +516,7 @@ mod tests {
         flags: PromptFlags::default(),
       };
       let ours = serde_json::to_value(GenerateVideoWireRequest::from_request(&request)).unwrap();
-      let captured: serde_json::Value =
-          serde_json::from_str(&load("generate_video_from_generation_request.json")).unwrap();
+      let captured: serde_json::Value = serde_json::from_str(&load("generate_video_from_generation_request.json")).unwrap();
       assert_eq!(ours, captured);
     }
 
@@ -563,10 +524,7 @@ mod tests {
     #[test]
     fn image_to_video_custom_mode_matches_capture() {
       let request = GenerateVideoRequest {
-        source: VideoSource::Image {
-          input_asset_id: "22222222-2222-4222-8222-222222222222",
-          prompt: Some("Windmill spins as the camera orbits the night scene. Stars above."),
-        },
+        source: VideoSource::Image { input_asset_id: "22222222-2222-4222-8222-222222222222", prompt: Some("Windmill spins as the camera orbits the night scene. Stars above.") },
         aspect_ratio: VideoAspectRatio::WideThreeByTwo,
         resolution: VideoResolution::Hd720p,
         duration: VideoDuration::SixSeconds,
@@ -574,8 +532,7 @@ mod tests {
         flags: PromptFlags::default(),
       };
       let ours = serde_json::to_value(GenerateVideoWireRequest::from_request(&request)).unwrap();
-      let captured: serde_json::Value =
-          serde_json::from_str(&load("generate_video_from_upload_request.json")).unwrap();
+      let captured: serde_json::Value = serde_json::from_str(&load("generate_video_from_upload_request.json")).unwrap();
       assert_eq!(ours, captured);
     }
 
@@ -591,8 +548,7 @@ mod tests {
         flags: PromptFlags::default(),
       };
       let ours = serde_json::to_value(GenerateVideoWireRequest::from_request(&request)).unwrap();
-      let captured: serde_json::Value =
-          serde_json::from_str(&load("generate_video_from_text_request.json")).unwrap();
+      let captured: serde_json::Value = serde_json::from_str(&load("generate_video_from_text_request.json")).unwrap();
       assert_eq!(ours, captured);
     }
   }
@@ -604,20 +560,11 @@ mod tests {
     fn parses_real_streamed_response() {
       let response = parse_generate_video_stream(&load("generate_video_response.txt"));
 
-      assert_eq!(
-        response.conversation_id.as_deref(),
-        Some("8b592ec5-b3ec-4cb4-b1f3-ddfd87b20625"),
-      );
-      assert_eq!(
-        response.video_id.as_ref().map(|id| id.0.as_str()),
-        Some("1622a562-971d-479b-b4be-44c96f3cd813"),
-      );
+      assert_eq!(response.conversation_id.as_deref(), Some("8b592ec5-b3ec-4cb4-b1f3-ddfd87b20625"),);
+      assert_eq!(response.video_id.as_ref().map(|id| id.0.as_str()), Some("1622a562-971d-479b-b4be-44c96f3cd813"),);
       assert_eq!(response.progress, Some(100));
       assert!(response.video_url.as_deref().unwrap().ends_with("generated_video.mp4"));
-      assert_eq!(
-        response.asset_id.as_deref(),
-        Some("1622a562-971d-479b-b4be-44c96f3cd813"),
-      );
+      assert_eq!(response.asset_id.as_deref(), Some("1622a562-971d-479b-b4be-44c96f3cd813"),);
       assert!(response.thumbnail_url.as_deref().unwrap().ends_with("preview_image.jpg"));
       assert_eq!(response.width, Some(832));
       assert_eq!(response.height, Some(352));
@@ -655,40 +602,24 @@ mod tests {
     /// time-bound, so harvest it right before running. The fallback is a stale
     /// placeholder that will 403 with a clear message.
     fn captured_statsig_headers() -> GrokRequestHeaders {
-      let statsig = std::env::var("GROK_STATSIG").unwrap_or_else(|_|
-        "PASTE_A_FRESH_x-statsig-id_OR_SET_GROK_STATSIG".to_string());
-      GrokRequestHeaders {
-        statsig_id: Some(statsig),
-        ..Default::default()
-      }
+      let statsig = std::env::var("GROK_STATSIG").unwrap_or_else(|_| "PASTE_A_FRESH_x-statsig-id_OR_SET_GROK_STATSIG".to_string());
+      GrokRequestHeaders { statsig_id: Some(statsig), ..Default::default() }
     }
 
     /// Generate a video from `source` at the given resolution/duration/audio and
     /// assert a finished video URL comes back. A statsig rejection surfaces as
     /// [`GrokSpecificApiError::StatsigSignatureRejected`].
-    async fn generate_and_assert(
-      source: VideoSource<'_>,
-      resolution: VideoResolution,
-      duration: VideoDuration,
-      enable_audio: bool,
-      headers: &GrokRequestHeaders,
-    ) -> AnyhowResult<()> {
+    async fn generate_and_assert(source: VideoSource<'_>, resolution: VideoResolution, duration: VideoDuration, enable_audio: bool, headers: &GrokRequestHeaders) -> AnyhowResult<()> {
       let secrets = load_grok_test_secrets()?;
 
       let result = generate_video(GenerateVideoArgs {
-        request: GenerateVideoRequest {
-          source,
-          aspect_ratio: VideoAspectRatio::TallTwoByThree,
-          resolution,
-          duration,
-          enable_audio,
-          flags: PromptFlags::default(),
-        },
+        request: GenerateVideoRequest { source, aspect_ratio: VideoAspectRatio::TallTwoByThree, resolution, duration, enable_audio, flags: PromptFlags::default() },
         credentials: &secrets.cookies,
         request_headers: Some(headers),
         domain_override: None,
         request_timeout: Some(VIDEO_TIMEOUT),
-      }).await;
+      })
+      .await;
 
       match result {
         Ok(response) => {
@@ -696,10 +627,10 @@ mod tests {
           assert_eq!(response.progress, Some(100), "video did not finish");
           assert!(response.video_url.is_some(), "expected a finished video url");
           Ok(())
-        }
+        },
         Err(GrokError::ApiSpecific(GrokSpecificApiError::StatsigSignatureRejected { status_code, body })) => {
           panic!("x-statsig-id rejected (HTTP {status_code}). Body: {body}");
-        }
+        },
         Err(err) => Err(err.into()),
       }
     }
@@ -711,13 +642,7 @@ mod tests {
     #[ignore] // Hits the real website; spends video quota; needs a fresh GROK_STATSIG.
     async fn generate_video_from_text_prompt() -> AnyhowResult<()> {
       setup_test_logging(LevelFilter::Info);
-      generate_and_assert(
-        VideoSource::Text { prompt: "a lone lighthouse on a cliff at dusk, the light beam sweeps across the water" },
-        VideoResolution::Sd480p,
-        VideoDuration::SixSeconds,
-        true,
-        &captured_statsig_headers(),
-      ).await
+      generate_and_assert(VideoSource::Text { prompt: "a lone lighthouse on a cliff at dusk, the light beam sweeps across the water" }, VideoResolution::Sd480p, VideoDuration::SixSeconds, true, &captured_statsig_headers()).await
     }
 
     // 1080p, audio off, 10 seconds — exercises the new resolution/duration/audio
@@ -744,7 +669,8 @@ mod tests {
         request_headers: Some(&headers),
         domain_override: None,
         request_timeout: Some(VIDEO_TIMEOUT),
-      }).await;
+      })
+      .await;
 
       match result {
         Ok(response) => {
@@ -752,14 +678,14 @@ mod tests {
           assert_eq!(response.progress, Some(100), "video did not finish");
           assert!(response.video_url.is_some(), "expected a finished video url");
           Ok(())
-        }
+        },
         Err(GrokError::ApiSpecific(GrokSpecificApiError::VideoResolutionNotAllowed { status_code, body })) => {
           info!("1080p correctly reported as plan-gated (HTTP {status_code}): {body}");
           Ok(())
-        }
+        },
         Err(GrokError::ApiSpecific(GrokSpecificApiError::StatsigSignatureRejected { status_code, body })) => {
           panic!("x-statsig-id rejected (HTTP {status_code}) — harvest a fresh GROK_STATSIG. Body: {body}");
-        }
+        },
         Err(err) => Err(err.into()),
       }
     }
@@ -771,25 +697,11 @@ mod tests {
       setup_test_logging(LevelFilter::Info);
       let secrets = load_grok_test_secrets()?;
 
-      let assets = ListAssetsArgs {
-        request: ListAssetsRequest { page_size: Some(20) },
-        credentials: &secrets.cookies,
-        domain_override: None,
-        request_headers: Some(&secrets.headers),
-        request_timeout: None,
-      }.send().await?;
+      let assets = ListAssetsArgs { request: ListAssetsRequest { page_size: Some(20) }, credentials: &secrets.cookies, domain_override: None, request_headers: Some(&secrets.headers), request_timeout: None }.send().await?;
 
-      let image = assets.assets.iter()
-          .find(|a| a.mime_type.as_deref() == Some("image/jpeg"))
-          .expect("expected at least one generated image asset");
+      let image = assets.assets.iter().find(|a| a.mime_type.as_deref() == Some("image/jpeg")).expect("expected at least one generated image asset");
 
-      generate_and_assert(
-        VideoSource::Image { input_asset_id: &image.asset_id, prompt: None },
-        VideoResolution::Sd480p,
-        VideoDuration::SixSeconds,
-        true,
-        &captured_statsig_headers(),
-      ).await
+      generate_and_assert(VideoSource::Image { input_asset_id: &image.asset_id, prompt: None }, VideoResolution::Sd480p, VideoDuration::SixSeconds, true, &captured_statsig_headers()).await
     }
 
     // Way 3: from an uploaded (untrusted) image.
@@ -799,21 +711,11 @@ mod tests {
       setup_test_logging(LevelFilter::Info);
       let secrets = load_grok_test_secrets()?;
 
-      let upload = grok_upload_file(GrokUploadFileArgs {
-        request: GrokUploadFileRequest { file: PathOrFile::Path(Path::new(TEST_IMAGE_PATH)) },
-        cookie: secrets.cookies.as_str(),
-        domain_override: None,
-        request_timeout: Some(Duration::from_secs(30)),
-      }).await?;
+      let upload =
+        grok_upload_file(GrokUploadFileArgs { request: GrokUploadFileRequest { file: PathOrFile::Path(Path::new(TEST_IMAGE_PATH)) }, cookie: secrets.cookies.as_str(), domain_override: None, request_timeout: Some(Duration::from_secs(30)) }).await?;
       let asset_id = upload.file_id.expect("upload should yield a file id").0;
 
-      generate_and_assert(
-        VideoSource::Image { input_asset_id: &asset_id, prompt: Some("slow cinematic zoom") },
-        VideoResolution::Sd480p,
-        VideoDuration::SixSeconds,
-        true,
-        &captured_statsig_headers(),
-      ).await
+      generate_and_assert(VideoSource::Image { input_asset_id: &asset_id, prompt: Some("slow cinematic zoom") }, VideoResolution::Sd480p, VideoDuration::SixSeconds, true, &captured_statsig_headers()).await
     }
   }
 }

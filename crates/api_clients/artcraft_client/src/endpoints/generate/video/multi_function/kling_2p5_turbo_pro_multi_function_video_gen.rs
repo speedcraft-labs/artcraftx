@@ -9,10 +9,5 @@ pub async fn kling_2p5_turbo_pro_multi_function_video_gen(
   maybe_creds: Option<&StorytellerCredentialSet>,
   request: Kling2p5TurboProMultiFunctionVideoGenRequest,
 ) -> Result<Kling2p5TurboProMultiFunctionVideoGenResponse, StorytellerError> {
-  Ok(basic_json_post_request(
-    api_host,
-    KLING_2P5_TURBO_PRO_MULTI_FUNCTION_VIDEO_VIDEO_PATH,
-    maybe_creds,
-    request,
-  ).await?)
+  Ok(basic_json_post_request(api_host, KLING_2P5_TURBO_PRO_MULTI_FUNCTION_VIDEO_VIDEO_PATH, maybe_creds, request).await?)
 }

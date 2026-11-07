@@ -30,7 +30,7 @@ pub enum Kling1p6ProDuration {
 
 #[derive(Copy, Clone, Debug)]
 pub enum Kling1p6ProAspectRatio {
-  Square, // 1:1
+  Square,          // 1:1
   WideSixteenNine, // 16:9
   TallNineSixteen, // 9:16
 }
@@ -39,23 +39,20 @@ impl FalRequestCostCalculator for Kling1p6ProRequest {
   fn calculate_cost_in_cents(&self) -> UsdCents {
     // "Your request will cost $0.095 per second."
     match self.duration {
-      Kling1p6ProDuration::Default => 48, // $0.095 * 5 = $0.475 (round up)
+      Kling1p6ProDuration::Default => 48,     // $0.095 * 5 = $0.475 (round up)
       Kling1p6ProDuration::FiveSeconds => 48, // $0.095 * 5 = $0.475 (round up)
-      Kling1p6ProDuration::TenSeconds => 95, // $0.095 * 10 = $0.95
+      Kling1p6ProDuration::TenSeconds => 95,  // $0.095 * 10 = $0.95
     }
   }
 }
 
-
 /// Kling 1.6 Pro Image-to-Video
 /// https://fal.ai/models/fal-ai/kling-video/v1.6/pro/image-to-video
-pub async fn enqueue_kling_v1p6_pro_image_to_video_webhook<R: IntoUrl>(
-  args: Kling1p6ProArgs<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
+pub async fn enqueue_kling_v1p6_pro_image_to_video_webhook<R: IntoUrl>(args: Kling1p6ProArgs<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
 
   let duration = match req.duration {
-    Kling1p6ProDuration::Default => None, // defaults to "5"
+    Kling1p6ProDuration::Default => None,                      // defaults to "5"
     Kling1p6ProDuration::FiveSeconds => Some("5".to_string()), // Gross...
     Kling1p6ProDuration::TenSeconds => Some("10".to_string()),
   };
@@ -77,10 +74,7 @@ pub async fn enqueue_kling_v1p6_pro_image_to_video_webhook<R: IntoUrl>(
     negative_prompt: None,
   };
 
-  let result = kling_v1p6_pro_image_to_video(request)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await;
+  let result = kling_v1p6_pro_image_to_video(request).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await;
 
   result.map_err(|err| classify_fal_error(err))
 }

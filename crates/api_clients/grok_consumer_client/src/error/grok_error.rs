@@ -24,10 +24,7 @@ impl GrokError {
   /// need re-earning in the login window, under the same User-Agent the
   /// client sends.
   pub fn is_cloudflare_challenge(&self) -> bool {
-    matches!(
-      self,
-      Self::ApiGeneric(GrokGenericApiError::CloudflareError(CloudflareError::ChallengeInterstitial403)),
-    )
+    matches!(self, Self::ApiGeneric(GrokGenericApiError::CloudflareError(CloudflareError::ChallengeInterstitial403)),)
   }
 }
 

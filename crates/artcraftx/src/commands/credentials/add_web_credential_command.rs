@@ -41,29 +41,18 @@ pub struct WebCredentialSave {
 /// hand-maintain multiple accounts.
 ///
 /// Fresh cookies are a fresh session, so any "needs re-login" mark is cleared.
-pub fn save_web_credential(
-  creds_dir: &AppCredentialsDir,
-  save: WebCredentialSave,
-) -> Result<AuthCredential, ArtcraftXError> {
+pub fn save_web_credential(creds_dir: &AppCredentialsDir, save: WebCredentialSave) -> Result<AuthCredential, ArtcraftXError> {
   let all_credentials = creds_dir.load_credentials()?;
 
   let targeted = save.maybe_target_credential_id.as_deref().and_then(|target_id| {
-    let found = all_credentials.iter().find(|credential| {
-      credential.id.as_str() == target_id
-          && credential.service == save.service
-          && credential.kind() == CredentialKind::Cookies
-    });
+    let found = all_credentials.iter().find(|credential| credential.id.as_str() == target_id && credential.service == save.service && credential.kind() == CredentialKind::Cookies);
     if found.is_none() {
       info!("Re-login target credential {} no longer exists; saving a new credential instead", target_id);
     }
     found.cloned()
   });
 
-  let existing = targeted.or_else(|| {
-    all_credentials.into_iter().find(|credential| {
-      credential.service == save.service && credential.kind() == CredentialKind::Cookies
-    })
-  });
+  let existing = targeted.or_else(|| all_credentials.into_iter().find(|credential| credential.service == save.service && credential.kind() == CredentialKind::Cookies));
 
   let now = Utc::now();
 
@@ -71,38 +60,15 @@ pub fn save_web_credential(
   // the existing credential already had.
   let grok_data = match save.maybe_statsig {
     Some(capture) => Some(CookieCredentialGrokExtraPieces::fresh(capture, now)),
-    None => existing
-        .as_ref()
-        .and_then(|credential| credential.cookies())
-        .and_then(|cookie| cookie.grok_data.clone()),
+    None => existing.as_ref().and_then(|credential| credential.cookies()).and_then(|cookie| cookie.grok_data.clone()),
   };
 
-  let cookie = CookieCredential {
-    updated_at: Some(now),
-    failed_at: None,
-    succeeded_at: None,
-    relogin_required_since: None,
-    user_agent: save.maybe_user_agent,
-    grok_data,
-    cookies: save.cookies,
-  };
+  let cookie = CookieCredential { updated_at: Some(now), failed_at: None, succeeded_at: None, relogin_required_since: None, user_agent: save.maybe_user_agent, grok_data, cookies: save.cookies };
 
   let credential = match existing {
-    Some(existing) => AuthCredential {
-      id: existing.id,
-      service: existing.service,
-      name: existing.name,
-      secret: CredentialSecret::Cookies(cookie),
-      user_info: merge_user_info(existing.user_info, save.maybe_user_info),
-      source_path: existing.source_path,
-    },
-    None => AuthCredential {
-      id: creds_dir.generate_unique_credential_id(),
-      service: save.service,
-      name: None,
-      secret: CredentialSecret::Cookies(cookie),
-      user_info: save.maybe_user_info,
-      source_path: creds_dir.next_available_credential_path(save.service),
+    Some(existing) => AuthCredential { id: existing.id, service: existing.service, name: existing.name, secret: CredentialSecret::Cookies(cookie), user_info: merge_user_info(existing.user_info, save.maybe_user_info), source_path: existing.source_path },
+    None => {
+      AuthCredential { id: creds_dir.generate_unique_credential_id(), service: save.service, name: None, secret: CredentialSecret::Cookies(cookie), user_info: save.maybe_user_info, source_path: creds_dir.next_available_credential_path(save.service) }
     },
   };
 
@@ -113,17 +79,11 @@ pub fn save_web_credential(
 /// Prefer freshly detected identity fields, falling back to whatever the
 /// existing file already recorded, so a login that can't read (say) an email
 /// doesn't wipe one the user previously had.
-fn merge_user_info(
-  existing: Option<CredentialUserInfo>,
-  fresh: Option<CredentialUserInfo>,
-) -> Option<CredentialUserInfo> {
+fn merge_user_info(existing: Option<CredentialUserInfo>, fresh: Option<CredentialUserInfo>) -> Option<CredentialUserInfo> {
   match (existing, fresh) {
     (None, fresh) => fresh,
     (existing, None) => existing,
-    (Some(existing), Some(fresh)) => Some(CredentialUserInfo {
-      username: fresh.username.or(existing.username),
-      email: fresh.email.or(existing.email),
-    }),
+    (Some(existing), Some(fresh)) => Some(CredentialUserInfo { username: fresh.username.or(existing.username), email: fresh.email.or(existing.email) }),
   }
 }
 
@@ -136,12 +96,7 @@ pub struct AddWebCredentialResponse {
 /// full `Cookie:` header. The automated login flow saves via
 /// [`save_web_credential`]; this command is the hand-entry path.
 #[tauri::command]
-pub async fn add_web_credential_command(
-  app_data_root: State<'_, AppDataRoot>,
-  service: GenerationSource,
-  cookie_header: String,
-  name: Option<String>,
-) -> Result<AddWebCredentialResponse, String> {
+pub async fn add_web_credential_command(app_data_root: State<'_, AppDataRoot>, service: GenerationSource, cookie_header: String, name: Option<String>) -> Result<AddWebCredentialResponse, String> {
   info!("add_web_credential_command called for service: {}", service);
 
   if service.kind() != CredentialKind::Cookies {
@@ -176,24 +131,19 @@ pub async fn add_web_credential_command(
       maybe_user_agent: None,
       maybe_target_credential_id: None,
     },
-  ).map_err(|err| {
+  )
+  .map_err(|err| {
     error!("Error saving web credential: {}", err);
     format!("Error saving web credential: {}", err)
   })?;
 
   let credential = apply_optional_name(app_data_root.credentials_dir(), credential, name)?;
 
-  Ok(AddWebCredentialResponse {
-    credential: CredentialPayload::from_auth_credential(&credential),
-  })
+  Ok(AddWebCredentialResponse { credential: CredentialPayload::from_auth_credential(&credential) })
 }
 
 /// Apply an optional user-supplied label to a just-saved credential.
-fn apply_optional_name(
-  creds_dir: &AppCredentialsDir,
-  mut credential: AuthCredential,
-  name: Option<String>,
-) -> Result<AuthCredential, String> {
+fn apply_optional_name(creds_dir: &AppCredentialsDir, mut credential: AuthCredential, name: Option<String>) -> Result<AuthCredential, String> {
   let Some(name) = name else {
     return Ok(credential);
   };
@@ -258,13 +208,10 @@ mod tests {
 
   fn save(creds_dir: &AppCredentialsDir, cookie_header: &str, target: Option<&str>) -> AuthCredential {
     let origin = Url::parse("https://higgsfield.ai/").unwrap();
-    save_web_credential(creds_dir, WebCredentialSave {
-      service: SERVICE,
-      cookies: CookieStore::from_cookie_header(cookie_header, &origin),
-      maybe_user_info: None,
-      maybe_statsig: None,
-      maybe_user_agent: None,
-      maybe_target_credential_id: target.map(str::to_string),
-    }).unwrap()
+    save_web_credential(
+      creds_dir,
+      WebCredentialSave { service: SERVICE, cookies: CookieStore::from_cookie_header(cookie_header, &origin), maybe_user_info: None, maybe_statsig: None, maybe_user_agent: None, maybe_target_credential_id: target.map(str::to_string) },
+    )
+    .unwrap()
   }
 }

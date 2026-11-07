@@ -30,7 +30,7 @@ macro_rules! impl_client_token {
         write!(f, "{}", self.0)
       }
     }
-  }
+  };
 }
 
 pub mod api_keys;

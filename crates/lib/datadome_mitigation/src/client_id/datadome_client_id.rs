@@ -10,12 +10,7 @@ pub const DATADOME_CLIENT_ID_HEADER: &str = "x-datadome-clientid";
 
 /// The DataDome client id carried by a cookie header, if any.
 pub fn client_id_from_cookie_header(cookie_header: &str) -> Option<String> {
-  cookie_header
-      .split(';')
-      .filter_map(|pair| pair.trim().split_once('='))
-      .find(|(name, _)| name.trim() == DATADOME_COOKIE)
-      .map(|(_, value)| value.trim().to_string())
-      .filter(|value| !value.is_empty())
+  cookie_header.split(';').filter_map(|pair| pair.trim().split_once('=')).find(|(name, _)| name.trim() == DATADOME_COOKIE).map(|(_, value)| value.trim().to_string()).filter(|value| !value.is_empty())
 }
 
 /// The `(name, value)` header a replaying client should add, derived from
@@ -33,10 +28,7 @@ mod tests {
   fn extracts_client_id() {
     let header = "__client=abc; datadome=Yw0QRSl16BFXimBAv1I7~SfJW6aNcwFV; _ga=1";
     assert_eq!(client_id_from_cookie_header(header).as_deref(), Some("Yw0QRSl16BFXimBAv1I7~SfJW6aNcwFV"));
-    assert_eq!(
-      client_id_header_for_cookie_header(header),
-      Some(("x-datadome-clientid", "Yw0QRSl16BFXimBAv1I7~SfJW6aNcwFV".to_string())),
-    );
+    assert_eq!(client_id_header_for_cookie_header(header), Some(("x-datadome-clientid", "Yw0QRSl16BFXimBAv1I7~SfJW6aNcwFV".to_string())),);
   }
 
   #[test]

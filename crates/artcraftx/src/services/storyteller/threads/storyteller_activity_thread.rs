@@ -12,9 +12,9 @@ use log::{debug, error, info};
 use std::time::Instant;
 use artcraft_client::tokens::app_session::AppSessionToken;
 
-const CLIENT_NAME : &str = "artcraft";
+const CLIENT_NAME: &str = "artcraft";
 
-const ERROR_SLEEP_MILLIS : u64 = 1_000 * 60 * 3; // 3 minutes;
+const ERROR_SLEEP_MILLIS: u64 = 1_000 * 60 * 3; // 3 minutes;
 
 /// App session tokens are the one token minted client-side: an opaque
 /// per-app-run analytics id in the server's historical format
@@ -26,32 +26,22 @@ fn generate_app_session_token() -> AppSessionToken {
   use rand::Rng;
   let mut rng = rand::thread_rng();
   let entropy: String = (0..APP_SESSION_ENTROPY_LENGTH)
-      .map(|_| {
-        let idx = rng.gen_range(0..APP_SESSION_ENTROPY_CHARSET.len());
-        APP_SESSION_ENTROPY_CHARSET[idx] as char
-      })
-      .collect();
+    .map(|_| {
+      let idx = rng.gen_range(0..APP_SESSION_ENTROPY_CHARSET.len());
+      APP_SESSION_ENTROPY_CHARSET[idx] as char
+    })
+    .collect();
   AppSessionToken::new(format!("app_session_{entropy}"))
 }
 
-pub async fn storyteller_activity_thread(
-  artcraft_platform_info: ArtcraftPlatformInfo,
-  artcraft_usage_tracker: ArtcraftUsageTracker,
-  storyteller_creds_manager: StorytellerCredentialManager,
-) -> ! {
+pub async fn storyteller_activity_thread(artcraft_platform_info: ArtcraftPlatformInfo, artcraft_usage_tracker: ArtcraftUsageTracker, storyteller_creds_manager: StorytellerCredentialManager) -> ! {
   let startup = Instant::now();
   let app_session_token = generate_app_session_token();
 
   info!("Session started at {:?} with token: {:?}", startup, app_session_token);
 
   loop {
-    let res = polling_loop(
-      &artcraft_usage_tracker,
-      &storyteller_creds_manager,
-      startup,
-      &artcraft_platform_info,
-      &app_session_token,
-    ).await;
+    let res = polling_loop(&artcraft_usage_tracker, &storyteller_creds_manager, startup, &artcraft_platform_info, &app_session_token).await;
     if let Err(err) = res {
       error!("An error occurred: {:?}", err);
     }
@@ -60,13 +50,7 @@ pub async fn storyteller_activity_thread(
   }
 }
 
-async fn polling_loop(
-  artcraft_usage_tracker: &ArtcraftUsageTracker,
-  storyteller_creds_manager: &StorytellerCredentialManager,
-  startup: Instant,
-  artcraft_platform_info: &ArtcraftPlatformInfo,
-  app_session_token: &AppSessionToken,
-) -> AnyhowResult<()> {
+async fn polling_loop(artcraft_usage_tracker: &ArtcraftUsageTracker, storyteller_creds_manager: &StorytellerCredentialManager, startup: Instant, artcraft_platform_info: &ArtcraftPlatformInfo, app_session_token: &AppSessionToken) -> AnyhowResult<()> {
   loop {
     let creds = storyteller_creds_manager.get_credentials()?;
 
@@ -74,7 +58,7 @@ async fn polling_loop(
       None => {
         tokio::time::sleep(std::time::Duration::from_millis(5_000)).await;
         continue;
-      }
+      },
       Some(creds) => {
         if creds.is_empty() {
           tokio::time::sleep(std::time::Duration::from_millis(5_000)).await;
@@ -85,7 +69,7 @@ async fn polling_loop(
     };
 
     let usage_data = artcraft_usage_tracker.get()?;
-    
+
     let time_since_startup = Instant::now().duration_since(startup);
 
     let request = LogAppActiveUserRequest {
@@ -115,11 +99,7 @@ async fn polling_loop(
 
     debug!("Logging active user with storyteller.");
 
-    let result = log_active_user_v2(
-      &ApiHost::Storyteller,
-      Some(&creds),
-      request,
-    ).await;
+    let result = log_active_user_v2(&ApiHost::Storyteller, Some(&creds), request).await;
 
     let wait_millis = match result {
       Ok(result) => result.wait_for_retry_millis,
@@ -129,11 +109,11 @@ async fn polling_loop(
             error!("Too many requests (sleeping): {:?}", message);
             tokio::time::sleep(std::time::Duration::from_millis(ERROR_SLEEP_MILLIS)).await;
             continue;
-          }
-          _ => {}
+          },
+          _ => {},
         }
         return Err(anyhow!(err));
-      }
+      },
     };
 
     // Wait at least a minute, no matter what the server tells us.

@@ -2,9 +2,7 @@ use crate::commands::generate::common::notify_frontend_of_errors::notify_fronten
 use crate::commands::generate::generate_error::{GenerateError, MissingCredentialsReason};
 use crate::commands::generate::task_enqueue_success::TaskEnqueueSuccess;
 use crate::commands::generate::generate_image::enqueue_image_generation::enqueue_image_generation;
-use crate::commands::generate::generate_image::tauri_generate_image_request::{
-  TauriGenerateImageErrorType, TauriGenerateImageRequest, TauriGenerateImageResponse,
-};
+use crate::commands::generate::generate_image::tauri_generate_image_request::{TauriGenerateImageErrorType, TauriGenerateImageRequest, TauriGenerateImageResponse};
 use crate::services::grok::state::grok_websockets::GrokWebsockets;
 use crate::services::midjourney::state::midjourney_live_session::MidjourneyLiveSession;
 use crate::commands::utils::response::failure_response_wrapper::{CommandErrorResponseWrapper, CommandErrorStatus};
@@ -29,20 +27,12 @@ pub async fn generate_image_command(
   grok_websockets: State<'_, GrokWebsockets>,
   local_files_database: State<'_, LocalFilesDatabase>,
 ) -> Response<TauriGenerateImageResponse, TauriGenerateImageErrorType, ()> {
-
   info!("generate_image_command called, request: {:?}", request);
 
   // Generation is credential-driven: the request names a stored credential,
   // and we invoke the router for that credential's service.
   let ledger = AssetUploadLedger::new(local_files_database.inner().clone());
-  let result = enqueue_image_generation(
-    &request,
-    &app,
-    &app_data_root,
-    &midjourney_live_session,
-    &grok_websockets,
-    &ledger,
-  ).await;
+  let result = enqueue_image_generation(&request, &app, &app_data_root, &midjourney_live_session, &grok_websockets, &ledger).await;
 
   match result {
     Ok(success) => handle_success_behavior(&app, &task_database, &request, success).await,
@@ -52,23 +42,9 @@ pub async fn generate_image_command(
 
 // ── Result mapping ──
 
-async fn handle_success_behavior(
-  app: &AppHandle,
-  task_database: &TaskDatabase,
-  request: &TauriGenerateImageRequest,
-  success: TaskEnqueueSuccess,
-) -> Response<TauriGenerateImageResponse, TauriGenerateImageErrorType, ()> {
-
-
+async fn handle_success_behavior(app: &AppHandle, task_database: &TaskDatabase, request: &TauriGenerateImageRequest, success: TaskEnqueueSuccess) -> Response<TauriGenerateImageResponse, TauriGenerateImageErrorType, ()> {
   // Insert into task database
-  let db_result = success
-      .insert_into_task_database_with_frontend_payload(
-        &task_database,
-        request.frontend_caller,
-        request.frontend_subscriber_id.as_deref(),
-        request.frontend_subscriber_payload.as_deref(),
-      )
-      .await;
+  let db_result = success.insert_into_task_database_with_frontend_payload(&task_database, request.frontend_caller, request.frontend_subscriber_id.as_deref(), request.frontend_subscriber_payload.as_deref()).await;
 
   if let Err(err) = db_result {
     error!("Failed to create task in database: {:?}", err);
@@ -87,25 +63,18 @@ async fn handle_success_behavior(
   }
    */
 
-  let event = GenerationEnqueueSuccessEvent {
-    action: success.to_frontend_event_action(),
-    service: success.to_frontend_event_service(),
-    model: success.model,
-  };
+  let event = GenerationEnqueueSuccessEvent { action: success.to_frontend_event_action(), service: success.to_frontend_event_service(), model: success.model };
 
   if let Err(err) = event.send(&app) {
     error!("Failed to emit event: {:?}", err);
   }
 
-  CreditsBalanceChangedEvent{}.send_infallible(&app);
+  CreditsBalanceChangedEvent {}.send_infallible(&app);
 
   Ok(TauriGenerateImageResponse {}.into())
 }
 
-async fn handle_error_behavior(
-  app: &AppHandle,
-  err: GenerateError,
-) -> Response<TauriGenerateImageResponse, TauriGenerateImageErrorType, ()> {
+async fn handle_error_behavior(app: &AppHandle, err: GenerateError) -> Response<TauriGenerateImageResponse, TauriGenerateImageErrorType, ()> {
   error!("generate_image_command error: {:?}", err);
 
   notify_frontend_of_errors(&app, &err).await;
@@ -123,36 +92,36 @@ async fn handle_error_behavior(
 
   // TODO:
   /*
-    let mut status = CommandErrorStatus::ServerError;
-    let mut error_type = EnqueueTextToImageErrorType::ServerError;
-    let mut error_message = "A server error occurred. Please try again. If it continues, please tell our staff about the problem.";
+   let mut status = CommandErrorStatus::ServerError;
+   let mut error_type = EnqueueTextToImageErrorType::ServerError;
+   let mut error_message = "A server error occurred. Please try again. If it continues, please tell our staff about the problem.";
 
-    match err {
-      GenerateError::BadInput(BadInputReason::NoModelSpecified) => {
-        status = CommandErrorStatus::BadRequest;
-        error_type = EnqueueTextToImageErrorType::ModelNotSpecified;
-        error_message = "No model specified for image generation";
-      }
-      GenerateError::NoProviderAvailable => {
-        status = CommandErrorStatus::ServerError;
-        error_type = EnqueueTextToImageErrorType::NoProviderAvailable;
-        error_message = "No configured provider available for image generation";
-      }
-      GenerateError::MissingCredentials(MissingCredentialsReason::NeedsFalApiKey) => {
-        status = CommandErrorStatus::Unauthorized;
-        error_type = EnqueueTextToImageErrorType::NeedsFalApiKey;
-        error_message = "You need to set a FAL api key";
-      },
-      _ => {}, // Fall-through
-    }
+   match err {
+     GenerateError::BadInput(BadInputReason::NoModelSpecified) => {
+       status = CommandErrorStatus::BadRequest;
+       error_type = EnqueueTextToImageErrorType::ModelNotSpecified;
+       error_message = "No model specified for image generation";
+     }
+     GenerateError::NoProviderAvailable => {
+       status = CommandErrorStatus::ServerError;
+       error_type = EnqueueTextToImageErrorType::NoProviderAvailable;
+       error_message = "No configured provider available for image generation";
+     }
+     GenerateError::MissingCredentials(MissingCredentialsReason::NeedsFalApiKey) => {
+       status = CommandErrorStatus::Unauthorized;
+       error_type = EnqueueTextToImageErrorType::NeedsFalApiKey;
+       error_message = "You need to set a FAL api key";
+     },
+     _ => {}, // Fall-through
+   }
 
-    Err(CommandErrorResponseWrapper {
-      status,
-      error_message: Some(error_message.to_string()),
-      error_type: Some(error_type),
-      error_details: None,
-    })
-   */
+   Err(CommandErrorResponseWrapper {
+     status,
+     error_message: Some(error_message.to_string()),
+     error_type: Some(error_type),
+     error_details: None,
+   })
+  */
 
   // Prefer a human-readable message for the frontend toast; fall back to the
   // debug rendering for error kinds without one.
@@ -163,10 +132,5 @@ async fn handle_error_behavior(
     other => format!("{:?}", other),
   };
 
-  Err(CommandErrorResponseWrapper {
-    status: CommandErrorStatus::ServerError,
-    error_message: Some(error_message),
-    error_type: Some(error_type),
-    error_details: None,
-  })
+  Err(CommandErrorResponseWrapper { status: CommandErrorStatus::ServerError, error_message: Some(error_message), error_type: Some(error_type), error_details: None })
 }

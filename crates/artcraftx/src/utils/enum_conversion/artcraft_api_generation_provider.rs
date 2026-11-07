@@ -19,28 +19,15 @@ use core_types::enums::generation_source::GenerationSource;
 
 pub fn artcraft_api_generation_provider(source: GenerationSource) -> Option<GenerationSource> {
   match source {
-    GenerationSource::Artcraft
-    | GenerationSource::ArtcraftLocal
-    | GenerationSource::ArtcraftCookies
-    | GenerationSource::ArtcraftApi => Some(GenerationSource::Artcraft),
-    GenerationSource::Fal
-    | GenerationSource::FalApi => Some(GenerationSource::Fal),
-    GenerationSource::Grok
-    | GenerationSource::GrokCookies
-    | GenerationSource::XAiApi => Some(GenerationSource::Grok),
-    GenerationSource::Midjourney
-    | GenerationSource::MidjourneyCookies => Some(GenerationSource::Midjourney),
-    GenerationSource::WorldLabs
-    | GenerationSource::WorldLabsCookies => Some(GenerationSource::WorldLabs),
-    GenerationSource::Higgsfield
-    | GenerationSource::HiggsfieldCookies => Some(GenerationSource::Higgsfield),
+    GenerationSource::Artcraft | GenerationSource::ArtcraftLocal | GenerationSource::ArtcraftCookies | GenerationSource::ArtcraftApi => Some(GenerationSource::Artcraft),
+    GenerationSource::Fal | GenerationSource::FalApi => Some(GenerationSource::Fal),
+    GenerationSource::Grok | GenerationSource::GrokCookies | GenerationSource::XAiApi => Some(GenerationSource::Grok),
+    GenerationSource::Midjourney | GenerationSource::MidjourneyCookies => Some(GenerationSource::Midjourney),
+    GenerationSource::WorldLabs | GenerationSource::WorldLabsCookies => Some(GenerationSource::WorldLabs),
+    GenerationSource::Higgsfield | GenerationSource::HiggsfieldCookies => Some(GenerationSource::Higgsfield),
     // The API knows `magnific` / `openart` / `runway`, but the app has no bare
     // provider variant for them yet (see the module docs).
-    GenerationSource::MagnificCookies
-    | GenerationSource::OpenArtCookies
-    | GenerationSource::RunwayCookies
-    | GenerationSource::OpenAiApi
-    | GenerationSource::ReplicateApi => None,
+    GenerationSource::MagnificCookies | GenerationSource::OpenArtCookies | GenerationSource::RunwayCookies | GenerationSource::OpenAiApi | GenerationSource::ReplicateApi => None,
   }
 }
 
@@ -49,10 +36,7 @@ mod tests {
   use super::*;
 
   /// What storyteller-web's `GenerationProvider` deserializes today.
-  const API_KNOWN_VALUES: &[&str] = &[
-    "artcraft", "fal", "grok", "midjourney", "sora", "world_labs",
-    "higgsfield", "krea", "leonardo", "magnific", "openart", "picsart", "pixverse", "runway",
-  ];
+  const API_KNOWN_VALUES: &[&str] = &["artcraft", "fal", "grok", "midjourney", "sora", "world_labs", "higgsfield", "krea", "leonardo", "magnific", "openart", "picsart", "pixverse", "runway"];
 
   #[test]
   fn only_values_the_api_knows_are_ever_sent() {

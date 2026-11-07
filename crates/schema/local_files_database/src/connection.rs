@@ -29,14 +29,11 @@ impl LocalFilesDbConnection {
       Ok(pool) => return Ok(Self { pool }),
       Err(err) => {
         error!("Error running local_files SQLite migrations: {:?}", err);
-      }
+      },
     }
 
     let database_file = database_file.as_ref();
-    let unix_ms = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|duration| duration.as_millis())
-        .unwrap_or(0);
+    let unix_ms = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|duration| duration.as_millis()).unwrap_or(0);
     let aside = database_file.with_extension(format!("broken-{unix_ms}"));
     info!("Moving local_files SQLite database aside to {:?} and recreating it", aside);
 
@@ -62,12 +59,7 @@ impl LocalFilesDbConnection {
 }
 
 async fn run_migrations<P: AsRef<Path>>(database_file: P) -> Result<SqlitePool, MigrateError> {
-  let connection_options = SqliteConnectOptions::new()
-      .filename(database_file)
-      .create_if_missing(true)
-      .journal_mode(SqliteJournalMode::Wal)
-      .synchronous(SqliteSynchronous::Normal)
-      .busy_timeout(BUSY_TIMEOUT);
+  let connection_options = SqliteConnectOptions::new().filename(database_file).create_if_missing(true).journal_mode(SqliteJournalMode::Wal).synchronous(SqliteSynchronous::Normal).busy_timeout(BUSY_TIMEOUT);
 
   let pool = SqlitePool::connect_with(connection_options).await?;
 

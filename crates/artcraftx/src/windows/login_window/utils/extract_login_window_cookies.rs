@@ -15,18 +15,12 @@ use tauri::WebviewWindow;
 /// That never equals the bare host (`storyteller.ai`), so `cookies_for_url`
 /// silently drops exactly the auth cookie we need. `cookies()` returns
 /// everything (including HttpOnly cookies), so we filter it correctly here.
-pub fn extract_login_window_cookies(
-  webview: &WebviewWindow,
-  cookie_urls: &[Url],
-) -> AnyhowResult<CookieStore> {
+pub fn extract_login_window_cookies(webview: &WebviewWindow, cookie_urls: &[Url]) -> AnyhowResult<CookieStore> {
   let Some(fallback_url) = cookie_urls.first() else {
     return Ok(CookieStore::empty());
   };
 
-  let hosts: Vec<String> = cookie_urls
-      .iter()
-      .filter_map(|url| url.host_str().map(|host| host.to_ascii_lowercase()))
-      .collect();
+  let hosts: Vec<String> = cookie_urls.iter().filter_map(|url| url.host_str().map(|host| host.to_ascii_lowercase())).collect();
 
   let mut cookie_store = CookieStore::empty();
   for cookie in webview.cookies()?.iter() {
@@ -36,15 +30,7 @@ pub fn extract_login_window_cookies(
       continue;
     }
     if cookie_domain_matches(cookie.domain(), &hosts) {
-      cookie_store.insert_captured(
-        CapturedCookie {
-          name: cookie.name().to_string(),
-          value: cookie.value().to_string(),
-          maybe_domain: cookie.domain().map(str::to_string),
-          maybe_path: cookie.path().map(str::to_string),
-        },
-        fallback_url,
-      );
+      cookie_store.insert_captured(CapturedCookie { name: cookie.name().to_string(), value: cookie.value().to_string(), maybe_domain: cookie.domain().map(str::to_string), maybe_path: cookie.path().map(str::to_string) }, fallback_url);
     }
   }
   Ok(cookie_store)
@@ -63,11 +49,7 @@ fn cookie_domain_matches(cookie_domain: Option<&str>, hosts: &[String]) -> bool 
   if domain.is_empty() {
     return false;
   }
-  hosts.iter().any(|host| {
-    *host == domain
-      || host.ends_with(&format!(".{domain}"))
-      || domain.ends_with(&format!(".{host}"))
-  })
+  hosts.iter().any(|host| *host == domain || host.ends_with(&format!(".{domain}")) || domain.ends_with(&format!(".{host}")))
 }
 
 #[cfg(test)]

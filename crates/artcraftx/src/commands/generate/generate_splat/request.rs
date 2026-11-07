@@ -2,9 +2,7 @@ use sqlite_identifiers::enums::tauri_command_caller::TauriCommandCaller;
 use serde_derive::{Deserialize, Serialize};
 use sqlite_identifiers::ids::media_file_token::MediaFileToken;
 
-use crate::commands::generate::common::tauri_media_source::{
-  merge_source_with_legacy_token, merge_sources_with_legacy_tokens, TauriMediaSource,
-};
+use crate::commands::generate::common::tauri_media_source::{merge_source_with_legacy_token, merge_sources_with_legacy_tokens, TauriMediaSource};
 use crate::commands::utils::response::success_response_wrapper::SerializeMarker;
 
 // ── Request ──
@@ -40,7 +38,6 @@ pub struct TauriGenerateSplatRequest {
   pub disable_recaption: Option<bool>,
 
   // ── Frontend metadata ──
-
   /// Name of the frontend caller.
   pub frontend_caller: Option<TauriCommandCaller>,
 
@@ -62,12 +59,8 @@ pub struct SplatRequestMediaSources {
 impl TauriGenerateSplatRequest {
   pub fn media_sources(&self) -> SplatRequestMediaSources {
     SplatRequestMediaSources {
-      reference_images: merge_sources_with_legacy_tokens(
-        self.reference_image_sources.clone(), self.reference_image_media_tokens.clone(),
-      ),
-      reference_video: merge_source_with_legacy_token(
-        self.reference_video_source.clone(), self.reference_video_media_token.clone(),
-      ),
+      reference_images: merge_sources_with_legacy_tokens(self.reference_image_sources.clone(), self.reference_image_media_tokens.clone()),
+      reference_video: merge_source_with_legacy_token(self.reference_video_source.clone(), self.reference_video_media_token.clone()),
     }
   }
 }
@@ -102,8 +95,7 @@ pub enum TauriSplatModel {
 // ── Response ──
 
 #[derive(Serialize)]
-pub struct TauriGenerateSplatResponse {
-}
+pub struct TauriGenerateSplatResponse {}
 
 impl SerializeMarker for TauriGenerateSplatResponse {}
 

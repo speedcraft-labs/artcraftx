@@ -1,23 +1,8 @@
-use fal_client::requests::api::video::extend::veo_3p1_fast::api::{
-  Veo3p1FastExtendVideoAspectRatio, Veo3p1FastExtendVideoDuration, Veo3p1FastExtendVideoRequest,
-  Veo3p1FastExtendVideoResolution,
-};
-use fal_client::requests::api::video::image::veo_3p1_fast::api::{
-  Veo3p1FastImageToVideoAspectRatio, Veo3p1FastImageToVideoDuration, Veo3p1FastImageToVideoRequest,
-  Veo3p1FastImageToVideoResolution,
-};
-use fal_client::requests::api::video::images::veo_3p1_fast::api::{
-  Veo3p1FastFirstLastFrameToVideoAspectRatio, Veo3p1FastFirstLastFrameToVideoDuration,
-  Veo3p1FastFirstLastFrameToVideoRequest, Veo3p1FastFirstLastFrameToVideoResolution,
-};
-use fal_client::requests::api::video::reference::veo_3p1_fast::api::{
-  Veo3p1FastReferenceToVideoAspectRatio, Veo3p1FastReferenceToVideoDuration,
-  Veo3p1FastReferenceToVideoRequest, Veo3p1FastReferenceToVideoResolution,
-};
-use fal_client::requests::api::video::text::veo_3p1_fast::api::{
-  Veo3p1FastTextToVideoAspectRatio, Veo3p1FastTextToVideoDuration, Veo3p1FastTextToVideoRequest,
-  Veo3p1FastTextToVideoResolution,
-};
+use fal_client::requests::api::video::extend::veo_3p1_fast::api::{Veo3p1FastExtendVideoAspectRatio, Veo3p1FastExtendVideoDuration, Veo3p1FastExtendVideoRequest, Veo3p1FastExtendVideoResolution};
+use fal_client::requests::api::video::image::veo_3p1_fast::api::{Veo3p1FastImageToVideoAspectRatio, Veo3p1FastImageToVideoDuration, Veo3p1FastImageToVideoRequest, Veo3p1FastImageToVideoResolution};
+use fal_client::requests::api::video::images::veo_3p1_fast::api::{Veo3p1FastFirstLastFrameToVideoAspectRatio, Veo3p1FastFirstLastFrameToVideoDuration, Veo3p1FastFirstLastFrameToVideoRequest, Veo3p1FastFirstLastFrameToVideoResolution};
+use fal_client::requests::api::video::reference::veo_3p1_fast::api::{Veo3p1FastReferenceToVideoAspectRatio, Veo3p1FastReferenceToVideoDuration, Veo3p1FastReferenceToVideoRequest, Veo3p1FastReferenceToVideoResolution};
+use fal_client::requests::api::video::text::veo_3p1_fast::api::{Veo3p1FastTextToVideoAspectRatio, Veo3p1FastTextToVideoDuration, Veo3p1FastTextToVideoRequest, Veo3p1FastTextToVideoResolution};
 
 use crate::api::image_list_ref::ImageListRef;
 use crate::api::image_ref::ImageRef;
@@ -29,9 +14,7 @@ use crate::client::request_mismatch_mitigation_strategy::RequestMismatchMitigati
 use crate::errors::artcraft_router_error::ArtcraftRouterError;
 use crate::errors::client_error::ClientError;
 use crate::generate::generate_video::generate_video_request_builder::GenerateVideoRequestBuilder;
-use crate::generate::generate_video::providers::fal::veo_3p1_fast::request::{
-  FalVeo3p1FastMode, FalVeo3p1FastRequestState,
-};
+use crate::generate::generate_video::providers::fal::veo_3p1_fast::request::{FalVeo3p1FastMode, FalVeo3p1FastRequestState};
 use crate::generate::generate_video::video_generation_draft_or_request::VideoGenerationDraftOrRequest;
 use crate::generate::generate_video::video_generation_request::VideoGenerationRequest;
 
@@ -56,16 +39,12 @@ pub(crate) enum PlanDuration {
   Eight,
 }
 
-pub fn build_fal_veo_3p1_fast(
-  builder: GenerateVideoRequestBuilder,
-) -> Result<VideoGenerationDraftOrRequest, ArtcraftRouterError> {
+pub fn build_fal_veo_3p1_fast(builder: GenerateVideoRequestBuilder) -> Result<VideoGenerationDraftOrRequest, ArtcraftRouterError> {
   let state = build_fal_veo_3p1_fast_state(builder)?;
   Ok(VideoGenerationDraftOrRequest::Request(VideoGenerationRequest::FalVeo3p1Fast(state)))
 }
 
-pub(crate) fn build_fal_veo_3p1_fast_state(
-  builder: GenerateVideoRequestBuilder,
-) -> Result<FalVeo3p1FastRequestState, ArtcraftRouterError> {
+pub(crate) fn build_fal_veo_3p1_fast_state(builder: GenerateVideoRequestBuilder) -> Result<FalVeo3p1FastRequestState, ArtcraftRouterError> {
   let strategy = builder.request_mismatch_mitigation_strategy;
 
   let start = optional_url(builder.start_frame.clone())?;
@@ -87,28 +66,16 @@ pub(crate) fn build_fal_veo_3p1_fast_state(
   //   5. no media            → text-to-video
   let mode = if let Some(video_urls) = reference_videos {
     if reference_images.is_some() {
-      return Err(unsupported(
-        "reference_images",
-        "Veo 3.1 Fast extend-video cannot combine reference_images with a reference video",
-      ));
+      return Err(unsupported("reference_images", "Veo 3.1 Fast extend-video cannot combine reference_images with a reference video"));
     }
     if start.is_some() {
-      return Err(unsupported(
-        "start_frame",
-        "Veo 3.1 Fast extend-video cannot combine start_frame with a reference video",
-      ));
+      return Err(unsupported("start_frame", "Veo 3.1 Fast extend-video cannot combine start_frame with a reference video"));
     }
     if end.is_some() {
-      return Err(unsupported(
-        "end_frame",
-        "Veo 3.1 Fast extend-video cannot combine end_frame with a reference video",
-      ));
+      return Err(unsupported("end_frame", "Veo 3.1 Fast extend-video cannot combine end_frame with a reference video"));
     }
     if video_urls.len() != 1 {
-      return Err(unsupported(
-        "reference_videos",
-        &format!("Veo 3.1 Fast extend-video requires exactly 1 reference video, got {}", video_urls.len()),
-      ));
+      return Err(unsupported("reference_videos", &format!("Veo 3.1 Fast extend-video requires exactly 1 reference video, got {}", video_urls.len())));
     }
     let video_url = video_urls.into_iter().next().expect("checked len == 1");
     FalVeo3p1FastMode::ExtendVideo(Veo3p1FastExtendVideoRequest {
@@ -125,16 +92,10 @@ pub(crate) fn build_fal_veo_3p1_fast_state(
     })
   } else if let Some(image_urls) = reference_images {
     if start.is_some() {
-      return Err(unsupported(
-        "start_frame",
-        "Veo 3.1 Fast reference-to-video cannot combine start_frame with reference_images",
-      ));
+      return Err(unsupported("start_frame", "Veo 3.1 Fast reference-to-video cannot combine start_frame with reference_images"));
     }
     if end.is_some() {
-      return Err(unsupported(
-        "end_frame",
-        "Veo 3.1 Fast reference-to-video cannot combine end_frame with reference_images",
-      ));
+      return Err(unsupported("end_frame", "Veo 3.1 Fast reference-to-video cannot combine end_frame with reference_images"));
     }
     // NB: reference-to-video has no negative_prompt or seed fields on fal's
     // schema — those builder inputs are dropped silently.
@@ -174,27 +135,22 @@ pub(crate) fn build_fal_veo_3p1_fast_state(
         auto_fix: None,
         safety_tolerance: None,
       }),
-      (Some(first_frame_url), Some(last_frame_url)) => FalVeo3p1FastMode::FirstLastFrameToVideo(
-        Veo3p1FastFirstLastFrameToVideoRequest {
-          prompt,
-          first_frame_url,
-          last_frame_url,
-          aspect_ratio: aspect_ratio.map(to_flf_aspect_ratio),
-          duration: duration.map(to_flf_duration),
-          resolution: resolution.map(to_flf_resolution),
-          generate_audio,
-          negative_prompt,
-          seed: None,
-          auto_fix: None,
-          safety_tolerance: None,
-        },
-      ),
+      (Some(first_frame_url), Some(last_frame_url)) => FalVeo3p1FastMode::FirstLastFrameToVideo(Veo3p1FastFirstLastFrameToVideoRequest {
+        prompt,
+        first_frame_url,
+        last_frame_url,
+        aspect_ratio: aspect_ratio.map(to_flf_aspect_ratio),
+        duration: duration.map(to_flf_duration),
+        resolution: resolution.map(to_flf_resolution),
+        generate_audio,
+        negative_prompt,
+        seed: None,
+        auto_fix: None,
+        safety_tolerance: None,
+      }),
       (None, Some(_)) => {
-        return Err(unsupported(
-          "end_frame",
-          "Veo 3.1 Fast requires a start_frame when end_frame is provided",
-        ));
-      }
+        return Err(unsupported("end_frame", "Veo 3.1 Fast requires a start_frame when end_frame is provided"));
+      },
     }
   };
 
@@ -205,9 +161,7 @@ fn optional_url(image_ref: Option<ImageRef>) -> Result<Option<String>, ArtcraftR
   match image_ref {
     None => Ok(None),
     Some(ImageRef::Url(url)) => Ok(Some(url)),
-    Some(ImageRef::MediaFileToken(_) | ImageRef::LocalPath(_) | ImageRef::Bytes(_)) => {
-      Err(ArtcraftRouterError::Client(ClientError::FalOnlySupportsUrls))
-    }
+    Some(ImageRef::MediaFileToken(_) | ImageRef::LocalPath(_) | ImageRef::Bytes(_)) => Err(ArtcraftRouterError::Client(ClientError::FalOnlySupportsUrls)),
   }
 }
 
@@ -217,9 +171,7 @@ fn reference_image_urls(refs: Option<ImageListRef>) -> Result<Option<Vec<String>
     Some(ImageListRef::Urls(urls)) if urls.is_empty() => Ok(None),
     Some(ImageListRef::Urls(urls)) => Ok(Some(urls)),
     Some(ImageListRef::MediaFileTokens(tokens)) if tokens.is_empty() => Ok(None),
-    Some(ImageListRef::MediaFileTokens(_)) => {
-      Err(ArtcraftRouterError::Client(ClientError::FalOnlySupportsUrls))
-    }
+    Some(ImageListRef::MediaFileTokens(_)) => Err(ArtcraftRouterError::Client(ClientError::FalOnlySupportsUrls)),
     Some(ImageListRef::Sources(refs)) if refs.is_empty() => Ok(None),
     Some(ImageListRef::Sources(refs)) => {
       let mut urls = Vec::with_capacity(refs.len());
@@ -230,7 +182,7 @@ fn reference_image_urls(refs: Option<ImageListRef>) -> Result<Option<Vec<String>
         }
       }
       Ok(Some(urls))
-    }
+    },
   }
 }
 
@@ -240,9 +192,7 @@ fn reference_video_urls(refs: Option<VideoListRef>) -> Result<Option<Vec<String>
     Some(VideoListRef::Urls(urls)) if urls.is_empty() => Ok(None),
     Some(VideoListRef::Urls(urls)) => Ok(Some(urls)),
     Some(VideoListRef::MediaFileTokens(tokens)) if tokens.is_empty() => Ok(None),
-    Some(VideoListRef::MediaFileTokens(_)) => {
-      Err(ArtcraftRouterError::Client(ClientError::FalOnlySupportsUrls))
-    }
+    Some(VideoListRef::MediaFileTokens(_)) => Err(ArtcraftRouterError::Client(ClientError::FalOnlySupportsUrls)),
     Some(VideoListRef::Sources(refs)) if refs.is_empty() => Ok(None),
     Some(VideoListRef::Sources(refs)) => {
       let mut urls = Vec::with_capacity(refs.len());
@@ -253,38 +203,28 @@ fn reference_video_urls(refs: Option<VideoListRef>) -> Result<Option<Vec<String>
         }
       }
       Ok(Some(urls))
-    }
+    },
   }
 }
 
-fn plan_aspect_ratio(
-  aspect_ratio: Option<RouterAspectRatio>,
-  strategy: RequestMismatchMitigationStrategy,
-) -> Result<Option<PlanAspectRatio>, ArtcraftRouterError> {
+fn plan_aspect_ratio(aspect_ratio: Option<RouterAspectRatio>, strategy: RequestMismatchMitigationStrategy) -> Result<Option<PlanAspectRatio>, ArtcraftRouterError> {
   use PlanAspectRatio as Ar;
   match aspect_ratio {
     None => Ok(None),
 
-    Some(RouterAspectRatio::Auto)
-    | Some(RouterAspectRatio::Auto2k)
-    | Some(RouterAspectRatio::Auto4k) => Ok(Some(Ar::Auto)),
+    Some(RouterAspectRatio::Auto) | Some(RouterAspectRatio::Auto2k) | Some(RouterAspectRatio::Auto4k) => Ok(Some(Ar::Auto)),
 
     Some(RouterAspectRatio::WideSixteenByNine) | Some(RouterAspectRatio::Wide) => Ok(Some(Ar::SixteenByNine)),
     Some(RouterAspectRatio::TallNineBySixteen) | Some(RouterAspectRatio::Tall) => Ok(Some(Ar::NineBySixteen)),
 
     Some(other) => match strategy {
-      RequestMismatchMitigationStrategy::ErrorOut => {
-        Err(unsupported("aspect_ratio", &format!("{:?}", other)))
-      }
+      RequestMismatchMitigationStrategy::ErrorOut => Err(unsupported("aspect_ratio", &format!("{:?}", other))),
       _ => Ok(Some(Ar::Auto)),
     },
   }
 }
 
-fn plan_resolution(
-  resolution: Option<RouterResolution>,
-  strategy: RequestMismatchMitigationStrategy,
-) -> Result<Option<PlanResolution>, ArtcraftRouterError> {
+fn plan_resolution(resolution: Option<RouterResolution>, strategy: RequestMismatchMitigationStrategy) -> Result<Option<PlanResolution>, ArtcraftRouterError> {
   use PlanResolution as R;
   match resolution {
     None => Ok(None),
@@ -292,28 +232,21 @@ fn plan_resolution(
     Some(RouterResolution::TenEightyP) => Ok(Some(R::TenEightyP)),
     Some(RouterResolution::FourK) => Ok(Some(R::FourK)),
     Some(other) => match strategy {
-      RequestMismatchMitigationStrategy::ErrorOut => {
-        Err(unsupported("resolution", &format!("{:?}", other)))
-      }
+      RequestMismatchMitigationStrategy::ErrorOut => Err(unsupported("resolution", &format!("{:?}", other))),
       RequestMismatchMitigationStrategy::PayMoreUpgrade => Ok(Some(R::TenEightyP)),
       RequestMismatchMitigationStrategy::PayLessDowngrade => Ok(Some(R::SevenTwentyP)),
     },
   }
 }
 
-fn plan_duration(
-  duration_seconds: Option<u16>,
-  strategy: RequestMismatchMitigationStrategy,
-) -> Result<Option<PlanDuration>, ArtcraftRouterError> {
+fn plan_duration(duration_seconds: Option<u16>, strategy: RequestMismatchMitigationStrategy) -> Result<Option<PlanDuration>, ArtcraftRouterError> {
   match duration_seconds {
     None => Ok(None),
     Some(4) => Ok(Some(PlanDuration::Four)),
     Some(6) => Ok(Some(PlanDuration::Six)),
     Some(8) => Ok(Some(PlanDuration::Eight)),
     Some(other) => match strategy {
-      RequestMismatchMitigationStrategy::ErrorOut => {
-        Err(unsupported("duration_seconds", &format!("{}", other)))
-      }
+      RequestMismatchMitigationStrategy::ErrorOut => Err(unsupported("duration_seconds", &format!("{}", other))),
       // Nearest supported duration above/below, clamped to the 4s–8s range.
       RequestMismatchMitigationStrategy::PayMoreUpgrade => Ok(Some(match other {
         0..=4 => PlanDuration::Four,
@@ -330,10 +263,7 @@ fn plan_duration(
 }
 
 /// Extend-video also supports fal's 7s default in addition to 4/6/8.
-fn plan_extend_duration(
-  duration_seconds: Option<u16>,
-  strategy: RequestMismatchMitigationStrategy,
-) -> Result<Option<Veo3p1FastExtendVideoDuration>, ArtcraftRouterError> {
+fn plan_extend_duration(duration_seconds: Option<u16>, strategy: RequestMismatchMitigationStrategy) -> Result<Option<Veo3p1FastExtendVideoDuration>, ArtcraftRouterError> {
   use Veo3p1FastExtendVideoDuration as D;
   match duration_seconds {
     None => Ok(None),
@@ -342,24 +272,21 @@ fn plan_extend_duration(
     Some(7) => Ok(Some(D::SevenSeconds)),
     Some(8) => Ok(Some(D::EightSeconds)),
     Some(other) => match strategy {
-      RequestMismatchMitigationStrategy::ErrorOut => {
-        Err(unsupported("duration_seconds", &format!("{}", other)))
-      }
-      RequestMismatchMitigationStrategy::PayMoreUpgrade => {
-        Ok(Some(if other < 5 { D::FourSeconds } else if other == 5 { D::SixSeconds } else { D::EightSeconds }))
-      }
-      RequestMismatchMitigationStrategy::PayLessDowngrade => {
-        Ok(Some(if other <= 5 { D::FourSeconds } else { D::EightSeconds }))
-      }
+      RequestMismatchMitigationStrategy::ErrorOut => Err(unsupported("duration_seconds", &format!("{}", other))),
+      RequestMismatchMitigationStrategy::PayMoreUpgrade => Ok(Some(if other < 5 {
+        D::FourSeconds
+      } else if other == 5 {
+        D::SixSeconds
+      } else {
+        D::EightSeconds
+      })),
+      RequestMismatchMitigationStrategy::PayLessDowngrade => Ok(Some(if other <= 5 { D::FourSeconds } else { D::EightSeconds })),
     },
   }
 }
 
 fn unsupported(field: &'static str, value: &str) -> ArtcraftRouterError {
-  ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption {
-    field,
-    value: value.to_string(),
-  })
+  ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field, value: value.to_string() })
 }
 
 // The text-to-video endpoint has no `auto` aspect ratio; omit the field and
@@ -472,17 +399,12 @@ fn to_extend_aspect_ratio(a: PlanAspectRatio) -> Veo3p1FastExtendVideoAspectRati
 
 // Extend-video has no 4k tier; the nearest supported resolution in either
 // direction is 1080p.
-fn to_extend_resolution(
-  r: PlanResolution,
-  strategy: RequestMismatchMitigationStrategy,
-) -> Result<Veo3p1FastExtendVideoResolution, ArtcraftRouterError> {
+fn to_extend_resolution(r: PlanResolution, strategy: RequestMismatchMitigationStrategy) -> Result<Veo3p1FastExtendVideoResolution, ArtcraftRouterError> {
   match r {
     PlanResolution::SevenTwentyP => Ok(Veo3p1FastExtendVideoResolution::SevenTwentyP),
     PlanResolution::TenEightyP => Ok(Veo3p1FastExtendVideoResolution::TenEightyP),
     PlanResolution::FourK => match strategy {
-      RequestMismatchMitigationStrategy::ErrorOut => {
-        Err(unsupported("resolution", "Veo 3.1 Fast extend-video does not support 4k"))
-      }
+      RequestMismatchMitigationStrategy::ErrorOut => Err(unsupported("resolution", "Veo 3.1 Fast extend-video does not support 4k")),
       _ => Ok(Veo3p1FastExtendVideoResolution::TenEightyP),
     },
   }
@@ -550,7 +472,7 @@ mod tests {
       match build_fal_veo_3p1_fast(base_builder()).expect("build") {
         VideoGenerationDraftOrRequest::Request(VideoGenerationRequest::FalVeo3p1Fast(s)) => {
           assert!(matches!(s.mode, FalVeo3p1FastMode::TextToVideo(_)));
-        }
+        },
         _ => panic!("expected Request(FalVeo3p1Fast)"),
       }
     }
@@ -568,7 +490,7 @@ mod tests {
         FalVeo3p1FastMode::ExtendVideo(r) => {
           assert_eq!(r.video_url, REFERENCE_VIDEO_URL);
           assert!(matches!(r.duration, Some(Veo3p1FastExtendVideoDuration::SevenSeconds)));
-        }
+        },
         _ => panic!("expected extend"),
       }
     }
@@ -576,10 +498,7 @@ mod tests {
     #[test]
     fn extend_requires_exactly_one_video() {
       let mut b = base_builder();
-      b.reference_videos = Some(VideoListRef::Urls(vec![
-        REFERENCE_VIDEO_URL.to_string(),
-        "https://example.com/other.mp4".to_string(),
-      ]));
+      b.reference_videos = Some(VideoListRef::Urls(vec![REFERENCE_VIDEO_URL.to_string(), "https://example.com/other.mp4".to_string()]));
       assert!(build_fal_veo_3p1_fast_state(b).is_err());
     }
 
@@ -618,10 +537,7 @@ mod tests {
 
     #[test]
     fn extend_4k_maps_to_1080p_with_mitigation() {
-      for strategy in [
-        RequestMismatchMitigationStrategy::PayMoreUpgrade,
-        RequestMismatchMitigationStrategy::PayLessDowngrade,
-      ] {
+      for strategy in [RequestMismatchMitigationStrategy::PayMoreUpgrade, RequestMismatchMitigationStrategy::PayLessDowngrade] {
         let mut b = base_builder();
         b.reference_videos = Some(VideoListRef::Urls(vec![REFERENCE_VIDEO_URL.to_string()]));
         b.resolution = Some(RouterResolution::FourK);
@@ -629,7 +545,7 @@ mod tests {
         match unwrap_mode(b) {
           FalVeo3p1FastMode::ExtendVideo(r) => {
             assert!(matches!(r.resolution, Some(Veo3p1FastExtendVideoResolution::TenEightyP)));
-          }
+          },
           _ => panic!("expected extend"),
         }
       }
@@ -646,7 +562,7 @@ mod tests {
       match unwrap_mode(b) {
         FalVeo3p1FastMode::ReferenceToVideo(r) => {
           assert_eq!(r.image_urls, vec![REFERENCE_IMAGE_URL]);
-        }
+        },
         _ => panic!("expected reference"),
       }
     }
@@ -678,7 +594,7 @@ mod tests {
       match unwrap_mode(b) {
         FalVeo3p1FastMode::TextToVideo(r) => {
           assert!(matches!(r.duration, Some(Veo3p1FastTextToVideoDuration::FourSeconds)));
-        }
+        },
         _ => panic!("expected t2v"),
       }
     }
@@ -702,7 +618,7 @@ mod tests {
       match unwrap_mode(b) {
         FalVeo3p1FastMode::TextToVideo(r) => {
           assert!(matches!(r.resolution, Some(Veo3p1FastTextToVideoResolution::SevenTwentyP)));
-        }
+        },
         _ => panic!("expected t2v"),
       }
     }
@@ -714,7 +630,7 @@ mod tests {
       match unwrap_mode(b) {
         FalVeo3p1FastMode::TextToVideo(r) => {
           assert!(matches!(r.resolution, Some(Veo3p1FastTextToVideoResolution::FourK)));
-        }
+        },
         _ => panic!("expected t2v"),
       }
     }
@@ -755,12 +671,7 @@ mod tests {
   }
 
   fn base_builder() -> GenerateVideoRequestBuilder {
-    GenerateVideoRequestBuilder {
-      model: RouterVideoModel::Veo3p1Fast,
-      provider: RouterProvider::Fal,
-      prompt: Some("test".to_string()),
-      ..Default::default()
-    }
+    GenerateVideoRequestBuilder { model: RouterVideoModel::Veo3p1Fast, provider: RouterProvider::Fal, prompt: Some("test".to_string()), ..Default::default() }
   }
 
   fn unwrap_mode(b: GenerateVideoRequestBuilder) -> FalVeo3p1FastMode {

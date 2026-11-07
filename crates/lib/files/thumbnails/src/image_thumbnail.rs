@@ -14,24 +14,15 @@ const JPEG_QUALITY: u8 = 80;
 /// `max_dimension`, never upscaled), and write it as a JPEG.
 ///
 /// Blocking CPU + I/O — call from `spawn_blocking` in async contexts.
-pub fn generate_image_thumbnail<P: AsRef<Path>, Q: AsRef<Path>>(
-  source: P,
-  destination_jpg: Q,
-  max_dimension: u32,
-) -> Result<(), ThumbnailError> {
-  let decoded = images::image::open(source.as_ref())
-      .map_err(|err| ThumbnailError::Unsupported(format!("{}: {}", source.as_ref().display(), err)))?;
+pub fn generate_image_thumbnail<P: AsRef<Path>, Q: AsRef<Path>>(source: P, destination_jpg: Q, max_dimension: u32) -> Result<(), ThumbnailError> {
+  let decoded = images::image::open(source.as_ref()).map_err(|err| ThumbnailError::Unsupported(format!("{}: {}", source.as_ref().display(), err)))?;
   let thumbnail = downscale(&decoded, max_dimension);
   write_jpeg(&thumbnail, destination_jpg.as_ref())
 }
 
 /// Downscale only; small sources pass through at native size.
 pub(crate) fn downscale(decoded: &DynamicImage, max_dimension: u32) -> DynamicImage {
-  if decoded.width() <= max_dimension && decoded.height() <= max_dimension {
-    decoded.clone()
-  } else {
-    resize_preserving_aspect(decoded, max_dimension, max_dimension, false)
-  }
+  if decoded.width() <= max_dimension && decoded.height() <= max_dimension { decoded.clone() } else { resize_preserving_aspect(decoded, max_dimension, max_dimension, false) }
 }
 
 /// Write via a temp file + rename so a crash never leaves a half-written
@@ -41,8 +32,7 @@ pub(crate) fn write_jpeg(thumbnail: &DynamicImage, destination: &Path) -> Result
   {
     let file = File::create(&temp_path)?;
     let mut encoder = JpegEncoder::new_with_quality(BufWriter::new(file), JPEG_QUALITY);
-    encoder.encode_image(&thumbnail.to_rgb8())
-        .map_err(|err| ThumbnailError::Encode(err.to_string()))?;
+    encoder.encode_image(&thumbnail.to_rgb8()).map_err(|err| ThumbnailError::Encode(err.to_string()))?;
   }
   std::fs::rename(&temp_path, destination)?;
   Ok(())
@@ -71,9 +61,7 @@ mod tests {
   fn thumbnails_are_downscaled_and_written_atomically() {
     let dir = tempfile::tempdir().unwrap();
     let source = dir.path().join("source.png");
-    let wide = DynamicImage::ImageRgb8(RgbImage::from_fn(1024, 512, |x, _| {
-      images::image::Rgb([(x % 256) as u8, 0, 0])
-    }));
+    let wide = DynamicImage::ImageRgb8(RgbImage::from_fn(1024, 512, |x, _| images::image::Rgb([(x % 256) as u8, 0, 0])));
     wide.save(&source).unwrap();
 
     let destination = dir.path().join("thumb.jpg");

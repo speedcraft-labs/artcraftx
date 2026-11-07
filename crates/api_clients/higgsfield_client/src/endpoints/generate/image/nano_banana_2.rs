@@ -95,15 +95,7 @@ pub struct NanoBanana2Request {
 impl NanoBanana2Request {
   /// A text-to-image request with the web app's defaults (1 image, credits).
   pub fn text_to_image(prompt: impl Into<String>, aspect_ratio: NanoBananaAspectRatio, resolution: NanoBanana2Resolution) -> Self {
-    Self {
-      prompt: prompt.into(),
-      aspect_ratio,
-      resolution,
-      batch_size: ImageBatchSize::One,
-      reference_images: Vec::new(),
-      use_unlim: false,
-      maybe_dimensions: None,
-    }
+    Self { prompt: prompt.into(), aspect_ratio, resolution, batch_size: ImageBatchSize::One, reference_images: Vec::new(), use_unlim: false, maybe_dimensions: None }
   }
 
   /// Add reference images (image-to-image).
@@ -124,10 +116,7 @@ impl NanoBanana2Request {
       return Ok(dimensions);
     }
     ImageDimensions::for_aspect_ratio(&self.aspect_ratio.to_image_aspect_ratio(), &self.resolution.to_image_resolution())
-        .ok_or_else(|| HiggsfieldClientError::InvalidRequest(format!(
-          "can't derive dimensions for aspect ratio {} at {}; pass maybe_dimensions",
-          self.aspect_ratio.as_str(), self.resolution.as_str(),
-        )))
+      .ok_or_else(|| HiggsfieldClientError::InvalidRequest(format!("can't derive dimensions for aspect ratio {} at {}; pass maybe_dimensions", self.aspect_ratio.as_str(), self.resolution.as_str(),)))
   }
 
   fn to_body(&self) -> Result<NanoBanana2RequestBody, HiggsfieldClientError> {
@@ -205,8 +194,7 @@ mod tests {
   fn every_option_combination_derives_dimensions() {
     for ratio in NanoBananaAspectRatio::all() {
       for resolution in NanoBanana2Resolution::all() {
-        NanoBanana2Request::text_to_image("p", ratio, resolution).dimensions()
-            .unwrap_or_else(|err| panic!("{} @ {}: {err}", ratio.as_str(), resolution.as_str()));
+        NanoBanana2Request::text_to_image("p", ratio, resolution).dimensions().unwrap_or_else(|err| panic!("{} @ {}: {err}", ratio.as_str(), resolution.as_str()));
       }
     }
   }
@@ -215,7 +203,7 @@ mod tests {
   fn wire_body_with_reference_image_matches_captured_request() {
     // Captured from the web app 2026-08-31 (ids scrubbed).
     let request = NanoBanana2Request::text_to_image("a corgi on a bike", NanoBananaAspectRatio::Portrait3x4, NanoBanana2Resolution::OneK)
-        .with_reference_images(vec![MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png")]);
+      .with_reference_images(vec![MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png")]);
     let actual: Value = serde_json::to_value(request.to_body().unwrap()).unwrap();
     let expected: Value = serde_json::from_str(r#"{"params":{"prompt":"a corgi on a bike","medias":[{"role":"image","data":{"id":"00000000-0000-4000-8000-0000000000aa","type":"media_input","url":"https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png"}}],"aspect_ratio":"3:4","resolution":"1k","batch_size":1,"use_unlim":false,"width":896,"height":1200},"use_unlim":false}"#).unwrap();
     assert_eq!(actual, expected);
@@ -260,8 +248,7 @@ mod tests {
     let request = NanoBanana2Request::text_to_image("a corgi on a bike", NanoBananaAspectRatio::Portrait3x4, NanoBanana2Resolution::OneK);
     println!("\n===== request =====\n{:#?}", request);
 
-    let response = nano_banana_2(NanoBanana2Args { request, auth: &auth, host: &HiggsfieldHost::Higgsfield })
-        .await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let response = nano_banana_2(NanoBanana2Args { request, auth: &auth, host: &HiggsfieldHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
     println!("\n===== POST {PATH} =====\n{:#?}", response);
     let job_ids = response.job_ids();
     assert_eq!(response.first_job_set().unwrap().job_set_type, JobSetType::NanoBananaFlash);

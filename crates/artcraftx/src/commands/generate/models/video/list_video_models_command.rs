@@ -26,8 +26,5 @@ impl SerializeMarker for ListVideoModelsResponse {}
 #[tauri::command]
 pub async fn list_video_models_command() -> ResponseOrErrorMessage<ListVideoModelsResponse> {
   info!("list_video_models_command called");
-  Ok(ListVideoModelsResponse {
-    models: VIDEO_MODELS.clone(),
-    providers: VIDEO_PROVIDERS.clone(),
-  }.into())
+  Ok(ListVideoModelsResponse { models: VIDEO_MODELS.clone(), providers: VIDEO_PROVIDERS.clone() }.into())
 }

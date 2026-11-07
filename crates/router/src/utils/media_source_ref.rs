@@ -112,48 +112,25 @@ impl From<MeshRef> for MediaSourceRef {
 
 /// Turn one source into bytes: tokens resolve through `maybe_map` and
 /// download; URLs download; local paths read from disk; bytes pass through.
-pub async fn resolve_media_source_bytes(
-  source: MediaSourceRef,
-  maybe_map: Option<&HashMap<MediaFileToken, String>>,
-) -> Result<ResolvedMediaBytes, ArtcraftRouterError> {
+pub async fn resolve_media_source_bytes(source: MediaSourceRef, maybe_map: Option<&HashMap<MediaFileToken, String>>) -> Result<ResolvedMediaBytes, ArtcraftRouterError> {
   match source {
     MediaSourceRef::MediaFileToken(token) => {
       let url = resolve_media_token(maybe_map, &token)?;
       let bytes = download_file(&url).await?;
-      Ok(ResolvedMediaBytes {
-        bytes,
-        description: format!("media token {}", token.as_str()),
-        maybe_name_hint: Some(url),
-        maybe_source_url: None,
-      })
-    }
+      Ok(ResolvedMediaBytes { bytes, description: format!("media token {}", token.as_str()), maybe_name_hint: Some(url), maybe_source_url: None })
+    },
     MediaSourceRef::Url(url) => {
       let bytes = download_file(&url).await?;
-      Ok(ResolvedMediaBytes {
-        bytes,
-        description: format!("url {url}"),
-        maybe_name_hint: Some(url.clone()),
-        maybe_source_url: Some(url),
-      })
-    }
+      Ok(ResolvedMediaBytes { bytes, description: format!("url {url}"), maybe_name_hint: Some(url.clone()), maybe_source_url: Some(url) })
+    },
     MediaSourceRef::LocalPath(path) => {
       let bytes = read_local_file(&path).await?;
-      Ok(ResolvedMediaBytes {
-        bytes,
-        description: format!("local file {}", path.display()),
-        maybe_name_hint: Some(path.to_string_lossy().into_owned()),
-        maybe_source_url: None,
-      })
-    }
+      Ok(ResolvedMediaBytes { bytes, description: format!("local file {}", path.display()), maybe_name_hint: Some(path.to_string_lossy().into_owned()), maybe_source_url: None })
+    },
     MediaSourceRef::Bytes(media_bytes) => {
       let MediaBytes { bytes, maybe_file_name } = media_bytes;
-      Ok(ResolvedMediaBytes {
-        bytes,
-        description: "raw bytes".to_string(),
-        maybe_name_hint: maybe_file_name,
-        maybe_source_url: None,
-      })
-    }
+      Ok(ResolvedMediaBytes { bytes, description: "raw bytes".to_string(), maybe_name_hint: maybe_file_name, maybe_source_url: None })
+    },
   }
 }
 
@@ -162,9 +139,7 @@ pub async fn read_local_file(path: &Path) -> Result<Vec<u8>, ArtcraftRouterError
   if !path.is_file() {
     return Err(ArtcraftRouterError::Client(ClientError::LocalFileNotFound { path: path.to_path_buf() }));
   }
-  tokio::fs::read(path).await.map_err(|error| {
-    ArtcraftRouterError::Client(ClientError::LocalFileRead { path: path.to_path_buf(), error })
-  })
+  tokio::fs::read(path).await.map_err(|error| ArtcraftRouterError::Client(ClientError::LocalFileRead { path: path.to_path_buf(), error }))
 }
 
 /// The extension a name hint (URL, filesystem path, or bare file name)
@@ -176,20 +151,12 @@ pub fn extension_from_name_hint(name_hint: &str) -> Option<String> {
   Path::new(name_hint).extension()?.to_str().map(str::to_string)
 }
 
-pub fn resolve_media_token(
-  maybe_map: Option<&HashMap<MediaFileToken, String>>,
-  token: &MediaFileToken,
-) -> Result<String, ArtcraftRouterError> {
+pub fn resolve_media_token(maybe_map: Option<&HashMap<MediaFileToken, String>>, token: &MediaFileToken) -> Result<String, ArtcraftRouterError> {
   let map = maybe_map.ok_or(ArtcraftRouterError::Client(ClientError::MediaFileToUrlMapNotProvided))?;
-  map.get(token).cloned().ok_or_else(|| {
-    ArtcraftRouterError::Client(ClientError::MediaFileTokenNotFoundInMap { token: token.clone() })
-  })
+  map.get(token).cloned().ok_or_else(|| ArtcraftRouterError::Client(ClientError::MediaFileTokenNotFoundInMap { token: token.clone() }))
 }
 
-pub fn resolve_media_tokens(
-  maybe_map: Option<&HashMap<MediaFileToken, String>>,
-  tokens: &[MediaFileToken],
-) -> Result<Vec<String>, ArtcraftRouterError> {
+pub fn resolve_media_tokens(maybe_map: Option<&HashMap<MediaFileToken, String>>, tokens: &[MediaFileToken]) -> Result<Vec<String>, ArtcraftRouterError> {
   tokens.iter().map(|token| resolve_media_token(maybe_map, token)).collect()
 }
 
@@ -207,11 +174,7 @@ mod tests {
 
   #[test]
   fn lists_collapse_to_sources() {
-    let sources = MediaSourceRef::list_from_images(ImageListRef::Sources(vec![
-      ImageRef::Url("https://a.example/a.png".into()),
-      ImageRef::LocalPath(PathBuf::from("/tmp/b.png")),
-      ImageRef::Bytes(MediaBytes::new(vec![1])),
-    ]));
+    let sources = MediaSourceRef::list_from_images(ImageListRef::Sources(vec![ImageRef::Url("https://a.example/a.png".into()), ImageRef::LocalPath(PathBuf::from("/tmp/b.png")), ImageRef::Bytes(MediaBytes::new(vec![1]))]));
     assert_eq!(sources.len(), 3);
     assert!(matches!(sources[0], MediaSourceRef::Url(_)));
     assert!(matches!(sources[1], MediaSourceRef::LocalPath(_)));
@@ -226,10 +189,7 @@ mod tests {
 
   #[tokio::test]
   async fn bytes_pass_straight_through() {
-    let resolved = resolve_media_source_bytes(
-      MediaSourceRef::Bytes(MediaBytes::new(vec![9, 9]).with_file_name("a.png")),
-      None,
-    ).await.unwrap();
+    let resolved = resolve_media_source_bytes(MediaSourceRef::Bytes(MediaBytes::new(vec![9, 9]).with_file_name("a.png")), None).await.unwrap();
     assert_eq!(resolved.bytes, vec![9, 9]);
     assert_eq!(resolved.maybe_name_hint.as_deref(), Some("a.png"));
     assert!(resolved.maybe_source_url.is_none());

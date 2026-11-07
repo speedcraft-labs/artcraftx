@@ -18,14 +18,10 @@ pub struct StorytellerCredentialManager {
 }
 
 impl StorytellerCredentialManager {
-
   pub fn initialize_empty(app_data_root: &AppDataRoot) -> Self {
-    Self {
-      holder: StorytellerCredentialHolder::new(),
-      app_data_root: app_data_root.clone(),
-    }
+    Self { holder: StorytellerCredentialHolder::new(), app_data_root: app_data_root.clone() }
   }
-  
+
   pub fn initialize_from_disk_infallible(app_data_root: &AppDataRoot) -> Self {
     let holder = StorytellerCredentialHolder::new();
 
@@ -33,13 +29,10 @@ impl StorytellerCredentialManager {
       Err(err) => warn!("Failed to read credentials from disk: {:?}", err),
       Ok(creds) => {
         holder.set_credentials(&creds).expect("Failed to set credentials");
-      }
+      },
     }
 
-    Self {
-      holder,
-      app_data_root: app_data_root.clone(),
-    }
+    Self { holder, app_data_root: app_data_root.clone() }
   }
 
   pub fn set_credentials(&self, creds: &StorytellerCredentialSet) -> AnyhowResult<()> {
@@ -65,7 +58,7 @@ impl StorytellerCredentialManager {
           warn!("Could not cache credentials from credentials dir: {:?}", err);
         }
         Ok(Some(creds))
-      }
+      },
       None => Ok(None),
     }
   }
@@ -73,20 +66,13 @@ impl StorytellerCredentialManager {
   /// Load session cookies from the first `artcraft` (production) credential
   /// in the app's credentials directory, if any.
   fn try_load_from_credentials_dir(&self) -> Option<StorytellerCredentialSet> {
-    let credentials = self.app_data_root
-        .credentials_dir()
-        .load_credentials()
-        .ok()?;
+    let credentials = self.app_data_root.credentials_dir().load_credentials().ok()?;
 
-    let credential = credentials.into_iter()
-        .find(|c| c.service == GenerationSource::Artcraft)?;
+    let credential = credentials.into_iter().find(|c| c.service == GenerationSource::Artcraft)?;
 
     let cookie = credential.cookies()?;
 
-    StorytellerCredentialSet::parse_multi_cookie_header(&cookie.cookie_header())
-        .ok()
-        .flatten()
-        .filter(|creds| !creds.is_empty())
+    StorytellerCredentialSet::parse_multi_cookie_header(&cookie.cookie_header()).ok().flatten().filter(|creds| !creds.is_empty())
   }
 
   pub fn get_credentials_required(&self) -> AnyhowResult<StorytellerCredentialSet> {
@@ -136,11 +122,7 @@ fn persist_session_to_disk(session: &StorytellerSessionCookie, app_data_root: &A
   let creds_dir = app_data_root.credentials_dir();
   let filename = creds_dir.get_storyteller_session_cookie_file_path();
 
-  let mut file = OpenOptions::new()
-      .create(true)
-      .write(true)
-      .truncate(true)
-      .open(filename)?;
+  let mut file = OpenOptions::new().create(true).write(true).truncate(true).open(filename)?;
 
   file.write_all(session.as_bytes())?;
   file.flush()?;
@@ -152,11 +134,7 @@ fn persist_avt_to_disk(avt: &StorytellerAvtCookie, app_data_root: &AppDataRoot) 
   let creds_dir = app_data_root.credentials_dir();
   let filename = creds_dir.get_storyteller_avt_cookie_file_path();
 
-  let mut file = OpenOptions::new()
-      .create(true)
-      .write(true)
-      .truncate(true)
-      .open(filename)?;
+  let mut file = OpenOptions::new().create(true).write(true).truncate(true).open(filename)?;
 
   file.write_all(avt.as_bytes())?;
   file.flush()?;

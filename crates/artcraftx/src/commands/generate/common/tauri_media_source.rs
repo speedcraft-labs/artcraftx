@@ -26,8 +26,12 @@ use crate::commands::generate::generate_error::{BadInputReason, GenerateError};
 #[derive(Deserialize, Clone)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum TauriMediaSource {
-  MediaFileToken { token: MediaFileToken },
-  LocalPath { path: PathBuf },
+  MediaFileToken {
+    token: MediaFileToken,
+  },
+  LocalPath {
+    path: PathBuf,
+  },
   Bytes {
     bytes: Vec<u8>,
     #[serde(default)]
@@ -48,14 +52,14 @@ impl TauriMediaSource {
         } else {
           Err(GenerateError::BadInput(BadInputReason::LocalMediaFileNotFound { path: path.clone() }))
         }
-      }
+      },
       Self::Bytes { bytes, .. } => {
         if bytes.is_empty() {
           Err(GenerateError::BadInput(BadInputReason::EmptyMediaBytes))
         } else {
           Ok(())
         }
-      }
+      },
     }
   }
 
@@ -97,29 +101,20 @@ impl Debug for TauriMediaSource {
     match self {
       Self::MediaFileToken { token } => f.debug_struct("MediaFileToken").field("token", token).finish(),
       Self::LocalPath { path } => f.debug_struct("LocalPath").field("path", path).finish(),
-      Self::Bytes { bytes, file_name } => f.debug_struct("Bytes")
-          .field("bytes", &format_args!("<{} bytes>", bytes.len()))
-          .field("file_name", file_name)
-          .finish(),
+      Self::Bytes { bytes, file_name } => f.debug_struct("Bytes").field("bytes", &format_args!("<{} bytes>", bytes.len())).field("file_name", file_name).finish(),
     }
   }
 }
 
 /// A source field wins over its legacy token twin; legacy tokens are folded
 /// into sources so handlers only ever see [`TauriMediaSource`].
-pub fn merge_source_with_legacy_token(
-  maybe_source: Option<TauriMediaSource>,
-  maybe_legacy_token: Option<MediaFileToken>,
-) -> Option<TauriMediaSource> {
+pub fn merge_source_with_legacy_token(maybe_source: Option<TauriMediaSource>, maybe_legacy_token: Option<MediaFileToken>) -> Option<TauriMediaSource> {
   maybe_source.or_else(|| maybe_legacy_token.map(|token| TauriMediaSource::MediaFileToken { token }))
 }
 
 /// List twin of [`merge_source_with_legacy_token`]. An empty legacy list is
 /// treated like an absent one.
-pub fn merge_sources_with_legacy_tokens(
-  maybe_sources: Option<Vec<TauriMediaSource>>,
-  maybe_legacy_tokens: Option<Vec<MediaFileToken>>,
-) -> Option<Vec<TauriMediaSource>> {
+pub fn merge_sources_with_legacy_tokens(maybe_sources: Option<Vec<TauriMediaSource>>, maybe_legacy_tokens: Option<Vec<MediaFileToken>>) -> Option<Vec<TauriMediaSource>> {
   maybe_sources.or_else(|| {
     let tokens = maybe_legacy_tokens?;
     if tokens.is_empty() {
@@ -175,14 +170,8 @@ mod tests {
   fn validation() {
     assert!(TauriMediaSource::MediaFileToken { token: MediaFileToken::new_from_str("m_a") }.validate().is_ok());
     assert!(TauriMediaSource::Bytes { bytes: vec![1], file_name: None }.validate().is_ok());
-    assert!(matches!(
-      TauriMediaSource::Bytes { bytes: vec![], file_name: None }.validate(),
-      Err(GenerateError::BadInput(BadInputReason::EmptyMediaBytes)),
-    ));
-    assert!(matches!(
-      TauriMediaSource::LocalPath { path: PathBuf::from("/definitely/not/real.png") }.validate(),
-      Err(GenerateError::BadInput(BadInputReason::LocalMediaFileNotFound { .. })),
-    ));
+    assert!(matches!(TauriMediaSource::Bytes { bytes: vec![], file_name: None }.validate(), Err(GenerateError::BadInput(BadInputReason::EmptyMediaBytes)),));
+    assert!(matches!(TauriMediaSource::LocalPath { path: PathBuf::from("/definitely/not/real.png") }.validate(), Err(GenerateError::BadInput(BadInputReason::LocalMediaFileNotFound { .. })),));
   }
 
   #[test]
@@ -192,10 +181,7 @@ mod tests {
     assert!(matches!(merged, Some(TauriMediaSource::MediaFileToken { .. })));
 
     // A source field wins over its legacy twin.
-    let merged = merge_source_with_legacy_token(
-      Some(TauriMediaSource::LocalPath { path: PathBuf::from("/tmp/a.png") }),
-      Some(token.clone()),
-    );
+    let merged = merge_source_with_legacy_token(Some(TauriMediaSource::LocalPath { path: PathBuf::from("/tmp/a.png") }), Some(token.clone()));
     assert!(matches!(merged, Some(TauriMediaSource::LocalPath { .. })));
 
     assert!(merge_sources_with_legacy_tokens(None, Some(vec![])).is_none());

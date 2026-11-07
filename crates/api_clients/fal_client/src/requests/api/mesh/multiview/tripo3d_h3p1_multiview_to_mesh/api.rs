@@ -1,11 +1,6 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::mesh::image::tripo3d_h3p1_image_to_mesh::api::{
-  Tripo3dH3p1ImageGeometryQuality, Tripo3dH3p1ImageTextureQuality, Tripo3dH3p1Orientation,
-  Tripo3dH3p1TextureAlignment,
-};
-use crate::requests::api::mesh::multiview::tripo3d_h3p1_multiview_to_mesh::raw_request::{
-  Tripo3dH3p1MultiviewToMeshInput, Tripo3dH3p1MultiviewToMeshOutput,
-};
+use crate::requests::api::mesh::image::tripo3d_h3p1_image_to_mesh::api::{Tripo3dH3p1ImageGeometryQuality, Tripo3dH3p1ImageTextureQuality, Tripo3dH3p1Orientation, Tripo3dH3p1TextureAlignment};
+use crate::requests::api::mesh::multiview::tripo3d_h3p1_multiview_to_mesh::raw_request::{Tripo3dH3p1MultiviewToMeshInput, Tripo3dH3p1MultiviewToMeshOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 /// Tripo3D H3.1 multiview-to-3D: reconstructs a mesh from 2-4 views of the
@@ -87,10 +82,7 @@ mod tests {
 
   fn base_request() -> Tripo3dH3p1MultiviewToMeshRequest {
     Tripo3dH3p1MultiviewToMeshRequest {
-      image_urls: vec![
-        "https://example.com/front.jpg".to_string(),
-        "https://example.com/left.jpg".to_string(),
-      ],
+      image_urls: vec!["https://example.com/front.jpg".to_string(), "https://example.com/left.jpg".to_string()],
       face_limit: None,
       texture: None,
       pbr: None,
@@ -110,13 +102,7 @@ mod tests {
   async fn test_multiview_to_mesh_webhook() -> AnyhowResult<()> {
     let secret = read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt")?;
     let api_key = FalApiKey::from_str(&secret);
-    let request = Tripo3dH3p1MultiviewToMeshRequest {
-      image_urls: vec![
-        ERNEST_SCARED_STUPID_IMAGE_URL.to_string(),
-        JUNO_AT_LAKE_IMAGE_URL.to_string(),
-      ],
-      ..base_request()
-    };
+    let request = Tripo3dH3p1MultiviewToMeshRequest { image_urls: vec![ERNEST_SCARED_STUPID_IMAGE_URL.to_string(), JUNO_AT_LAKE_IMAGE_URL.to_string()], ..base_request() };
     let result = request.send_webhook_request(&api_key, "https://example.com/webhook").await?;
     println!("Webhook result: {:?}", result);
     assert!(result.request_id.is_some() || result.gateway_request_id.is_some());
@@ -128,13 +114,7 @@ mod tests {
   async fn test_multiview_to_mesh_queue() -> AnyhowResult<()> {
     let secret = read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt")?;
     let api_key = FalApiKey::from_str(&secret);
-    let request = Tripo3dH3p1MultiviewToMeshRequest {
-      image_urls: vec![
-        ERNEST_SCARED_STUPID_IMAGE_URL.to_string(),
-        JUNO_AT_LAKE_IMAGE_URL.to_string(),
-      ],
-      ..base_request()
-    };
+    let request = Tripo3dH3p1MultiviewToMeshRequest { image_urls: vec![ERNEST_SCARED_STUPID_IMAGE_URL.to_string(), JUNO_AT_LAKE_IMAGE_URL.to_string()], ..base_request() };
     let result = request.send_queue_request(&api_key).await?;
     println!("Queue result — request_id: {}", result.request_id);
     assert!(!result.request_id.is_empty());
@@ -145,11 +125,7 @@ mod tests {
 
   #[test]
   fn raw_request_maps_core_fields() {
-    let request = Tripo3dH3p1MultiviewToMeshRequest {
-      texture_quality: Some(Tripo3dH3p1ImageTextureQuality::Detailed),
-      quad: Some(true),
-      ..base_request()
-    };
+    let request = Tripo3dH3p1MultiviewToMeshRequest { texture_quality: Some(Tripo3dH3p1ImageTextureQuality::Detailed), quad: Some(true), ..base_request() };
     let json = serde_json::to_value(request.to_raw_request().unwrap()).unwrap();
     assert_eq!(
       json,

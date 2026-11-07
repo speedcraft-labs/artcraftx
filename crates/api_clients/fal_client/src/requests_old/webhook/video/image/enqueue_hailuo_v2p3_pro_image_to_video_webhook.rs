@@ -29,13 +29,9 @@ impl FalRequestCostCalculator for EnqueueHailuoV2p3ProImageToVideoRequest {
   }
 }
 
-
 /// Hailuo 2.3 Pro Image-to-Video
 /// https://fal.ai/models/fal-ai/minimax/hailuo-2.3/pro/image-to-video
-pub async fn enqueue_hailuo_v2p3_pro_image_to_video_webhook<R: IntoUrl>(
-  args: EnqueueHailuoV2p3ProImageToVideoArgs<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
-
+pub async fn enqueue_hailuo_v2p3_pro_image_to_video_webhook<R: IntoUrl>(args: EnqueueHailuoV2p3ProImageToVideoArgs<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
   let prompt_optimizer = req.prompt_optimizer.unwrap_or(true);
 
@@ -46,10 +42,7 @@ pub async fn enqueue_hailuo_v2p3_pro_image_to_video_webhook<R: IntoUrl>(
     prompt_optimizer: Some(prompt_optimizer),
   };
 
-  let result = hailuo_v2p3_pro_image_to_video(request)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await;
+  let result = hailuo_v2p3_pro_image_to_video(request).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await;
 
   result.map_err(|err| classify_fal_error(err))
 }

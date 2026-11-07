@@ -18,13 +18,8 @@ impl ArtcraftGrokImagineVideo1p5RequestState {
     // allow image-less states so the cost path can quote a request the user
     // is still composing. Bouncing here costs nothing and avoids an upstream
     // call we know will fail.
-    if self.request.start_frame_image_media_token.is_none()
-      && self.request.reference_image_media_tokens.as_ref().map_or(true, |v| v.is_empty())
-    {
-      return Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption {
-        field: "image_inputs",
-        value: "text-to-video isn't supported by grok-imagine-video-1.5; supply a start_frame or at least one reference image".to_string(),
-      }));
+    if self.request.start_frame_image_media_token.is_none() && self.request.reference_image_media_tokens.as_ref().map_or(true, |v| v.is_empty()) {
+      return Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "image_inputs", value: "text-to-video isn't supported by grok-imagine-video-1.5; supply a start_frame or at least one reference image".to_string() }));
     }
 
     send_artcraft_omni_video_request(&self.request, client).await
@@ -68,16 +63,13 @@ mod tests {
 
     // The guard fires before the client is used, so an unroutable localhost
     // client with empty credentials proves no network call happens.
-    let client = RouterArtcraftClient::new(
-      ApiHost::Localhost { port: 1 },
-      StorytellerCredentialSet::empty(),
-    );
+    let client = RouterArtcraftClient::new(ApiHost::Localhost { port: 1 }, StorytellerCredentialSet::empty());
 
     let err = state.send(&client).await.expect_err("image-less send should be rejected");
     match err {
       ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field, .. }) => {
         assert_eq!(field, "image_inputs");
-      }
+      },
       other => panic!("expected Client(ModelDoesNotSupportOption), got {:?}", other),
     }
   }

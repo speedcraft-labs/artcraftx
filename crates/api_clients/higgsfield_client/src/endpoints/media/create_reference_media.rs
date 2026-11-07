@@ -68,11 +68,7 @@ mod tests {
     setup_test_logging();
 
     let auth = load_higgsfield_test_auth().await?;
-    let slot = create_reference_media(CreateReferenceMediaArgs {
-      request: CreateReferenceMediaRequest::new(MediaMimeType::ImagePng),
-      auth: &auth,
-      host: &HiggsfieldHost::Higgsfield,
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let slot = create_reference_media(CreateReferenceMediaArgs { request: CreateReferenceMediaRequest::new(MediaMimeType::ImagePng), auth: &auth, host: &HiggsfieldHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
     println!("Allocated media slot {} at {} (content_type {})", slot.id, slot.url, slot.content_type);
     assert!(slot.upload_url.starts_with("https://"));

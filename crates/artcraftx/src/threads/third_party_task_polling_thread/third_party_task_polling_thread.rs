@@ -12,9 +12,7 @@ use crate::services::storyteller::state::storyteller_credential_manager::Storyte
 use core_types::enums::generation_source::GenerationSource;
 use sqlite_identifiers::enums::task_type::TaskType;
 use log::{error, info, warn};
-use sqlite_database::queries::read::list_non_artcraft_pending_tasks::{
-  list_non_artcraft_pending_tasks, ListNonArtcraftPendingTasksArgs,
-};
+use sqlite_database::queries::read::list_non_artcraft_pending_tasks::{list_non_artcraft_pending_tasks, ListNonArtcraftPendingTasksArgs};
 use sqlite_database::queries::task::Task;
 use std::time::Duration;
 use tauri::AppHandle;
@@ -39,17 +37,7 @@ pub async fn third_party_task_polling_thread(
   let mut higgsfield_sessions = HiggsfieldPollSessions::new();
 
   loop {
-    let result = poll_iteration(
-      &app_handle,
-      &app_data_root,
-      &app_preferences,
-      &task_database,
-      &storyteller_creds_manager,
-      &grok_websockets,
-      &mut grok_image_collector,
-      &mut higgsfield_sessions,
-      &mut has_ever_seen_third_party_jobs,
-    ).await;
+    let result = poll_iteration(&app_handle, &app_data_root, &app_preferences, &task_database, &storyteller_creds_manager, &grok_websockets, &mut grok_image_collector, &mut higgsfield_sessions, &mut has_ever_seen_third_party_jobs).await;
 
     if let Err(err) = result {
       error!("[ThirdPartyPolling] Error in polling loop: {:?}", err);
@@ -69,79 +57,41 @@ async fn poll_iteration(
   higgsfield_sessions: &mut HiggsfieldPollSessions,
   has_ever_seen_third_party_jobs: &mut bool,
 ) -> Result<(), PollError> {
-  let task_list = list_non_artcraft_pending_tasks(ListNonArtcraftPendingTasksArgs {
-    db: task_database.get_connection(),
-    task_statuses: &TASK_DATABASE_PENDING_STATUSES,
-  }).await?;
+  let task_list = list_non_artcraft_pending_tasks(ListNonArtcraftPendingTasksArgs { db: task_database.get_connection(), task_statuses: &TASK_DATABASE_PENDING_STATUSES }).await?;
 
   let tasks = task_list.tasks;
 
   if tasks.is_empty() {
-    let sleep_duration = if *has_ever_seen_third_party_jobs {
-      SLEEP_THIRD_PARTY_JOBS_SEEN
-    } else {
-      SLEEP_NO_THIRD_PARTY_JOBS_SEEN
-    };
+    let sleep_duration = if *has_ever_seen_third_party_jobs { SLEEP_THIRD_PARTY_JOBS_SEEN } else { SLEEP_NO_THIRD_PARTY_JOBS_SEEN };
     tokio::time::sleep(sleep_duration).await;
     return Ok(());
   }
 
   *has_ever_seen_third_party_jobs = true;
 
-  let fal_tasks: Vec<&Task> = tasks.iter()
-    .filter(|t| t.provider == GenerationSource::Fal)
-    .collect();
+  let fal_tasks: Vec<&Task> = tasks.iter().filter(|t| t.provider == GenerationSource::Fal).collect();
 
   // First-party Grok Imagine images (websocket results; see handlers/grok).
-  let grok_image_tasks: Vec<&Task> = tasks.iter()
-    .filter(|t| t.provider == GenerationSource::Grok && t.task_type == TaskType::ImageGeneration)
-    .collect();
+  let grok_image_tasks: Vec<&Task> = tasks.iter().filter(|t| t.provider == GenerationSource::Grok && t.task_type == TaskType::ImageGeneration).collect();
 
   // First-party Higgsfield images and videos (see handlers/higgsfield).
-  let higgsfield_tasks: Vec<&Task> = tasks.iter()
-    .filter(|t| t.provider == GenerationSource::Higgsfield)
-    .collect();
+  let higgsfield_tasks: Vec<&Task> = tasks.iter().filter(|t| t.provider == GenerationSource::Higgsfield).collect();
 
-  let unhandled_tasks: Vec<&Task> = tasks.iter()
-    .filter(|t| t.provider != GenerationSource::Fal)
-    .filter(|t| t.provider != GenerationSource::Higgsfield)
-    .filter(|t| !(t.provider == GenerationSource::Grok && t.task_type == TaskType::ImageGeneration))
-    .collect();
+  let unhandled_tasks: Vec<&Task> =
+    tasks.iter().filter(|t| t.provider != GenerationSource::Fal).filter(|t| t.provider != GenerationSource::Higgsfield).filter(|t| !(t.provider == GenerationSource::Grok && t.task_type == TaskType::ImageGeneration)).collect();
 
   for task in &unhandled_tasks {
-    warn!(
-      "[ThirdPartyPolling] Skipping unhandled task: id={}, provider={:?}, type={:?}",
-      task.id.as_str(),
-      task.provider,
-      task.task_type,
-    );
+    warn!("[ThirdPartyPolling] Skipping unhandled task: id={}, provider={:?}, type={:?}", task.id.as_str(), task.provider, task.task_type,);
   }
 
   if !grok_image_tasks.is_empty() {
     info!("[ThirdPartyPolling] {} Grok image job(s) pending", grok_image_tasks.len());
-    poll_grok_image_tasks(
-      app_handle,
-      app_data_root,
-      app_preferences,
-      task_database,
-      storyteller_creds_manager,
-      grok_websockets,
-      grok_image_collector,
-      &grok_image_tasks,
-    ).await;
+    poll_grok_image_tasks(app_handle, app_data_root, app_preferences, task_database, storyteller_creds_manager, grok_websockets, grok_image_collector, &grok_image_tasks).await;
   }
 
   if !higgsfield_tasks.is_empty() {
     info!("[ThirdPartyPolling] {} Higgsfield job(s) pending", higgsfield_tasks.len());
-    poll_higgsfield_tasks(
-      app_handle,
-      app_data_root,
-      app_preferences,
-      task_database,
-      storyteller_creds_manager,
-      higgsfield_sessions,
-      &higgsfield_tasks,
-    ).await;
+    poll_higgsfield_tasks(app_handle, app_data_root, app_preferences, task_database, storyteller_creds_manager, higgsfield_sessions, &higgsfield_tasks).await;
   }
 
   if fal_tasks.is_empty() {
@@ -154,14 +104,7 @@ async fn poll_iteration(
 
   info!("[ThirdPartyPolling] {} FAL job(s) ready to check", fal_tasks.len());
 
-  poll_fal_tasks(
-    app_handle,
-    app_data_root,
-    app_preferences,
-    task_database,
-    storyteller_creds_manager,
-    &fal_tasks,
-  ).await;
+  poll_fal_tasks(app_handle, app_data_root, app_preferences, task_database, storyteller_creds_manager, &fal_tasks).await;
 
   tokio::time::sleep(SLEEP_BETWEEN_FAL_POLLS).await;
 

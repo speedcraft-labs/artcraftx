@@ -69,16 +69,14 @@ impl FalRequestCostCalculator for EnqueueSeedance1p5ProImageToVideoRequest {
     let audio = self.generate_audio.unwrap_or(true);
     let dollars_per_million_tokens = if audio { 2.4 } else { 1.2 };
 
-    if resolution == EnqueueSeedance1p5ProImageToVideoResolution::SevenTwentyP
-        && duration == EnqueueSeedance1p5ProImageToVideoDuration::FiveSeconds
-    {
+    if resolution == EnqueueSeedance1p5ProImageToVideoResolution::SevenTwentyP && duration == EnqueueSeedance1p5ProImageToVideoDuration::FiveSeconds {
       return if audio { 26 } else { 13 };
     }
 
     // TODO: Only correct for some aspect ratios for now.
     let (width, height) = match resolution {
       EnqueueSeedance1p5ProImageToVideoResolution::FourEightyP => (640u32, 480u32), // NB: Only for 4:3 !
-      EnqueueSeedance1p5ProImageToVideoResolution::SevenTwentyP => (1280, 720), // NB: Only for 16:9 !
+      EnqueueSeedance1p5ProImageToVideoResolution::SevenTwentyP => (1280, 720),     // NB: Only for 16:9 !
       EnqueueSeedance1p5ProImageToVideoResolution::TenEightyP => (1920, 1080),
     };
 
@@ -109,45 +107,45 @@ impl FalRequestCostCalculator for EnqueueSeedance1p5ProImageToVideoRequest {
 
 /// Seedance 1.5 Pro Image-to-Video
 /// https://fal.ai/models/fal-ai/bytedance/seedance/v1.5/pro/image-to-video
-pub async fn enqueue_seedance_1p5_pro_image_to_video_webhook<R: IntoUrl>(
-  args: EnqueueSeedance1p5ProImageToVideoArgs<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
-
+pub async fn enqueue_seedance_1p5_pro_image_to_video_webhook<R: IntoUrl>(args: EnqueueSeedance1p5ProImageToVideoArgs<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
 
-  let duration = req.duration
-      .map(|d| match d {
-        EnqueueSeedance1p5ProImageToVideoDuration::FourSeconds => "4",
-        EnqueueSeedance1p5ProImageToVideoDuration::FiveSeconds => "5",
-        EnqueueSeedance1p5ProImageToVideoDuration::SixSeconds => "6",
-        EnqueueSeedance1p5ProImageToVideoDuration::SevenSeconds => "7",
-        EnqueueSeedance1p5ProImageToVideoDuration::EightSeconds => "8",
-        EnqueueSeedance1p5ProImageToVideoDuration::NineSeconds => "9",
-        EnqueueSeedance1p5ProImageToVideoDuration::TenSeconds => "10",
-        EnqueueSeedance1p5ProImageToVideoDuration::ElevenSeconds => "11",
-        EnqueueSeedance1p5ProImageToVideoDuration::TwelveSeconds => "12",
-      })
-      .map(|d| d.to_string());
+  let duration = req
+    .duration
+    .map(|d| match d {
+      EnqueueSeedance1p5ProImageToVideoDuration::FourSeconds => "4",
+      EnqueueSeedance1p5ProImageToVideoDuration::FiveSeconds => "5",
+      EnqueueSeedance1p5ProImageToVideoDuration::SixSeconds => "6",
+      EnqueueSeedance1p5ProImageToVideoDuration::SevenSeconds => "7",
+      EnqueueSeedance1p5ProImageToVideoDuration::EightSeconds => "8",
+      EnqueueSeedance1p5ProImageToVideoDuration::NineSeconds => "9",
+      EnqueueSeedance1p5ProImageToVideoDuration::TenSeconds => "10",
+      EnqueueSeedance1p5ProImageToVideoDuration::ElevenSeconds => "11",
+      EnqueueSeedance1p5ProImageToVideoDuration::TwelveSeconds => "12",
+    })
+    .map(|d| d.to_string());
 
-  let resolution = req.resolution
-      .map(|r| match r {
-        EnqueueSeedance1p5ProImageToVideoResolution::FourEightyP => "480p",
-        EnqueueSeedance1p5ProImageToVideoResolution::SevenTwentyP => "720p",
-        EnqueueSeedance1p5ProImageToVideoResolution::TenEightyP => "1080p",
-      })
-      .map(|r| r.to_string());
+  let resolution = req
+    .resolution
+    .map(|r| match r {
+      EnqueueSeedance1p5ProImageToVideoResolution::FourEightyP => "480p",
+      EnqueueSeedance1p5ProImageToVideoResolution::SevenTwentyP => "720p",
+      EnqueueSeedance1p5ProImageToVideoResolution::TenEightyP => "1080p",
+    })
+    .map(|r| r.to_string());
 
-  let aspect_ratio = req.aspect_ratio
-      .map(|ar| match ar {
-        EnqueueSeedance1p5ProImageToVideoAspectRatio::TwentyOneByNine => "21:9",
-        EnqueueSeedance1p5ProImageToVideoAspectRatio::SixteenByNine => "16:9",
-        EnqueueSeedance1p5ProImageToVideoAspectRatio::FourByThree => "4:3",
-        EnqueueSeedance1p5ProImageToVideoAspectRatio::Square => "1:1",
-        EnqueueSeedance1p5ProImageToVideoAspectRatio::ThreeByFour => "3:4",
-        EnqueueSeedance1p5ProImageToVideoAspectRatio::NineBySixteen => "9:16",
-        EnqueueSeedance1p5ProImageToVideoAspectRatio::Auto => "auto",
-      })
-      .map(|ar| ar.to_string());
+  let aspect_ratio = req
+    .aspect_ratio
+    .map(|ar| match ar {
+      EnqueueSeedance1p5ProImageToVideoAspectRatio::TwentyOneByNine => "21:9",
+      EnqueueSeedance1p5ProImageToVideoAspectRatio::SixteenByNine => "16:9",
+      EnqueueSeedance1p5ProImageToVideoAspectRatio::FourByThree => "4:3",
+      EnqueueSeedance1p5ProImageToVideoAspectRatio::Square => "1:1",
+      EnqueueSeedance1p5ProImageToVideoAspectRatio::ThreeByFour => "3:4",
+      EnqueueSeedance1p5ProImageToVideoAspectRatio::NineBySixteen => "9:16",
+      EnqueueSeedance1p5ProImageToVideoAspectRatio::Auto => "auto",
+    })
+    .map(|ar| ar.to_string());
 
   let request = Seedance1p5ProImageToVideoInput {
     prompt: req.prompt,
@@ -162,10 +160,7 @@ pub async fn enqueue_seedance_1p5_pro_image_to_video_webhook<R: IntoUrl>(
     generate_audio: Some(req.generate_audio.unwrap_or(true)),
   };
 
-  let result = seedance_1p5_pro_image_to_video(request)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await;
+  let result = seedance_1p5_pro_image_to_video(request).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await;
 
   result.map_err(|err| classify_fal_error(err))
 }

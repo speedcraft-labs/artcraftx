@@ -23,22 +23,12 @@ pub struct ArtcraftMidjourney7CostState {
 
 impl ArtcraftMidjourney7CostState {
   pub fn from_request(request: &ArtcraftMidjourney7RequestState) -> Self {
-    Self {
-      num_images: request.request.image_batch_count.unwrap_or(1),
-    }
+    Self { num_images: request.request.image_batch_count.unwrap_or(1) }
   }
 
   pub fn estimate_cost(&self) -> ImageGenerationCostEstimate {
     let cost_in_usd_cents = midjourney_cost_for_batch(self.num_images);
-    ImageGenerationCostEstimate {
-      cost_in_credits: Some(cost_in_usd_cents),
-      cost_in_usd_cents: Some(cost_in_usd_cents),
-      is_free: false,
-      is_unlimited: false,
-      is_rate_limited: false,
-      has_watermark: false,
-      failures_are_refunded: None,
-    }
+    ImageGenerationCostEstimate { cost_in_credits: Some(cost_in_usd_cents), cost_in_usd_cents: Some(cost_in_usd_cents), is_free: false, is_unlimited: false, is_rate_limited: false, has_watermark: false, failures_are_refunded: None }
   }
 }
 
@@ -108,24 +98,31 @@ mod tests {
   // ── Spot checks: each supported batch size ──
 
   #[test]
-  fn one_image_is_six_cents() { assert_eq!(cost_cents(1), 6); }
+  fn one_image_is_six_cents() {
+    assert_eq!(cost_cents(1), 6);
+  }
 
   #[test]
-  fn two_images_is_twelve_cents() { assert_eq!(cost_cents(2), 12); }
+  fn two_images_is_twelve_cents() {
+    assert_eq!(cost_cents(2), 12);
+  }
 
   #[test]
-  fn three_images_is_nineteen_cents() { assert_eq!(cost_cents(3), 19); }
+  fn three_images_is_nineteen_cents() {
+    assert_eq!(cost_cents(3), 19);
+  }
 
   #[test]
-  fn four_images_is_twentyfive_cents() { assert_eq!(cost_cents(4), 25); }
+  fn four_images_is_twentyfive_cents() {
+    assert_eq!(cost_cents(4), 25);
+  }
 
   // ── Credits track USD cents exactly (1 credit = 1 cent) ──
 
   #[test]
   fn credits_equal_usd_cents() {
     for batch in 1..=4u16 {
-      assert_eq!(cost_credits(batch), cost_cents(batch),
-        "credits should equal usd cents at batch {}", batch);
+      assert_eq!(cost_credits(batch), cost_cents(batch), "credits should equal usd cents at batch {}", batch);
     }
   }
 

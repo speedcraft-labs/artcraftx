@@ -68,7 +68,7 @@ mod tests {
       (ApiClientAudioModel::SunoRemix, "suno_remix"),
       (ApiClientAudioModel::SunoSounds, "suno_sounds"),
       (ApiClientAudioModel::SunoSample, "suno_sample"),
-      (ApiClientAudioModel::SeedAudio1p0, "seed_audio_1p0")
+      (ApiClientAudioModel::SeedAudio1p0, "seed_audio_1p0"),
     ];
     for (variant, wire) in all {
       let json = format!("\"{}\"", wire);

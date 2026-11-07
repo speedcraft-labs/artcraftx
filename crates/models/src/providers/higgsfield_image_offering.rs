@@ -60,21 +60,10 @@ const SEEDREAM_ASPECT_RATIOS: &[CommonAspectRatio] = &[
 ];
 
 /// Every image model Higgsfield offers, in picker order.
-pub const HIGGSFIELD_IMAGE_MODELS: &[ImageModel] = &[
-  ImageModel::NanoBananaPro,
-  ImageModel::NanoBanana2,
-  ImageModel::NanoBanana2Lite,
-  ImageModel::GptImage2,
-  ImageModel::Seedream5p0Pro,
-  ImageModel::Seedream5Lite,
-  ImageModel::Seedream4p5,
-];
+pub const HIGGSFIELD_IMAGE_MODELS: &[ImageModel] = &[ImageModel::NanoBananaPro, ImageModel::NanoBanana2, ImageModel::NanoBanana2Lite, ImageModel::GptImage2, ImageModel::Seedream5p0Pro, ImageModel::Seedream5Lite, ImageModel::Seedream4p5];
 
 pub fn higgsfield_image_offering() -> ImageProviderOffering {
-  ImageProviderOffering {
-    provider: GenerationProvider::Higgsfield,
-    models: HIGGSFIELD_IMAGE_MODELS.iter().copied().map(offered).collect(),
-  }
+  ImageProviderOffering { provider: GenerationProvider::Higgsfield, models: HIGGSFIELD_IMAGE_MODELS.iter().copied().map(offered).collect() }
 }
 
 /// The base config, or a Higgsfield-specific replacement when the menus
@@ -85,19 +74,11 @@ fn offered(model: ImageModel) -> OfferedModel<ImageModel, ImageModelConfig> {
     // Nano Banana Pro: the same 11 ratios, 1K / 2K / 4K, up to 4 images.
     ImageModel::NanoBananaPro => None,
     // Nano Banana 2: no 0.5K tier on Higgsfield.
-    ImageModel::NanoBanana2 => Some(ImageModelConfig {
-      aspect_ratio_options: NANO_BANANA_ASPECT_RATIOS.to_vec(),
-      resolution_options: vec![CommonResolution::OneK, CommonResolution::TwoK, CommonResolution::FourK],
-      ..capped(base)
-    }),
+    ImageModel::NanoBanana2 => Some(ImageModelConfig { aspect_ratio_options: NANO_BANANA_ASPECT_RATIOS.to_vec(), resolution_options: vec![CommonResolution::OneK, CommonResolution::TwoK, CommonResolution::FourK], ..capped(base) }),
     // Higgsfield-only: the base config already describes it.
     ImageModel::NanoBanana2Lite => None,
     // GPT Image 2: no "1:1 HD", no 3K.
-    ImageModel::GptImage2 => Some(ImageModelConfig {
-      aspect_ratio_options: GPT_IMAGE_2_ASPECT_RATIOS.to_vec(),
-      resolution_options: vec![CommonResolution::OneK, CommonResolution::TwoK, CommonResolution::FourK],
-      ..capped(base)
-    }),
+    ImageModel::GptImage2 => Some(ImageModelConfig { aspect_ratio_options: GPT_IMAGE_2_ASPECT_RATIOS.to_vec(), resolution_options: vec![CommonResolution::OneK, CommonResolution::TwoK, CommonResolution::FourK], ..capped(base) }),
     // Seedream 5.0 Pro: no Auto ratio; 1K / 2K (Higgsfield's 1.5K has no
     // common tier); batches of 4, not 8.
     ImageModel::Seedream5p0Pro => Some(ImageModelConfig {
@@ -137,12 +118,7 @@ fn offered(model: ImageModel) -> OfferedModel<ImageModel, ImageModelConfig> {
 
 /// Apply the batch cap every Higgsfield image model shares.
 fn capped(base: ImageModelConfig) -> ImageModelConfig {
-  ImageModelConfig {
-    batch_size_max: HIGGSFIELD_IMAGE_BATCH_MAX,
-    batch_size_options: None,
-    batch_size_default: base.batch_size_default.min(HIGGSFIELD_IMAGE_BATCH_MAX),
-    ..base
-  }
+  ImageModelConfig { batch_size_max: HIGGSFIELD_IMAGE_BATCH_MAX, batch_size_options: None, batch_size_default: base.batch_size_default.min(HIGGSFIELD_IMAGE_BATCH_MAX), ..base }
 }
 
 #[cfg(test)]

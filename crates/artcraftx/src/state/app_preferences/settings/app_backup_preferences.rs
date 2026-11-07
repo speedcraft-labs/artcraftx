@@ -20,9 +20,6 @@ pub struct AppBackupPreferences {
 
 impl Default for AppBackupPreferences {
   fn default() -> Self {
-    Self {
-      enabled: false,
-      maybe_artcraft_credential_id: None,
-    }
+    Self { enabled: false, maybe_artcraft_credential_id: None }
   }
 }

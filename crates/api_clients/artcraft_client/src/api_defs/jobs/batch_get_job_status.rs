@@ -15,10 +15,7 @@ pub const BATCH_GET_JOB_STATUS_URL_PATH: &str = "/v1/jobs/batch";
 /// Build the request path for a batch of job tokens.
 /// The server reads repeated `tokens=` query keys into a set.
 pub fn batch_get_job_status_url_path(job_tokens: &[InferenceJobToken]) -> String {
-  let query = job_tokens.iter()
-      .map(|token| format!("tokens={}", token.as_str()))
-      .collect::<Vec<_>>()
-      .join("&");
+  let query = job_tokens.iter().map(|token| format!("tokens={}", token.as_str())).collect::<Vec<_>>().join("&");
   format!("{}?{}", BATCH_GET_JOB_STATUS_URL_PATH, query)
 }
 
@@ -37,14 +34,8 @@ mod tests {
 
   #[test]
   fn url_path_repeats_tokens_key() {
-    let tokens = vec![
-      InferenceJobToken::new_from_str("jinf_aaa"),
-      InferenceJobToken::new_from_str("jinf_bbb"),
-    ];
-    assert_eq!(
-      batch_get_job_status_url_path(&tokens),
-      "/v1/jobs/batch?tokens=jinf_aaa&tokens=jinf_bbb",
-    );
+    let tokens = vec![InferenceJobToken::new_from_str("jinf_aaa"), InferenceJobToken::new_from_str("jinf_bbb")];
+    assert_eq!(batch_get_job_status_url_path(&tokens), "/v1/jobs/batch?tokens=jinf_aaa&tokens=jinf_bbb",);
   }
 
   #[test]

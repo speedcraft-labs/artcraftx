@@ -27,10 +27,7 @@ pub enum FluxPro1InfillNumImages {
   Four,
 }
 
-pub async fn enqueue_flux_pro_1_infill_webhook<R: IntoUrl>(
-  args: FluxPro1InfillArgs<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
-
+pub async fn enqueue_flux_pro_1_infill_webhook<R: IntoUrl>(args: FluxPro1InfillArgs<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
 
   let num_images = match req.num_images {
@@ -48,17 +45,14 @@ pub async fn enqueue_flux_pro_1_infill_webhook<R: IntoUrl>(
 
     // Maybe expose
     safety_tolerance: Some("5".to_string()), // NB: 5 is most tolerant
-    output_format: Some("png".to_string()), // png or jpeg
+    output_format: Some("png".to_string()),  // png or jpeg
     seed: None,
 
     // Constants
     sync_mode: None, // Synchronous / slow
   };
 
-  let result = flux_pro_1_infill(request)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await;
+  let result = flux_pro_1_infill(request).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await;
 
   result.map_err(|err| classify_fal_error(err))
 }

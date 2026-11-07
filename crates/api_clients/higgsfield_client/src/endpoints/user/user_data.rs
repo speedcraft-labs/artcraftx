@@ -185,11 +185,7 @@ mod tests {
     let auth = session.auth().await.map_err(|err| anyhow::anyhow!("minting a session token failed: {err}"))?;
     println!("Minted bearer token ({} chars); session {:?}", auth.bearer_token.len(), session.current_token().await.map(|t| t.session_id().to_string()));
 
-    let response = user_data(UserDataArgs {
-      request: UserDataRequest,
-      auth: &auth,
-      host: &HiggsfieldHost::Higgsfield,
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let response = user_data(UserDataArgs { request: UserDataRequest, auth: &auth, host: &HiggsfieldHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
     println!("\n===== /fnf/user (typed) =====\n{:#?}", response);
     println!("\n===== /fnf/user (extra, untyped) =====");
@@ -210,11 +206,7 @@ mod tests {
     setup_test_logging();
 
     let auth = load_higgsfield_test_auth().await?;
-    let response = user_data(UserDataArgs {
-      request: UserDataRequest,
-      auth: &auth,
-      host: &HiggsfieldHost::Higgsfield,
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let response = user_data(UserDataArgs { request: UserDataRequest, auth: &auth, host: &HiggsfieldHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
     println!("User {} plan={:?} credits={:?}", response.id, response.plan_type, response.subscription_credits);
     assert!(response.email.is_some());

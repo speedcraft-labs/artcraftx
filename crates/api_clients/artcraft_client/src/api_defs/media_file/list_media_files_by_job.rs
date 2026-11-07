@@ -78,9 +78,6 @@ mod tests {
   #[test]
   fn url_path_includes_token() {
     let token = InferenceJobToken::new_from_str("jinf_abc123");
-    assert_eq!(
-      list_media_files_by_job_url_path(&token),
-      "/v1/media_files/by_job/jinf_abc123",
-    );
+    assert_eq!(list_media_files_by_job_url_path(&token), "/v1/media_files/by_job/jinf_abc123",);
   }
 }

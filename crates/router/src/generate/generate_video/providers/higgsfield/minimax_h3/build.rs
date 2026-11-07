@@ -6,9 +6,7 @@ use higgsfield_client::endpoints::generate::video::minimax_h3::MinimaxH3Request;
 
 use crate::errors::artcraft_router_error::ArtcraftRouterError;
 use crate::generate::generate_video::generate_video_request_builder::GenerateVideoRequestBuilder;
-use crate::generate::generate_video::providers::higgsfield::common::{
-  finish, plan_duration, plan_single_video, require_prompt, warn_ignored, HiggsfieldVideoReferences,
-};
+use crate::generate::generate_video::providers::higgsfield::common::{finish, plan_duration, plan_single_video, require_prompt, warn_ignored, HiggsfieldVideoReferences};
 use crate::generate::generate_video::providers::higgsfield::draft::HiggsfieldVideoPlan;
 use crate::generate::generate_video::providers::higgsfield::video_request::HiggsfieldVideoRequest;
 use crate::generate::generate_video::video_generation_draft_or_request::VideoGenerationDraftOrRequest;

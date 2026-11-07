@@ -5,9 +5,7 @@ use crate::creds::seedance2pro_session::Seedance2ProSession;
 use crate::error::seedance2pro_client_error::Seedance2ProClientError;
 use crate::error::seedance2pro_error::Seedance2ProError;
 use crate::requests::kinovi_host::KinoviHost;
-use crate::requests::workflow_run_task::workflow_run_task::{
-  workflow_run_task_custom, WorkflowRunTaskCustomArgs, WorkflowRunTaskResponse,
-};
+use crate::requests::workflow_run_task::workflow_run_task::{workflow_run_task_custom, WorkflowRunTaskCustomArgs, WorkflowRunTaskResponse};
 
 const BUSINESS_TYPE: &str = "seedream-5-pro-image-generation";
 const MODEL: &str = "seedream-5.0-pro";
@@ -168,24 +166,12 @@ pub struct GenerateSeedream5p0ProResponse {
 
 // ── Entry point ──
 
-pub async fn generate_seedream_5p0_pro(
-  args: GenerateSeedream5p0ProArgs<'_>,
-) -> Result<GenerateSeedream5p0ProResponse, Seedance2ProError> {
+pub async fn generate_seedream_5p0_pro(args: GenerateSeedream5p0ProArgs<'_>) -> Result<GenerateSeedream5p0ProResponse, Seedance2ProError> {
   let api_params = build_api_params(&args.request)?;
 
-  let raw_response: WorkflowRunTaskResponse = workflow_run_task_custom(WorkflowRunTaskCustomArgs {
-    business_type: BUSINESS_TYPE,
-    api_params,
-    session: args.session,
-    host_override: args.host_override,
-  }).await?;
+  let raw_response: WorkflowRunTaskResponse = workflow_run_task_custom(WorkflowRunTaskCustomArgs { business_type: BUSINESS_TYPE, api_params, session: args.session, host_override: args.host_override }).await?;
 
-  Ok(GenerateSeedream5p0ProResponse {
-    task_id: raw_response.task_id,
-    order_id: raw_response.order_id,
-    task_ids: raw_response.task_ids,
-    order_ids: raw_response.order_ids,
-  })
+  Ok(GenerateSeedream5p0ProResponse { task_id: raw_response.task_id, order_id: raw_response.order_id, task_ids: raw_response.task_ids, order_ids: raw_response.order_ids })
 }
 
 // ── Wire payload ──
@@ -207,17 +193,11 @@ struct Seedream5p0ProApiParams {
   uploaded_urls: Option<Vec<String>>,
 }
 
-fn build_api_params(
-  request: &GenerateSeedream5p0ProRequest,
-) -> Result<Seedream5p0ProApiParams, Seedance2ProClientError> {
+fn build_api_params(request: &GenerateSeedream5p0ProRequest) -> Result<Seedream5p0ProApiParams, Seedance2ProClientError> {
   let uploaded_urls = match &request.reference_image_urls {
     Some(urls) if urls.len() > MAX_REFERENCE_IMAGES => {
-      return Err(Seedance2ProClientError::InvalidRequestField {
-        field: "reference_image_urls",
-        raw_value: format!("{} urls", urls.len()),
-        reason: format!("At most {} reference images are allowed", MAX_REFERENCE_IMAGES),
-      });
-    }
+      return Err(Seedance2ProClientError::InvalidRequestField { field: "reference_image_urls", raw_value: format!("{} urls", urls.len()), reason: format!("At most {} reference images are allowed", MAX_REFERENCE_IMAGES) });
+    },
     Some(urls) if !urls.is_empty() => Some(urls.clone()),
     _ => None,
   };
@@ -225,14 +205,7 @@ fn build_api_params(
   let batch_count_value = request.batch_count.as_u8();
   let batch_count = if batch_count_value > 1 { Some(batch_count_value) } else { None };
 
-  Ok(Seedream5p0ProApiParams {
-    prompt: request.prompt.clone(),
-    aspect_ratio: request.aspect_ratio.as_api_str(),
-    resolution: request.resolution.as_api_str(),
-    model: MODEL,
-    batch_count,
-    uploaded_urls,
-  })
+  Ok(Seedream5p0ProApiParams { prompt: request.prompt.clone(), aspect_ratio: request.aspect_ratio.as_api_str(), resolution: request.resolution.as_api_str(), model: MODEL, batch_count, uploaded_urls })
 }
 
 // ── Tests ──
@@ -259,10 +232,7 @@ mod tests {
     #[test]
     fn auto_2k_single_image() {
       let params = build_api_params(&base_request()).unwrap();
-      assert_eq!(
-        serde_json::to_string(&params).unwrap(),
-        r#"{"prompt":"An anime girl riding a dinosaur","aspectRatio":"auto","resolution":"2k","model":"seedream-5.0-pro"}"#,
-      );
+      assert_eq!(serde_json::to_string(&params).unwrap(), r#"{"prompt":"An anime girl riding a dinosaur","aspectRatio":"auto","resolution":"2k","model":"seedream-5.0-pro"}"#,);
     }
 
     /// Mirrors capture 2_seedream_5_21x9.txt (21:9, 2k, single image).
@@ -274,11 +244,9 @@ mod tests {
         resolution: KinoviSeedream5p0ProResolution::TwoK,
         batch_count: KinoviSeedream5p0ProBatchCount::One,
         reference_image_urls: None,
-      }).unwrap();
-      assert_eq!(
-        serde_json::to_string(&params).unwrap(),
-        r#"{"prompt":"a pirate sailing a pirate ship","aspectRatio":"21:9","resolution":"2k","model":"seedream-5.0-pro"}"#,
-      );
+      })
+      .unwrap();
+      assert_eq!(serde_json::to_string(&params).unwrap(), r#"{"prompt":"a pirate sailing a pirate ship","aspectRatio":"21:9","resolution":"2k","model":"seedream-5.0-pro"}"#,);
     }
 
     /// Mirrors capture 3_seedream_5_9x16_image_refs.txt (9:16, 1k, single
@@ -290,11 +258,9 @@ mod tests {
         aspect_ratio: KinoviSeedream5p0ProAspectRatio::Portrait9x16,
         resolution: KinoviSeedream5p0ProResolution::OneK,
         batch_count: KinoviSeedream5p0ProBatchCount::One,
-        reference_image_urls: Some(vec![
-          "https://static.seedance2-pro.com/materials/20260713/1783904468032-0a803390.jpg".to_string(),
-          "https://static.seedance2-pro.com/materials/20260713/1783904481112-4a3fa0d2.png".to_string(),
-        ]),
-      }).unwrap();
+        reference_image_urls: Some(vec!["https://static.seedance2-pro.com/materials/20260713/1783904468032-0a803390.jpg".to_string(), "https://static.seedance2-pro.com/materials/20260713/1783904481112-4a3fa0d2.png".to_string()]),
+      })
+      .unwrap();
       assert_eq!(
         serde_json::to_string(&params).unwrap(),
         r#"{"prompt":"The man in @Image1 is staring out the door in @Image2 ","aspectRatio":"9:16","resolution":"1k","model":"seedream-5.0-pro","uploadedUrls":["https://static.seedance2-pro.com/materials/20260713/1783904468032-0a803390.jpg","https://static.seedance2-pro.com/materials/20260713/1783904481112-4a3fa0d2.png"]}"#,
@@ -310,11 +276,9 @@ mod tests {
         aspect_ratio: KinoviSeedream5p0ProAspectRatio::Tall2x3,
         resolution: KinoviSeedream5p0ProResolution::TwoK,
         batch_count: KinoviSeedream5p0ProBatchCount::Four,
-        reference_image_urls: Some(vec![
-          "https://static.seedance2-pro.com/materials/20260713/1783904481112-4a3fa0d2.png".to_string(),
-          "https://static.seedance2-pro.com/materials/20260713/1783904588294-5c713908.jpg".to_string(),
-        ]),
-      }).unwrap();
+        reference_image_urls: Some(vec!["https://static.seedance2-pro.com/materials/20260713/1783904481112-4a3fa0d2.png".to_string(), "https://static.seedance2-pro.com/materials/20260713/1783904588294-5c713908.jpg".to_string()]),
+      })
+      .unwrap();
       assert_eq!(
         serde_json::to_string(&params).unwrap(),
         r#"{"prompt":"An anime girl is standing in the door @Image1 Outside the door, there's the galaxy and windmill @Image2 ","aspectRatio":"2:3","resolution":"2k","model":"seedream-5.0-pro","batchCount":4,"uploadedUrls":["https://static.seedance2-pro.com/materials/20260713/1783904481112-4a3fa0d2.png","https://static.seedance2-pro.com/materials/20260713/1783904588294-5c713908.jpg"]}"#,
@@ -330,11 +294,9 @@ mod tests {
         aspect_ratio: KinoviSeedream5p0ProAspectRatio::Square1x1,
         resolution: KinoviSeedream5p0ProResolution::OneK,
         batch_count: KinoviSeedream5p0ProBatchCount::Eight,
-        reference_image_urls: Some(vec![
-          "https://static.seedance2-pro.com/materials/20260713/1783904715554-1a7ce415.jpg".to_string(),
-          "https://static.seedance2-pro.com/materials/20260713/1783904719453-1d10e81f.png".to_string(),
-        ]),
-      }).unwrap();
+        reference_image_urls: Some(vec!["https://static.seedance2-pro.com/materials/20260713/1783904715554-1a7ce415.jpg".to_string(), "https://static.seedance2-pro.com/materials/20260713/1783904719453-1d10e81f.png".to_string()]),
+      })
+      .unwrap();
       assert_eq!(
         serde_json::to_string(&params).unwrap(),
         r#"{"prompt":"The mirror from @Image2 is in front of the windmill in @Image1 . The sky and galaxy are lit up at night. ","aspectRatio":"1:1","resolution":"1k","model":"seedream-5.0-pro","batchCount":8,"uploadedUrls":["https://static.seedance2-pro.com/materials/20260713/1783904715554-1a7ce415.jpg","https://static.seedance2-pro.com/materials/20260713/1783904719453-1d10e81f.png"]}"#,
@@ -390,10 +352,7 @@ mod tests {
 
     #[test]
     fn empty_reference_list_omits_uploaded_urls() {
-      let params = build_api_params(&GenerateSeedream5p0ProRequest {
-        reference_image_urls: Some(vec![]),
-        ..base_request()
-      }).unwrap();
+      let params = build_api_params(&GenerateSeedream5p0ProRequest { reference_image_urls: Some(vec![]), ..base_request() }).unwrap();
       let json = serde_json::to_string(&params).unwrap();
       assert!(!json.contains("uploadedUrls"), "expected no uploadedUrls in {json}");
     }
@@ -419,18 +378,13 @@ mod tests {
       match result {
         Err(Seedance2ProClientError::InvalidRequestField { field, .. }) => {
           assert_eq!(field, "reference_image_urls");
-        }
+        },
         other => panic!("expected InvalidRequestField, got {other:?}"),
       }
     }
 
     fn request_with_n_references(count: usize) -> GenerateSeedream5p0ProRequest {
-      GenerateSeedream5p0ProRequest {
-        reference_image_urls: Some(
-          (0..count).map(|i| format!("https://example.com/ref{i}.jpg")).collect(),
-        ),
-        ..base_request()
-      }
+      GenerateSeedream5p0ProRequest { reference_image_urls: Some((0..count).map(|i| format!("https://example.com/ref{i}.jpg")).collect()), ..base_request() }
     }
   }
 
@@ -500,35 +454,21 @@ mod tests {
     #[test]
     fn reference_images_do_not_affect_cost() {
       let without_refs = request(KinoviSeedream5p0ProResolution::TwoK, KinoviSeedream5p0ProBatchCount::Four).calculate_costs();
-      let with_refs = GenerateSeedream5p0ProRequest {
-        reference_image_urls: Some(vec![
-          "https://example.com/ref1.jpg".to_string(),
-          "https://example.com/ref2.jpg".to_string(),
-        ]),
-        ..request(KinoviSeedream5p0ProResolution::TwoK, KinoviSeedream5p0ProBatchCount::Four)
-      }.calculate_costs();
+      let with_refs =
+        GenerateSeedream5p0ProRequest { reference_image_urls: Some(vec!["https://example.com/ref1.jpg".to_string(), "https://example.com/ref2.jpg".to_string()]), ..request(KinoviSeedream5p0ProResolution::TwoK, KinoviSeedream5p0ProBatchCount::Four) }
+          .calculate_costs();
       assert_eq!(without_refs, with_refs);
     }
 
     #[test]
     fn aspect_ratio_does_not_affect_cost() {
       let auto = request(KinoviSeedream5p0ProResolution::OneK, KinoviSeedream5p0ProBatchCount::One).calculate_costs();
-      let ultra_wide = GenerateSeedream5p0ProRequest {
-        aspect_ratio: KinoviSeedream5p0ProAspectRatio::UltraWide21x9,
-        ..request(KinoviSeedream5p0ProResolution::OneK, KinoviSeedream5p0ProBatchCount::One)
-      }.calculate_costs();
+      let ultra_wide = GenerateSeedream5p0ProRequest { aspect_ratio: KinoviSeedream5p0ProAspectRatio::UltraWide21x9, ..request(KinoviSeedream5p0ProResolution::OneK, KinoviSeedream5p0ProBatchCount::One) }.calculate_costs();
       assert_eq!(auto, ultra_wide);
     }
 
-    fn request(
-      resolution: KinoviSeedream5p0ProResolution,
-      batch_count: KinoviSeedream5p0ProBatchCount,
-    ) -> GenerateSeedream5p0ProRequest {
-      GenerateSeedream5p0ProRequest {
-        resolution,
-        batch_count,
-        ..base_request()
-      }
+    fn request(resolution: KinoviSeedream5p0ProResolution, batch_count: KinoviSeedream5p0ProBatchCount) -> GenerateSeedream5p0ProRequest {
+      GenerateSeedream5p0ProRequest { resolution, batch_count, ..base_request() }
     }
   }
 
@@ -556,7 +496,8 @@ mod tests {
           batch_count: KinoviSeedream5p0ProBatchCount::One,
           reference_image_urls: None,
         },
-      }).await?;
+      })
+      .await?;
       println!("seedream 5.0 pro 2k — task_id={}, order_id={}", result.task_id, result.order_id);
       assert!(!result.task_id.is_empty());
       assert!(!result.order_id.is_empty());
@@ -577,12 +518,10 @@ mod tests {
           aspect_ratio: KinoviSeedream5p0ProAspectRatio::Portrait9x16,
           resolution: KinoviSeedream5p0ProResolution::OneK,
           batch_count: KinoviSeedream5p0ProBatchCount::One,
-          reference_image_urls: Some(vec![
-            "https://static.seedance2-pro.com/materials/20260713/1783904468032-0a803390.jpg".to_string(),
-            "https://static.seedance2-pro.com/materials/20260713/1783904481112-4a3fa0d2.png".to_string(),
-          ]),
+          reference_image_urls: Some(vec!["https://static.seedance2-pro.com/materials/20260713/1783904468032-0a803390.jpg".to_string(), "https://static.seedance2-pro.com/materials/20260713/1783904481112-4a3fa0d2.png".to_string()]),
         },
-      }).await?;
+      })
+      .await?;
       println!("seedream 5.0 pro 1k refs — task_id={}, order_id={}", result.task_id, result.order_id);
       assert!(!result.task_id.is_empty());
       assert_eq!(1, 2, "Inspect output above");
@@ -604,7 +543,8 @@ mod tests {
           batch_count: KinoviSeedream5p0ProBatchCount::Four,
           reference_image_urls: None,
         },
-      }).await?;
+      })
+      .await?;
       println!("seedream 5.0 pro batch-4 — task_id={}, order_id={}", result.task_id, result.order_id);
       assert_eq!(result.task_ids.as_ref().map(|ids| ids.len()), Some(4));
       assert_eq!(result.order_ids.as_ref().map(|ids| ids.len()), Some(4));

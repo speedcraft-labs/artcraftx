@@ -11,30 +11,18 @@ pub struct FalFlux2LoraAnglesCostState {
 
 impl FalFlux2LoraAnglesCostState {
   pub fn from_request(request: &FalFlux2LoraAnglesRequestState) -> Self {
-    Self {
-      cost_in_usd_cents: request.request.calculate_cost_in_cents(),
-    }
+    Self { cost_in_usd_cents: request.request.calculate_cost_in_cents() }
   }
 
   pub fn estimate_cost(&self) -> ImageGenerationCostEstimate {
-    ImageGenerationCostEstimate {
-      cost_in_credits: Some(self.cost_in_usd_cents),
-      cost_in_usd_cents: Some(self.cost_in_usd_cents),
-      is_free: false,
-      is_unlimited: false,
-      is_rate_limited: false,
-      has_watermark: false,
-      failures_are_refunded: None,
-    }
+    ImageGenerationCostEstimate { cost_in_credits: Some(self.cost_in_usd_cents), cost_in_usd_cents: Some(self.cost_in_usd_cents), is_free: false, is_unlimited: false, is_rate_limited: false, has_watermark: false, failures_are_refunded: None }
   }
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
-  use fal_client::requests::api::image::angle::flux_2_lora_edit_image_angle::api::{
-    Flux2LoraAngleNumImages, Flux2LoraEditImageAngleRequest,
-  };
+  use fal_client::requests::api::image::angle::flux_2_lora_edit_image_angle::api::{Flux2LoraAngleNumImages, Flux2LoraEditImageAngleRequest};
 
   #[test]
   fn one_image_is_2_cents() {

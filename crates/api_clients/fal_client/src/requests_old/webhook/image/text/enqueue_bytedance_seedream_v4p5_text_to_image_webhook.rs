@@ -56,7 +56,6 @@ pub enum EnqueueBytedanceSeedreamV4p5TextToImageSize {
   Auto4k,
 }
 
-
 impl FalRequestCostCalculator for EnqueueBytedanceSeedreamV4p5TextToImageRequest {
   fn calculate_cost_in_cents(&self) -> UsdCents {
     // NB: Copied from edit image costs
@@ -73,41 +72,36 @@ impl FalRequestCostCalculator for EnqueueBytedanceSeedreamV4p5TextToImageRequest
   }
 }
 
-
-pub async fn enqueue_bytedance_seedream_v4p5_text_to_image_webhook<R: IntoUrl>(
-  args: EnqueueBytedanceSeedreamV4p5TextToImageArgs<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
-
+pub async fn enqueue_bytedance_seedream_v4p5_text_to_image_webhook<R: IntoUrl>(args: EnqueueBytedanceSeedreamV4p5TextToImageArgs<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
 
-  let num_images = req.num_images
-      .map(|num_images| match num_images {
-        EnqueueBytedanceSeedreamV4p5TextToImageNumImages::One => 1,
-        EnqueueBytedanceSeedreamV4p5TextToImageNumImages::Two => 2,
-        EnqueueBytedanceSeedreamV4p5TextToImageNumImages::Three => 3,
-        EnqueueBytedanceSeedreamV4p5TextToImageNumImages::Four => 4,
-      });
+  let num_images = req.num_images.map(|num_images| match num_images {
+    EnqueueBytedanceSeedreamV4p5TextToImageNumImages::One => 1,
+    EnqueueBytedanceSeedreamV4p5TextToImageNumImages::Two => 2,
+    EnqueueBytedanceSeedreamV4p5TextToImageNumImages::Three => 3,
+    EnqueueBytedanceSeedreamV4p5TextToImageNumImages::Four => 4,
+  });
 
-  let max_images = req.max_images
-      .map(|num_images| match num_images {
-        EnqueueBytedanceSeedreamV4p5TextToImageMaxImages::One => 1,
-        EnqueueBytedanceSeedreamV4p5TextToImageMaxImages::Two => 2,
-        EnqueueBytedanceSeedreamV4p5TextToImageMaxImages::Three => 3,
-        EnqueueBytedanceSeedreamV4p5TextToImageMaxImages::Four => 4,
-      });
+  let max_images = req.max_images.map(|num_images| match num_images {
+    EnqueueBytedanceSeedreamV4p5TextToImageMaxImages::One => 1,
+    EnqueueBytedanceSeedreamV4p5TextToImageMaxImages::Two => 2,
+    EnqueueBytedanceSeedreamV4p5TextToImageMaxImages::Three => 3,
+    EnqueueBytedanceSeedreamV4p5TextToImageMaxImages::Four => 4,
+  });
 
-  let image_size = req.image_size
-      .map(|image_size| match image_size {
-        EnqueueBytedanceSeedreamV4p5TextToImageSize::Square => "square",
-        EnqueueBytedanceSeedreamV4p5TextToImageSize::SquareHd => "square_hd",
-        EnqueueBytedanceSeedreamV4p5TextToImageSize::PortraitFourThree => "portrait_4_3",
-        EnqueueBytedanceSeedreamV4p5TextToImageSize::PortraitSixteenNine => "portrait_16_9",
-        EnqueueBytedanceSeedreamV4p5TextToImageSize::LandscapeFourThree => "landscape_4_3",
-        EnqueueBytedanceSeedreamV4p5TextToImageSize::LandscapeSixteenNine => "landscape_16_9",
-        EnqueueBytedanceSeedreamV4p5TextToImageSize::Auto2k => "auto_2K",
-        EnqueueBytedanceSeedreamV4p5TextToImageSize::Auto4k => "auto_4K",
-      })
-      .map(|resolution| resolution.to_string());
+  let image_size = req
+    .image_size
+    .map(|image_size| match image_size {
+      EnqueueBytedanceSeedreamV4p5TextToImageSize::Square => "square",
+      EnqueueBytedanceSeedreamV4p5TextToImageSize::SquareHd => "square_hd",
+      EnqueueBytedanceSeedreamV4p5TextToImageSize::PortraitFourThree => "portrait_4_3",
+      EnqueueBytedanceSeedreamV4p5TextToImageSize::PortraitSixteenNine => "portrait_16_9",
+      EnqueueBytedanceSeedreamV4p5TextToImageSize::LandscapeFourThree => "landscape_4_3",
+      EnqueueBytedanceSeedreamV4p5TextToImageSize::LandscapeSixteenNine => "landscape_16_9",
+      EnqueueBytedanceSeedreamV4p5TextToImageSize::Auto2k => "auto_2K",
+      EnqueueBytedanceSeedreamV4p5TextToImageSize::Auto4k => "auto_4K",
+    })
+    .map(|resolution| resolution.to_string());
 
   let request = SeedreamV4p5TextToImageInput {
     prompt: req.prompt,
@@ -120,10 +114,7 @@ pub async fn enqueue_bytedance_seedream_v4p5_text_to_image_webhook<R: IntoUrl>(
     seed: None,
   };
 
-  let result = seedream_4p5_text_to_image(request)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await;
+  let result = seedream_4p5_text_to_image(request).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await;
 
   result.map_err(|err| classify_fal_error(err))
 }
@@ -131,7 +122,10 @@ pub async fn enqueue_bytedance_seedream_v4p5_text_to_image_webhook<R: IntoUrl>(
 #[cfg(test)]
 mod tests {
   use crate::creds::fal_api_key::FalApiKey;
-  use crate::requests_old::webhook::image::text::enqueue_bytedance_seedream_v4p5_text_to_image_webhook::{enqueue_bytedance_seedream_v4p5_text_to_image_webhook, EnqueueBytedanceSeedreamV4p5TextToImageArgs, EnqueueBytedanceSeedreamV4p5TextToImageMaxImages, EnqueueBytedanceSeedreamV4p5TextToImageNumImages, EnqueueBytedanceSeedreamV4p5TextToImageRequest, EnqueueBytedanceSeedreamV4p5TextToImageSize};
+  use crate::requests_old::webhook::image::text::enqueue_bytedance_seedream_v4p5_text_to_image_webhook::{
+    enqueue_bytedance_seedream_v4p5_text_to_image_webhook, EnqueueBytedanceSeedreamV4p5TextToImageArgs, EnqueueBytedanceSeedreamV4p5TextToImageMaxImages, EnqueueBytedanceSeedreamV4p5TextToImageNumImages, EnqueueBytedanceSeedreamV4p5TextToImageRequest,
+    EnqueueBytedanceSeedreamV4p5TextToImageSize,
+  };
   use errors::AnyhowResult;
   use std::fs::read_to_string;
 

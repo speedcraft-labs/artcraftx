@@ -1,7 +1,5 @@
 use crate::credentials::find_service_credentials::find_first_credential_for_service;
-use crate::services::midjourney::completion::finalize_midjourney_job::{
-  finalize_midjourney_job, FinalizeMidjourneyJobArgs,
-};
+use crate::services::midjourney::completion::finalize_midjourney_job::{finalize_midjourney_job, FinalizeMidjourneyJobArgs};
 use crate::services::midjourney::state::midjourney_live_session::MidjourneyLiveSession;
 use crate::services::midjourney::utils::extract_midjourney_user_id_from_cookies::extract_midjourney_user_id_from_cookie_header;
 use crate::services::midjourney::utils::midjourney_browser_profile::midjourney_browser_profile;
@@ -18,9 +16,7 @@ use midjourney_client::credentials::midjourney_user_id::MidjourneyUserId;
 use midjourney_client::endpoints::imagine::{imagine, ImagineArgs, ImagineItem, ImagineRequest, MidjourneyJobType};
 use midjourney_client::recipes::get_user_info::{get_user_info, GetUserInfoArgs};
 use midjourney_client::utils::image_downloader_client::ImageDownloaderClient;
-use sqlite_database::queries::read::list_tasks_by_provider_and_status::{
-  list_tasks_by_provider_and_status, ListTasksByProviderAndStatusArgs, TaskList,
-};
+use sqlite_database::queries::read::list_tasks_by_provider_and_status::{list_tasks_by_provider_and_status, ListTasksByProviderAndStatusArgs, TaskList};
 use sqlite_database::queries::task::Task;
 use std::collections::HashMap;
 use tauri::AppHandle;
@@ -44,14 +40,7 @@ pub async fn midjourney_long_polling_thread(
   storyteller_creds_manager: StorytellerCredentialManager,
 ) -> ! {
   loop {
-    let res = polling_loop(
-      &app_handle,
-      &app_data_root,
-      &app_preferences,
-      &task_database,
-      &mj_session,
-      &storyteller_creds_manager,
-    ).await;
+    let res = polling_loop(&app_handle, &app_data_root, &app_preferences, &task_database, &mj_session, &storyteller_creds_manager).await;
     if let Err(err) = res {
       error!("Midjourney polling error: {:?}", err);
     }
@@ -76,34 +65,20 @@ async fn polling_loop(
       None => {
         tokio::time::sleep(std::time::Duration::from_millis(SLEEP_NO_SESSION_MS)).await;
         continue;
-      }
+      },
     };
-
 
     let user_id = match resolve_user_id(mj_session, &cookie_header).await {
       Some(user_id) => user_id,
       None => {
         tokio::time::sleep(std::time::Duration::from_millis(SLEEP_NO_SESSION_MS)).await;
         continue;
-      }
+      },
     };
 
-    let local_tasks = list_tasks_by_provider_and_status(ListTasksByProviderAndStatusArgs {
-      db: task_database.get_connection(),
-      provider: GenerationSource::Midjourney,
-      task_statuses: &TASK_DATABASE_PENDING_STATUSES,
-    }).await?;
+    let local_tasks = list_tasks_by_provider_and_status(ListTasksByProviderAndStatusArgs { db: task_database.get_connection(), provider: GenerationSource::Midjourney, task_statuses: &TASK_DATABASE_PENDING_STATUSES }).await?;
 
-    poll_midjourney_tasks(
-      app_handle,
-      app_data_root,
-      app_preferences,
-      task_database,
-      mj_session,
-      &cookie_header,
-      &user_id,
-      local_tasks,
-    ).await?;
+    poll_midjourney_tasks(app_handle, app_data_root, app_preferences, task_database, mj_session, &cookie_header, &user_id, local_tasks).await?;
 
     tokio::time::sleep(std::time::Duration::from_millis(SLEEP_BETWEEN_TASKS_MS)).await;
   }
@@ -124,23 +99,11 @@ async fn poll_midjourney_tasks(
     return Ok(());
   }
 
-  let local_tasks_by_job_id = local_tasks
-      .iter()
-      .filter_map(|task| task.provider_job_id.clone().map(|job_id| (job_id, task.clone())))
-      .collect::<HashMap<String, Task>>();
+  let local_tasks_by_job_id = local_tasks.iter().filter_map(|task| task.provider_job_id.clone().map(|job_id| (job_id, task.clone()))).collect::<HashMap<String, Task>>();
 
-  let midjourney_result = imagine(ImagineArgs {
-    request: ImagineRequest { user_id: mj_user_id, page_size: None },
-    cookie_header,
-    hostname: None,
-    browser: Some(midjourney_browser_profile()),
-  }).await?;
+  let midjourney_result = imagine(ImagineArgs { request: ImagineRequest { user_id: mj_user_id, page_size: None }, cookie_header, hostname: None, browser: Some(midjourney_browser_profile()) }).await?;
 
-  let midjourney_items_by_id = midjourney_result
-      .items
-      .iter()
-      .filter_map(|item| item.id.clone().map(|id| (id, item.clone())))
-      .collect::<HashMap<String, ImagineItem>>();
+  let midjourney_items_by_id = midjourney_result.items.iter().filter_map(|item| item.id.clone().map(|id| (id, item.clone()))).collect::<HashMap<String, ImagineItem>>();
 
   let image_downloader = ImageDownloaderClient::create(Some(midjourney_browser_profile()))?;
 
@@ -150,10 +113,7 @@ async fn poll_midjourney_tasks(
     };
 
     // Prefer the feed's command; fall back to the prompt we stashed at enqueue.
-    let maybe_full_command = item
-        .full_command
-        .clone()
-        .or_else(|| mj_session.take_pending_prompt(job_id));
+    let maybe_full_command = item.full_command.clone().or_else(|| mj_session.take_pending_prompt(job_id));
 
     let result = finalize_midjourney_job(FinalizeMidjourneyJobArgs {
       app_handle,
@@ -165,7 +125,8 @@ async fn poll_midjourney_tasks(
       local_task,
       model_type: job_type_to_model_type(job_id, item),
       maybe_full_command,
-    }).await;
+    })
+    .await;
 
     if let Err(err) = result {
       error!("Failed to finalize Midjourney job {}: {:?}", job_id, err);
@@ -189,10 +150,7 @@ pub(crate) fn midjourney_cookie_header(app_data_root: &AppDataRoot) -> Option<St
 
 /// The Midjourney user id, from the live session or resolved once via the
 /// index page (and cached).
-pub(crate) async fn resolve_user_id(
-  mj_session: &MidjourneyLiveSession,
-  cookie_header: &str,
-) -> Option<MidjourneyUserId> {
+pub(crate) async fn resolve_user_id(mj_session: &MidjourneyLiveSession, cookie_header: &str) -> Option<MidjourneyUserId> {
   if let Some(user_id) = mj_session.user_id() {
     return Some(user_id);
   }
@@ -204,22 +162,18 @@ pub(crate) async fn resolve_user_id(
   }
 
   // Fall back to the index page (needed for the websocket token anyway).
-  let info = get_user_info(GetUserInfoArgs {
-    cookie_header,
-    hostname: None,
-    browser: Some(midjourney_browser_profile()),
-  }).await;
+  let info = get_user_info(GetUserInfoArgs { cookie_header, hostname: None, browser: Some(midjourney_browser_profile()) }).await;
 
   match info {
     Ok(info) => {
       let user_id = info.user_id?;
       mj_session.set_identity(user_id.clone(), info.websocket_token);
       Some(user_id)
-    }
+    },
     Err(err) => {
       warn!("Could not resolve Midjourney user info: {:?}", err);
       None
-    }
+    },
   }
 }
 
@@ -235,7 +189,7 @@ fn job_type_to_model_type(job_id: &str, item: &ImagineItem) -> CommonModelType {
     Some(MidjourneyJobType::Other(ref other)) => {
       warn!("Unknown Midjourney job type (job {}): {}", job_id, other);
       CommonModelType::Midjourney
-    }
+    },
     _ => CommonModelType::Midjourney,
   }
 }

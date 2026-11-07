@@ -19,7 +19,6 @@ pub struct EnqueueKlingV2p6ProImageToVideoRequest {
   pub image_url: String,
 
   // Optional args
-
   /// NB: Generate audio defaults to true, and it costs twice as much.
   pub generate_audio: Option<bool>,
 
@@ -45,28 +44,25 @@ impl FalRequestCostCalculator for EnqueueKlingV2p6ProImageToVideoRequest {
 
     match (generate_audio, duration) {
       (false, EnqueueKlingV2p6ProImageToVideoDurationSeconds::Five) => 35, // audio off: $0.07 * 5 = $0.35
-      (false, EnqueueKlingV2p6ProImageToVideoDurationSeconds::Ten) => 70, // audio off: $0.07 * 10 = $0.70
-      (true, EnqueueKlingV2p6ProImageToVideoDurationSeconds::Five) => 70, // audio on: $0.14 * 5 = $0.70
-      (true, EnqueueKlingV2p6ProImageToVideoDurationSeconds::Ten) => 140, // audio on: $0.14 * 10 = $1.40
+      (false, EnqueueKlingV2p6ProImageToVideoDurationSeconds::Ten) => 70,  // audio off: $0.07 * 10 = $0.70
+      (true, EnqueueKlingV2p6ProImageToVideoDurationSeconds::Five) => 70,  // audio on: $0.14 * 5 = $0.70
+      (true, EnqueueKlingV2p6ProImageToVideoDurationSeconds::Ten) => 140,  // audio on: $0.14 * 10 = $1.40
     }
   }
 }
 
-
 /// Kling 2.6 Pro Image-to-Video
 /// https://fal.ai/models/fal-ai/kling-video/v2.6/pro/image-to-video
-pub async fn enqueue_kling_v2p6_pro_image_to_video_webhook<R: IntoUrl>(
-  args: EnqueueKlingV2p6ProImageToVideoArgs<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
-
+pub async fn enqueue_kling_v2p6_pro_image_to_video_webhook<R: IntoUrl>(args: EnqueueKlingV2p6ProImageToVideoArgs<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
 
-  let duration = req.duration
-      .map(|resolution| match resolution {
-        EnqueueKlingV2p6ProImageToVideoDurationSeconds::Five => "5",
-        EnqueueKlingV2p6ProImageToVideoDurationSeconds::Ten => "10",
-      })
-      .map(|resolution| resolution.to_string());
+  let duration = req
+    .duration
+    .map(|resolution| match resolution {
+      EnqueueKlingV2p6ProImageToVideoDurationSeconds::Five => "5",
+      EnqueueKlingV2p6ProImageToVideoDurationSeconds::Ten => "10",
+    })
+    .map(|resolution| resolution.to_string());
 
   let request = KlingV2p6ProImageToVideoInput {
     prompt: req.prompt,
@@ -77,10 +73,7 @@ pub async fn enqueue_kling_v2p6_pro_image_to_video_webhook<R: IntoUrl>(
     generate_audio: req.generate_audio,
   };
 
-  let result = kling_v2p6_pro_image_to_video(request)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await;
+  let result = kling_v2p6_pro_image_to_video(request).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await;
 
   result.map_err(|err| classify_fal_error(err))
 }
@@ -88,7 +81,9 @@ pub async fn enqueue_kling_v2p6_pro_image_to_video_webhook<R: IntoUrl>(
 #[cfg(test)]
 mod tests {
   use crate::creds::fal_api_key::FalApiKey;
-  use crate::requests_old::webhook::video::image::enqueue_kling_v2p6_pro_image_to_video_webhook::{enqueue_kling_v2p6_pro_image_to_video_webhook, EnqueueKlingV2p6ProImageToVideoArgs, EnqueueKlingV2p6ProImageToVideoRequest, EnqueueKlingV2p6ProImageToVideoDurationSeconds};
+  use crate::requests_old::webhook::video::image::enqueue_kling_v2p6_pro_image_to_video_webhook::{
+    enqueue_kling_v2p6_pro_image_to_video_webhook, EnqueueKlingV2p6ProImageToVideoArgs, EnqueueKlingV2p6ProImageToVideoRequest, EnqueueKlingV2p6ProImageToVideoDurationSeconds,
+  };
   use errors::AnyhowResult;
   use std::fs::read_to_string;
   use test_data::web::image_urls::ERNEST_SCARED_STUPID_IMAGE_URL;

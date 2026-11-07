@@ -89,15 +89,16 @@ impl SessionInfoArgs<'_> {
     let domain = self.domain_override.unwrap_or(&GrokDomain::DefaultDomain);
     let client = create_firefox_client()?;
 
-    let mut request_builder = client.get(request_url(domain))
-        .header(USER_AGENT, FIREFOX_143_MAC_USER_AGENT)
-        .header(ACCEPT, "*/*")
-        .header(ACCEPT_LANGUAGE, "en-US,en;q=0.5")
-        .header(REFERER, "https://grok.com/imagine/saved")
-        .header(COOKIE, self.credentials.to_string())
-        .header("sec-fetch-dest", "empty")
-        .header("sec-fetch-mode", "cors")
-        .header("sec-fetch-site", "same-origin");
+    let mut request_builder = client
+      .get(request_url(domain))
+      .header(USER_AGENT, FIREFOX_143_MAC_USER_AGENT)
+      .header(ACCEPT, "*/*")
+      .header(ACCEPT_LANGUAGE, "en-US,en;q=0.5")
+      .header(REFERER, "https://grok.com/imagine/saved")
+      .header(COOKIE, self.credentials.to_string())
+      .header("sec-fetch-dest", "empty")
+      .header("sec-fetch-mode", "cors")
+      .header("sec-fetch-site", "same-origin");
 
     if let Some(headers) = self.request_headers {
       request_builder = headers.apply(request_builder);
@@ -107,29 +108,23 @@ impl SessionInfoArgs<'_> {
       request_builder = request_builder.timeout(timeout);
     }
 
-    let http_request = request_builder
-        .build()
-        .map_err(|err| {
-          error!("Error building session_info request: {:?}", err);
-          GrokGenericApiError::WreqError(err)
-        })?;
+    let http_request = request_builder.build().map_err(|err| {
+      error!("Error building session_info request: {:?}", err);
+      GrokGenericApiError::WreqError(err)
+    })?;
 
-    let response = client.execute(http_request)
-        .await
-        .map_err(|err| {
-          error!("Error sending session_info request: {:?}", err);
-          GrokGenericApiError::WreqError(err)
-        })?;
+    let response = client.execute(http_request).await.map_err(|err| {
+      error!("Error sending session_info request: {:?}", err);
+      GrokGenericApiError::WreqError(err)
+    })?;
 
     let status = response.status();
     let headers = response.headers().clone();
 
-    let body = response.text()
-        .await
-        .map_err(|err| {
-          error!("Error reading session_info response body: {:?}", err);
-          GrokGenericApiError::WreqError(err)
-        })?;
+    let body = response.text().await.map_err(|err| {
+      error!("Error reading session_info response body: {:?}", err);
+      GrokGenericApiError::WreqError(err)
+    })?;
 
     Ok(RawSessionInfoResponse { status, headers, body })
   }
@@ -140,10 +135,7 @@ fn request_url(domain: &GrokDomain) -> String {
 }
 
 fn parse_response(body: &str) -> Result<SessionInfoResponse, GrokError> {
-  serde_json::from_str(body)
-      .map_err(|err| {
-        GrokGenericApiError::SerdeResponseParseErrorWithBody(err, body.to_string()).into()
-      })
+  serde_json::from_str(body).map_err(|err| GrokGenericApiError::SerdeResponseParseErrorWithBody(err, body.to_string()).into())
 }
 
 #[cfg(test)]
@@ -160,10 +152,7 @@ mod tests {
 
     #[test]
     fn url_uses_the_default_domain() {
-      assert_eq!(
-        request_url(&GrokDomain::DefaultDomain),
-        "https://grok.com/api/auth/session",
-      );
+      assert_eq!(request_url(&GrokDomain::DefaultDomain), "https://grok.com/api/auth/session",);
     }
 
     #[test]
@@ -189,10 +178,7 @@ mod tests {
       assert_eq!(session.email_confirmed, Some(true));
       assert_eq!(session.given_name.as_deref(), Some("Test"));
       assert_eq!(session.family_name.as_deref(), Some("User"));
-      assert_eq!(
-        session.session_id.as_deref(),
-        Some("88888888-8888-4888-8888-888888888888"),
-      );
+      assert_eq!(session.session_id.as_deref(), Some("88888888-8888-4888-8888-888888888888"),);
       assert_eq!(session.create_time, Some(1787514616739));
     }
 
@@ -200,10 +186,7 @@ mod tests {
     fn missing_required_status_is_an_error() {
       // `status` is required, so an object without it fails to parse.
       let result = parse_response("{}");
-      assert!(matches!(
-        result,
-        Err(GrokError::ApiGeneric(GrokGenericApiError::SerdeResponseParseErrorWithBody(_, _))),
-      ));
+      assert!(matches!(result, Err(GrokError::ApiGeneric(GrokGenericApiError::SerdeResponseParseErrorWithBody(_, _))),));
     }
   }
 
@@ -222,13 +205,7 @@ mod tests {
       setup_test_logging(LevelFilter::Info);
       let secrets = load_grok_test_secrets()?;
 
-      let args = SessionInfoArgs {
-        request: SessionInfoRequest::default(),
-        credentials: &secrets.cookies,
-        domain_override: None,
-        request_headers: Some(&secrets.headers),
-        request_timeout: None,
-      };
+      let args = SessionInfoArgs { request: SessionInfoRequest::default(), credentials: &secrets.cookies, domain_override: None, request_headers: Some(&secrets.headers), request_timeout: None };
 
       let response = args.send().await?;
       println!("[test] session_info: {:?}", response);
@@ -278,14 +255,12 @@ mod tests {
         Err(err) => {
           dump();
           panic!("session_info (cookies only) failed to parse body: {err}");
-        }
+        },
       };
       println!("[test] session_info (cookies only): {:?}", response);
 
       // Same assertions as fetch_session_info, but dump diagnostics on failure.
-      let assertions_pass = response.status == "authenticated"
-          && response.is_authenticated()
-          && response.session.as_ref().is_some_and(|session| !session.user_id.is_empty());
+      let assertions_pass = response.status == "authenticated" && response.is_authenticated() && response.session.as_ref().is_some_and(|session| !session.user_id.is_empty());
 
       if !assertions_pass {
         dump();

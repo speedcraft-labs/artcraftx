@@ -49,56 +49,44 @@ impl FalRequestCostCalculator for EnqueueSora2ImageToVideoRequest {
     // "The pricing is $0.1/s for Sora 2."
     let duration = self.duration.unwrap_or(EnqueueSora2ImageToVideoDurationSeconds::Four);
     match duration {
-      EnqueueSora2ImageToVideoDurationSeconds::Four => 40,   // $0.10 * 4
-      EnqueueSora2ImageToVideoDurationSeconds::Eight => 80,  // $0.10 * 8
-      EnqueueSora2ImageToVideoDurationSeconds::Twelve => 120 // $0.10 * 12
+      EnqueueSora2ImageToVideoDurationSeconds::Four => 40,    // $0.10 * 4
+      EnqueueSora2ImageToVideoDurationSeconds::Eight => 80,   // $0.10 * 8
+      EnqueueSora2ImageToVideoDurationSeconds::Twelve => 120, // $0.10 * 12
     }
   }
 }
 
 /// Sora 2 Image-to-Video
 /// https://fal.ai/models/fal-ai/sora-2/image-to-video
-pub async fn enqueue_sora_2_image_to_video_webhook<R: IntoUrl>(
-  args: EnqueueSora2ImageToVideoArgs<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
-
+pub async fn enqueue_sora_2_image_to_video_webhook<R: IntoUrl>(args: EnqueueSora2ImageToVideoArgs<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
 
-  let duration = req.duration
-      .map(|d| match d {
-        EnqueueSora2ImageToVideoDurationSeconds::Four => 4,
-        EnqueueSora2ImageToVideoDurationSeconds::Eight => 8,
-        EnqueueSora2ImageToVideoDurationSeconds::Twelve => 12,
-      });
+  let duration = req.duration.map(|d| match d {
+    EnqueueSora2ImageToVideoDurationSeconds::Four => 4,
+    EnqueueSora2ImageToVideoDurationSeconds::Eight => 8,
+    EnqueueSora2ImageToVideoDurationSeconds::Twelve => 12,
+  });
 
-  let resolution = req.resolution
-      .map(|r| match r {
-        EnqueueSora2ImageToVideoResolution::Auto => "auto",
-        EnqueueSora2ImageToVideoResolution::SevenTwentyP => "720p",
-      })
-      .map(|r| r.to_string());
+  let resolution = req
+    .resolution
+    .map(|r| match r {
+      EnqueueSora2ImageToVideoResolution::Auto => "auto",
+      EnqueueSora2ImageToVideoResolution::SevenTwentyP => "720p",
+    })
+    .map(|r| r.to_string());
 
-  let aspect_ratio = req.aspect_ratio
-      .map(|ar| match ar {
-        EnqueueSora2ImageToVideoAspectRatio::Auto => "auto",
-        EnqueueSora2ImageToVideoAspectRatio::NineBySixteen => "9:16",
-        EnqueueSora2ImageToVideoAspectRatio::SixteenByNine => "16:9",
-      })
-      .map(|ar| ar.to_string());
+  let aspect_ratio = req
+    .aspect_ratio
+    .map(|ar| match ar {
+      EnqueueSora2ImageToVideoAspectRatio::Auto => "auto",
+      EnqueueSora2ImageToVideoAspectRatio::NineBySixteen => "9:16",
+      EnqueueSora2ImageToVideoAspectRatio::SixteenByNine => "16:9",
+    })
+    .map(|ar| ar.to_string());
 
-  let request = Sora2ImageToVideoInput {
-    prompt: req.prompt,
-    image_url: req.image_url,
-    duration,
-    resolution,
-    aspect_ratio,
-    delete_video: Some(false),
-  };
+  let request = Sora2ImageToVideoInput { prompt: req.prompt, image_url: req.image_url, duration, resolution, aspect_ratio, delete_video: Some(false) };
 
-  let result = sora_2_image_to_video(request)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await;
+  let result = sora_2_image_to_video(request).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await;
 
   result.map_err(|err| classify_fal_error(err))
 }

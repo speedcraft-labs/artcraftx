@@ -13,13 +13,6 @@ pub struct OmniGenMeshGenerateArgs<'a> {
   pub request: &'a OmniGenMeshCostAndGenerateRequest,
 }
 
-pub async fn omni_gen_mesh_generate(
-  args: OmniGenMeshGenerateArgs<'_>,
-) -> Result<OmniGenMeshGenerateResponse, StorytellerError> {
-  Ok(api_or_web_json_post_request(
-    args.api_host,
-    OMNI_GEN_MESH_GENERATE_PATH,
-    args.api_or_web_creds,
-    args.request,
-  ).await?)
+pub async fn omni_gen_mesh_generate(args: OmniGenMeshGenerateArgs<'_>) -> Result<OmniGenMeshGenerateResponse, StorytellerError> {
+  Ok(api_or_web_json_post_request(args.api_host, OMNI_GEN_MESH_GENERATE_PATH, args.api_or_web_creds, args.request).await?)
 }

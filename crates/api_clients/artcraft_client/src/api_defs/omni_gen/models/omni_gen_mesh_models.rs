@@ -6,7 +6,7 @@ use core_types::enums::generation_source::GenerationSource;
 use serde_derive::Serialize;
 
 /// Mesh model to default to if none is specified
-const DEFAULT_MESH_MODEL : CommonMeshModel = CommonMeshModel::Hunyuan3d3;
+const DEFAULT_MESH_MODEL: CommonMeshModel = CommonMeshModel::Hunyuan3d3;
 
 /// Response body for the mesh models endpoint.
 #[derive(Serialize, Clone)]
@@ -37,7 +37,6 @@ pub struct OmniGenMeshProviderModelDetails {
 
 #[derive(Serialize, Clone)]
 pub struct OmniGenMeshModelDetails {
-
   pub model: CommonMeshModel,
 
   #[serde(skip_serializing_if = "Option::is_none")]

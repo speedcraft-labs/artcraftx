@@ -12,9 +12,7 @@ pub static SPLAT_MODELS: Lazy<Vec<SplatModelConfig>> = Lazy::new(splat_models);
 
 /// Look up one model's config.
 pub fn splat_model_config(model: SplatModel) -> &'static SplatModelConfig {
-  SPLAT_MODELS.iter()
-      .find(|config| config.model == model)
-      .expect("every SplatModel variant has a config (see tests)")
+  SPLAT_MODELS.iter().find(|config| config.model == model).expect("every SplatModel variant has a config (see tests)")
 }
 
 fn splat_models() -> Vec<SplatModelConfig> {

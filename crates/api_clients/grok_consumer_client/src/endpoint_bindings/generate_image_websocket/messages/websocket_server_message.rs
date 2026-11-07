@@ -60,7 +60,7 @@ pub struct ImageDataMessage {
   pub percentage_complete: Option<f32>,
 
   pub prompt: Option<String>,
-  
+
   /// The enriched prompt
   pub full_prompt: Option<String>,
 
@@ -102,8 +102,7 @@ pub struct JsonDataMessage {
 
 impl WebsocketServerMessage {
   pub fn from_json_str(json_str: &str) -> Result<Self, GrokGenericApiError> {
-    Ok(serde_json::from_str(json_str)
-        .map_err(|err| GrokGenericApiError::SerdeResponseParseErrorWithBody(err, json_str.to_string()))?)
+    Ok(serde_json::from_str(json_str).map_err(|err| GrokGenericApiError::SerdeResponseParseErrorWithBody(err, json_str.to_string()))?)
   }
 }
 
@@ -125,7 +124,7 @@ mod tests {
         assert_eq!(image.request_id.as_deref(), Some("ab3fa8e9-92ed-4f1b-a350-7a897e264d54"));
         assert!(image.url.as_deref().unwrap().starts_with("https://imagine-public.x.ai/"));
         assert_eq!(image.prompt.as_deref(), Some("A dead tree stump in the middle of a forest meadow"));
-      }
+      },
       other => panic!("Expected Image message, got {:?}", other),
     }
     Ok(())
@@ -139,7 +138,7 @@ mod tests {
         assert_eq!(error.err_code.as_deref(), Some(ERR_CODE_RATE_LIMIT_EXCEEDED));
         assert_eq!(error.err_msg.as_deref(), Some("Image rate limit exceeded"));
         assert!(error.request_id.is_some());
-      }
+      },
       other => panic!("Expected Error message, got {:?}", other),
     }
     Ok(())
@@ -154,7 +153,7 @@ mod tests {
       WebsocketServerMessage::Unknown(value) => {
         assert_eq!(value["type"], "session");
         assert!(value["conversation_id"].is_string());
-      }
+      },
       other => panic!("Expected Unknown message, got {:?}", other),
     }
     Ok(())
@@ -220,7 +219,7 @@ mod tests {
     let message = WebsocketServerMessage::from_json_str(&data)?;
 
     match message {
-      WebsocketServerMessage::Json(_value)=> {},
+      WebsocketServerMessage::Json(_value) => {},
       _ => panic!("Expected Json message"),
     }
 
@@ -235,7 +234,7 @@ mod tests {
     let message = WebsocketServerMessage::from_json_str(&data)?;
 
     match message {
-      WebsocketServerMessage::Json(_value)=> {},
+      WebsocketServerMessage::Json(_value) => {},
       _ => panic!("Expected Json message"),
     }
 
@@ -249,8 +248,8 @@ mod tests {
     //let message: WebsocketServerMessage = serde_json::from_str(&data)?;
     let message = WebsocketServerMessage::from_json_str(&data)?;
 
-     match message {
-      WebsocketServerMessage::Unknown(_value)=> {},
+    match message {
+      WebsocketServerMessage::Unknown(_value) => {},
       _ => panic!("Expected Unknown message"),
     }
 
@@ -265,7 +264,7 @@ mod tests {
     let message = WebsocketServerMessage::from_json_str(&data)?;
 
     match message {
-      WebsocketServerMessage::Unknown(_value)=> {},
+      WebsocketServerMessage::Unknown(_value) => {},
       _ => panic!("Expected Unknown message"),
     }
 

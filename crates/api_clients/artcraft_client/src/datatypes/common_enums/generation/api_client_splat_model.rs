@@ -76,7 +76,7 @@ mod tests {
       (ApiClientSplatModel::Marble1p0Draft, "marble_1p0_draft"),
       (ApiClientSplatModel::Marble1p1, "marble_1p1"),
       (ApiClientSplatModel::Marble1p1Plus, "marble_1p1_plus"),
-      (ApiClientSplatModel::TripoSplat, "triposplat")
+      (ApiClientSplatModel::TripoSplat, "triposplat"),
     ];
     for (variant, wire) in all {
       let json = format!("\"{}\"", wire);

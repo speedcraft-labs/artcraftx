@@ -13,8 +13,6 @@ pub struct AppPromptPreferences {
 
 impl Default for AppPromptPreferences {
   fn default() -> Self {
-    Self {
-      enter_to_generate: true,
-    }
+    Self { enter_to_generate: true }
   }
 }

@@ -44,10 +44,7 @@ pub struct MinterConfig {
 
 impl Default for MinterConfig {
   fn default() -> Self {
-    Self {
-      ttl_secs: DEFAULT_TTL_SECS,
-      refresh_margin_secs: DEFAULT_REFRESH_MARGIN_SECS,
-    }
+    Self { ttl_secs: DEFAULT_TTL_SECS, refresh_margin_secs: DEFAULT_REFRESH_MARGIN_SECS }
   }
 }
 
@@ -58,12 +55,7 @@ impl<O: StatsigOracle> StatsigMinter<O> {
   }
 
   pub fn with_config(oracle: O, config: MinterConfig) -> Self {
-    Self {
-      oracle,
-      config,
-      cache: Mutex::new(HashMap::new()),
-      clock: Box::new(default_now_unix),
-    }
+    Self { oracle, config, cache: Mutex::new(HashMap::new()), clock: Box::new(default_now_unix) }
   }
 
   /// Return a usable `x-statsig-id` string for `request`, serving a fresh
@@ -97,11 +89,7 @@ impl<O: StatsigOracle> StatsigMinter<O> {
   async fn cached_fresh(&self, request: &StatsigRequest, now: i64) -> Option<String> {
     let cache = self.cache.lock().await;
     let minted = cache.get(request)?;
-    if minted.remaining_secs(now) > self.config.refresh_margin_secs {
-      Some(minted.statsig_id.clone())
-    } else {
-      None
-    }
+    if minted.remaining_secs(now) > self.config.refresh_margin_secs { Some(minted.statsig_id.clone()) } else { None }
   }
 }
 

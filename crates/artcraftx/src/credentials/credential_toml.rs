@@ -59,27 +59,14 @@ pub struct CredentialToml {
 impl CredentialToml {
   pub fn load<P: AsRef<Path>>(path: P) -> Result<Self, ArtcraftXCredentialError> {
     let path = path.as_ref();
-    let contents = std::fs::read_to_string(path)
-        .map_err(|source| ArtcraftXCredentialError::FileReadError {
-          path: path.to_path_buf(),
-          source,
-        })?;
-    toml::from_str(&contents)
-        .map_err(|source| ArtcraftXCredentialError::TomlParseError {
-          path: path.to_path_buf(),
-          source,
-        })
+    let contents = std::fs::read_to_string(path).map_err(|source| ArtcraftXCredentialError::FileReadError { path: path.to_path_buf(), source })?;
+    toml::from_str(&contents).map_err(|source| ArtcraftXCredentialError::TomlParseError { path: path.to_path_buf(), source })
   }
 
   pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), ArtcraftXCredentialError> {
     let path = path.as_ref();
-    let contents = toml::to_string_pretty(self)
-        .map_err(|source| ArtcraftXCredentialError::TomlSerializeError { source })?;
-    std::fs::write(path, contents)
-        .map_err(|source| ArtcraftXCredentialError::FileWriteError {
-          path: path.to_path_buf(),
-          source,
-        })
+    let contents = toml::to_string_pretty(self).map_err(|source| ArtcraftXCredentialError::TomlSerializeError { source })?;
+    std::fs::write(path, contents).map_err(|source| ArtcraftXCredentialError::FileWriteError { path: path.to_path_buf(), source })
   }
 
   /// Validate and convert into the in-app credential type.
@@ -102,21 +89,10 @@ impl CredentialToml {
     };
 
     if secret.kind() != self.service.kind() {
-      return Err(ArtcraftXCredentialError::SecretKindMismatch {
-        path: source_path,
-        service: self.service,
-        found: secret.kind(),
-      });
+      return Err(ArtcraftXCredentialError::SecretKindMismatch { path: source_path, service: self.service, found: secret.kind() });
     }
 
-    Ok(AuthCredential {
-      id: self.id.unwrap_or_else(CredentialId::generate),
-      service: self.service,
-      name: self.name,
-      secret,
-      user_info: self.user_info,
-      source_path,
-    })
+    Ok(AuthCredential { id: self.id.unwrap_or_else(CredentialId::generate), service: self.service, name: self.name, secret, user_info: self.user_info, source_path })
   }
 
   pub fn from_auth_credential(credential: &AuthCredential) -> Self {
@@ -124,14 +100,7 @@ impl CredentialToml {
       CredentialSecret::Cookies(cookie) => (Some(cookie.clone()), None),
       CredentialSecret::ApiKey(api_key) => (None, Some(api_key.clone())),
     };
-    Self {
-      id: Some(credential.id.clone()),
-      service: credential.service,
-      name: credential.name.clone(),
-      cookie,
-      api_key,
-      user_info: credential.user_info.clone(),
-    }
+    Self { id: Some(credential.id.clone()), service: credential.service, name: credential.name.clone(), cookie, api_key, user_info: credential.user_info.clone() }
   }
 }
 
@@ -182,8 +151,7 @@ mod tests {
 
     #[test]
     fn rejects_unknown_service() {
-      let result: Result<CredentialToml, _> =
-          toml::from_str("service = \"unknown_service\"\n[api_key]\napi_key = \"x\"\n");
+      let result: Result<CredentialToml, _> = toml::from_str("service = \"unknown_service\"\n[api_key]\napi_key = \"x\"\n");
       assert!(result.is_err());
     }
   }

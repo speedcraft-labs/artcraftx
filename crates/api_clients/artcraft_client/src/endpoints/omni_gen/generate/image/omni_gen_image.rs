@@ -13,13 +13,6 @@ pub struct OmniGenImageGenerateArgs<'a> {
   pub request: &'a OmniGenImageCostAndGenerateRequest,
 }
 
-pub async fn omni_gen_image_generate(
-  args: OmniGenImageGenerateArgs<'_>,
-) -> Result<OmniGenImageGenerateResponse, StorytellerError> {
-  Ok(api_or_web_json_post_request(
-    args.api_host,
-    OMNI_GEN_IMAGE_GENERATE_PATH,
-    args.api_or_web_creds,
-    args.request,
-  ).await?)
+pub async fn omni_gen_image_generate(args: OmniGenImageGenerateArgs<'_>) -> Result<OmniGenImageGenerateResponse, StorytellerError> {
+  Ok(api_or_web_json_post_request(args.api_host, OMNI_GEN_IMAGE_GENERATE_PATH, args.api_or_web_creds, args.request).await?)
 }

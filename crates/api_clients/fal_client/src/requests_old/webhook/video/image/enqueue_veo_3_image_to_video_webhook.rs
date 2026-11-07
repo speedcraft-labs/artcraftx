@@ -68,12 +68,9 @@ impl FalRequestCostCalculator for Veo3Request {
   }
 }
 
-
 /// Veo 3 Image-to-Video
 /// https://fal.ai/models/fal-ai/veo3/image-to-video
-pub async fn enqueue_veo_3_image_to_video_webhook<R: IntoUrl>(
-  args: Veo3Args<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
+pub async fn enqueue_veo_3_image_to_video_webhook<R: IntoUrl>(args: Veo3Args<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
 
   let duration = match req.duration {
@@ -95,31 +92,17 @@ pub async fn enqueue_veo_3_image_to_video_webhook<R: IntoUrl>(
     Veo3I2vResolution::TenEightyP => Some("1080p".to_string()),
   };
 
-  let request = Veo3ImageToVideoInput {
-    image_url: req.image_url,
-    prompt: req.prompt,
-    aspect_ratio,
-    resolution,
-    duration,
-    generate_audio: Some(req.generate_audio),
-  };
+  let request = Veo3ImageToVideoInput { image_url: req.image_url, prompt: req.prompt, aspect_ratio, resolution, duration, generate_audio: Some(req.generate_audio) };
 
-  let result = veo_3_image_to_video(request)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await;
+  let result = veo_3_image_to_video(request).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await;
 
   result.map_err(|err| classify_fal_error(err))
 }
 
-
 #[cfg(test)]
 mod tests {
   use crate::creds::fal_api_key::FalApiKey;
-  use crate::requests_old::webhook::video::image::enqueue_veo_3_image_to_video_webhook::{
-    enqueue_veo_3_image_to_video_webhook, Veo3Args, Veo3I2vAspectRatio, Veo3I2vDuration,
-    Veo3I2vResolution, Veo3Request,
-  };
+  use crate::requests_old::webhook::video::image::enqueue_veo_3_image_to_video_webhook::{enqueue_veo_3_image_to_video_webhook, Veo3Args, Veo3I2vAspectRatio, Veo3I2vDuration, Veo3I2vResolution, Veo3Request};
   use errors::AnyhowResult;
   use std::fs::read_to_string;
   use test_data::web::image_urls::TREX_SKELETON_IMAGE_URL;

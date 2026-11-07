@@ -3,7 +3,8 @@
 //! stored enum strings. Extracted from the `enums` / `tokens` crates so the
 //! task database has a small, database-free dependency.
 
-#[macro_use] extern crate serde_derive;
+#[macro_use]
+extern crate serde_derive;
 
 // Crockford characters
 // https://en.wikipedia.org/wiki/Base32#Crockford's_Base32

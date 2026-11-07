@@ -7,10 +7,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::tokens::uploaded_videos::UploadedVideoToken;
 
-use crate::api_defs::video_info::read_only::{
-  DreaminaVideoInfo, KlingVideoInfo, SeedanceVideoInfo, SoraVideoInfo, VeoVideoInfo,
-  VideoProvenanceKind,
-};
+use crate::api_defs::video_info::read_only::{DreaminaVideoInfo, KlingVideoInfo, SeedanceVideoInfo, SoraVideoInfo, VeoVideoInfo, VideoProvenanceKind};
 
 /// Response for `POST /v1/video_info/upload`. Mirrors
 /// [`crate::api_defs::video_info::read_only::VideoInfoReadOnlyResponse`] and adds the

@@ -112,15 +112,7 @@ impl Seedream4p5Request {
   /// A text-to-image request with the web app's defaults (1 image, random
   /// seed, credits).
   pub fn text_to_image(prompt: impl Into<String>, aspect_ratio: SeedreamAspectRatio, resolution: Seedream4p5Resolution) -> Self {
-    Self {
-      prompt: prompt.into(),
-      aspect_ratio,
-      resolution,
-      batch_size: ImageBatchSize::One,
-      reference_images: Vec::new(),
-      maybe_seed: None,
-      use_unlim: false,
-    }
+    Self { prompt: prompt.into(), aspect_ratio, resolution, batch_size: ImageBatchSize::One, reference_images: Vec::new(), maybe_seed: None, use_unlim: false }
   }
 
   /// Add reference images (image-to-image).
@@ -205,8 +197,16 @@ mod tests {
   #[test]
   fn wire_bodies_match_captured_requests() {
     let cases = [
-      (Seedream4p5Resolution::TwoK, 447696u32, r#"{"params":{"prompt":"a corgi on a bike","aspect_ratio":"3:4","quality":"basic","batch_size":1,"use_unlim":false,"seed":447696,"model":"seedream_v4_5","width":1024,"height":1024,"input_images":[]},"use_unlim":false}"#),
-      (Seedream4p5Resolution::FourK, 69127, r#"{"params":{"prompt":"a corgi on a bike","aspect_ratio":"3:4","quality":"high","batch_size":1,"use_unlim":false,"seed":69127,"model":"seedream_v4_5","width":1024,"height":1024,"input_images":[]},"use_unlim":false}"#),
+      (
+        Seedream4p5Resolution::TwoK,
+        447696u32,
+        r#"{"params":{"prompt":"a corgi on a bike","aspect_ratio":"3:4","quality":"basic","batch_size":1,"use_unlim":false,"seed":447696,"model":"seedream_v4_5","width":1024,"height":1024,"input_images":[]},"use_unlim":false}"#,
+      ),
+      (
+        Seedream4p5Resolution::FourK,
+        69127,
+        r#"{"params":{"prompt":"a corgi on a bike","aspect_ratio":"3:4","quality":"high","batch_size":1,"use_unlim":false,"seed":69127,"model":"seedream_v4_5","width":1024,"height":1024,"input_images":[]},"use_unlim":false}"#,
+      ),
     ];
     for (resolution, seed, expected) in cases {
       let mut request = Seedream4p5Request::text_to_image("a corgi on a bike", SeedreamAspectRatio::Portrait3x4, resolution);
@@ -223,7 +223,7 @@ mod tests {
     // in `input_images`. The web app sent the reference's 640x640 as
     // width/height; this client keeps the placeholder.
     let mut request = Seedream4p5Request::text_to_image("a corgi on a bike", SeedreamAspectRatio::Portrait3x4, Seedream4p5Resolution::FourK)
-        .with_reference_images(vec![MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png")]);
+      .with_reference_images(vec![MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png")]);
     request.maybe_seed = Some(ImageSeed::new(275906));
     let actual: Value = serde_json::to_value(request.to_body()).unwrap();
     let expected: Value = serde_json::from_str(r#"{"params":{"prompt":"a corgi on a bike","aspect_ratio":"3:4","quality":"high","batch_size":1,"use_unlim":false,"seed":275906,"model":"seedream_v4_5","width":1024,"height":1024,"input_images":[{"id":"00000000-0000-4000-8000-0000000000aa","type":"media_input","url":"https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png"}]},"use_unlim":false}"#).unwrap();
@@ -270,8 +270,7 @@ mod tests {
     let request = Seedream4p5Request::text_to_image("a corgi on a bike", SeedreamAspectRatio::Portrait3x4, Seedream4p5Resolution::TwoK);
     println!("\n===== request =====\n{:#?}", request);
 
-    let response = seedream_4p5(Seedream4p5Args { request, auth: &auth, host: &HiggsfieldHost::Higgsfield })
-        .await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let response = seedream_4p5(Seedream4p5Args { request, auth: &auth, host: &HiggsfieldHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
     println!("\n===== POST {PATH} =====\n{:#?}", response);
     let job_ids = response.job_ids();
     assert_eq!(response.first_job_set().unwrap().job_set_type, JobSetType::SeedreamV4p5);

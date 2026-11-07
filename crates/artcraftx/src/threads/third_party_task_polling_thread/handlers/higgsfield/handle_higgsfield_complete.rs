@@ -41,16 +41,7 @@ pub async fn handle_higgsfield_complete(
 ) {
   info!("[HiggsfieldComplete] Handling completed task {} ({} job(s))", task.id.as_str(), jobs.len());
 
-  let result = handle_higgsfield_complete_inner(
-    app_handle,
-    app_data_root,
-    app_preferences,
-    task_database,
-    storyteller_creds_manager,
-    credential_id,
-    task,
-    jobs,
-  ).await;
+  let result = handle_higgsfield_complete_inner(app_handle, app_data_root, app_preferences, task_database, storyteller_creds_manager, credential_id, task, jobs).await;
 
   if let Err(err) = result {
     error!("[HiggsfieldComplete] Failed to handle task {}: {:?}", task.id.as_str(), err);
@@ -71,9 +62,7 @@ async fn handle_higgsfield_complete_inner(
   // Higgsfield already holds these files: remember each one under the
   // account that generated it, so using the download as a reference later
   // passes the job id instead of uploading (and IP-checking) it again.
-  let maybe_ledger = app_handle.try_state::<LocalFilesDatabase>()
-      .map(|database| AssetUploadLedger::new(database.inner().clone()))
-      .map(|ledger| ledger.for_higgsfield_credential(&CredentialId::from_trusted(credential_id)));
+  let maybe_ledger = app_handle.try_state::<LocalFilesDatabase>().map(|database| AssetUploadLedger::new(database.inner().clone())).map(|ledger| ledger.for_higgsfield_credential(&CredentialId::from_trusted(credential_id)));
 
   // NB: `NamedTempFile`s delete themselves on drop, so keep them alive until
   // the completion routine has copied and uploaded them.
@@ -87,16 +76,10 @@ async fn handle_higgsfield_complete_inner(
     }
     temp_files.push(temp_file);
   }
-  let local_files = temp_files.iter()
-      .map(|file| file.path().to_path_buf())
-      .collect::<Vec<_>>();
+  let local_files = temp_files.iter().map(|file| file.path().to_path_buf()).collect::<Vec<_>>();
 
   let media_class = media_class_for(task.task_type);
-  let maybe_prompt = jobs.iter()
-      .filter_map(|job| job.params.prompt.as_deref())
-      .map(str::trim)
-      .find(|prompt| !prompt.is_empty())
-      .map(str::to_string);
+  let maybe_prompt = jobs.iter().filter_map(|job| job.params.prompt.as_deref()).map(str::trim).find(|prompt| !prompt.is_empty()).map(str::to_string);
 
   // Attribute a prompt when storyteller-web knows the model; the
   // Higgsfield-only models have no prompt type there.
@@ -104,7 +87,6 @@ async fn handle_higgsfield_complete_inner(
     Some(model_type) => CompletionPrompt::Create { model_type, maybe_prompt },
     None => CompletionPrompt::None,
   };
-
 
   complete_task_with_local_files(CompleteTaskArgs {
     app_handle,
@@ -117,7 +99,8 @@ async fn handle_higgsfield_complete_inner(
     prompt,
     fallback_model_slug: HIGGSFIELD_FALLBACK_MODEL_SLUG,
     local_files: &local_files,
-  }).await?;
+  })
+  .await?;
 
   Ok(())
 }
@@ -126,13 +109,15 @@ async fn handle_higgsfield_complete_inner(
 /// result URL). Best-effort: a hashing or database problem only costs a
 /// future re-upload.
 async fn record_generation_result(ledger: &AccountUploadCache, job: &JobStatusResponse, path: &Path) {
-  let Some(url) = job.result_url() else { return };
+  let Some(url) = job.result_url() else {
+    return;
+  };
   let (hash, size) = match (hash_file_blake3(path), std::fs::metadata(path)) {
     (Ok(hash), Ok(metadata)) => (hash, metadata.len()),
     (Err(err), _) | (_, Err(err)) => {
       warn!("[HiggsfieldComplete] Could not hash downloaded result of job {}: {}", job.id, err);
       return;
-    }
+    },
   };
   ledger.record_upload(&hash, size, &CachedAssetUpload::generation_result(job.id.as_str(), url)).await;
 }

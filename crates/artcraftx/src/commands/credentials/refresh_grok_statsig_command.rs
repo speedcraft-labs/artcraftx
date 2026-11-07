@@ -10,10 +10,7 @@ use tauri::{AppHandle, State};
 /// credentials page on mount, say — never wait on it. A no-op when there's no
 /// Grok credential or the material is still fresh.
 #[tauri::command]
-pub async fn refresh_grok_statsig_command(
-  app: AppHandle,
-  app_data_root: State<'_, AppDataRoot>,
-) -> Result<(), String> {
+pub async fn refresh_grok_statsig_command(app: AppHandle, app_data_root: State<'_, AppDataRoot>) -> Result<(), String> {
   info!("refresh_grok_statsig_command called");
   // Returns as soon as the (hidden) window is built and the poll loop spawned;
   // the actual capture happens in the background. A single-flight guard inside

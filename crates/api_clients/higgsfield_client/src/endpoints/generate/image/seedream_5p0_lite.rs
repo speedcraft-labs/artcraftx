@@ -117,15 +117,7 @@ impl Seedream5p0LiteRequest {
   /// A text-to-image request with the web app's defaults (1 image, random
   /// seed, credits).
   pub fn text_to_image(prompt: impl Into<String>, aspect_ratio: SeedreamAspectRatio, resolution: Seedream5p0LiteResolution) -> Self {
-    Self {
-      prompt: prompt.into(),
-      aspect_ratio,
-      resolution,
-      batch_size: ImageBatchSize::One,
-      reference_images: Vec::new(),
-      maybe_seed: None,
-      use_unlim: false,
-    }
+    Self { prompt: prompt.into(), aspect_ratio, resolution, batch_size: ImageBatchSize::One, reference_images: Vec::new(), maybe_seed: None, use_unlim: false }
   }
 
   /// Add reference images (image-to-image).
@@ -230,7 +222,7 @@ mod tests {
     // the reference's 640x640 as width/height; this client keeps the
     // placeholder (the server derives the real size from `quality`).
     let mut request = Seedream5p0LiteRequest::text_to_image("a corgi on a bike", SeedreamAspectRatio::Portrait3x4, Seedream5p0LiteResolution::FourK)
-        .with_reference_images(vec![MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png")]);
+      .with_reference_images(vec![MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png")]);
     request.maybe_seed = Some(ImageSeed::new(366541));
     let actual: Value = serde_json::to_value(request.to_body()).unwrap();
     let expected: Value = serde_json::from_str(r#"{"params":{"prompt":"a corgi on a bike","aspect_ratio":"3:4","quality":"ultra","batch_size":1,"use_unlim":false,"medias":[{"role":"image","data":{"id":"00000000-0000-4000-8000-0000000000aa","type":"media_input","url":"https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png"}}],"model":"seedream_v5_lite","width":1024,"height":1024,"seed":366541},"use_unlim":false}"#).unwrap();
@@ -278,8 +270,7 @@ mod tests {
     let request = Seedream5p0LiteRequest::text_to_image("a corgi on a bike", SeedreamAspectRatio::Portrait3x4, Seedream5p0LiteResolution::TwoK);
     println!("\n===== request =====\n{:#?}", request);
 
-    let response = seedream_5p0_lite(Seedream5p0LiteArgs { request, auth: &auth, host: &HiggsfieldHost::Higgsfield })
-        .await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let response = seedream_5p0_lite(Seedream5p0LiteArgs { request, auth: &auth, host: &HiggsfieldHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
     println!("\n===== POST {PATH} =====\n{:#?}", response);
     let job_ids = response.job_ids();
     assert_eq!(response.first_job_set().unwrap().job_set_type, JobSetType::SeedreamV5Lite);

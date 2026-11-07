@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::video::image::kling_2p6_pro_image_to_video::raw_request::{
-  Kling2p6ProImageToVideoInput, Kling2p6ProImageToVideoOutput,
-};
+use crate::requests::api::video::image::kling_2p6_pro_image_to_video::raw_request::{Kling2p6ProImageToVideoInput, Kling2p6ProImageToVideoOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 #[derive(Clone, Debug)]
@@ -136,22 +134,12 @@ mod tests {
     let secret = read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt")?;
     let api_key = FalApiKey::from_str(&secret);
 
-    let durations = [
-      Kling2p6ProImageToVideoDuration::FiveSeconds,
-      Kling2p6ProImageToVideoDuration::TenSeconds,
-    ];
+    let durations = [Kling2p6ProImageToVideoDuration::FiveSeconds, Kling2p6ProImageToVideoDuration::TenSeconds];
 
     for dur in durations {
       println!("--- duration: {:?} ---", dur);
-      let request = Kling2p6ProImageToVideoRequest {
-        prompt: "the dog wags its tail".to_string(),
-        start_image_url: JUNO_AT_LAKE_IMAGE_URL.to_string(),
-        end_image_url: None,
-        duration: Some(dur),
-        negative_prompt: None,
-        generate_audio: Some(false),
-        voice_ids: None,
-      };
+      let request =
+        Kling2p6ProImageToVideoRequest { prompt: "the dog wags its tail".to_string(), start_image_url: JUNO_AT_LAKE_IMAGE_URL.to_string(), end_image_url: None, duration: Some(dur), negative_prompt: None, generate_audio: Some(false), voice_ids: None };
       let result = request.send_webhook_request(&api_key, "https://example.com/webhook").await?;
       println!("result: {:?}", result);
     }
@@ -184,15 +172,7 @@ mod tests {
 
   #[test]
   fn raw_request_omits_unset_optionals() {
-    let request = Kling2p6ProImageToVideoRequest {
-      prompt: "p".to_string(),
-      start_image_url: "https://example.com/start.png".to_string(),
-      end_image_url: None,
-      duration: None,
-      negative_prompt: None,
-      generate_audio: None,
-      voice_ids: None,
-    };
+    let request = Kling2p6ProImageToVideoRequest { prompt: "p".to_string(), start_image_url: "https://example.com/start.png".to_string(), end_image_url: None, duration: None, negative_prompt: None, generate_audio: None, voice_ids: None };
     let raw = request.to_raw_request().unwrap();
     assert_eq!(raw.start_image_url, "https://example.com/start.png");
     assert!(raw.end_image_url.is_none());
@@ -204,10 +184,7 @@ mod tests {
 
   #[test]
   fn endpoint_path_is_canonical() {
-    assert_eq!(
-      Kling2p6ProImageToVideoRequest::ENDPOINT,
-      "fal-ai/kling-video/v2.6/pro/image-to-video",
-    );
+    assert_eq!(Kling2p6ProImageToVideoRequest::ENDPOINT, "fal-ai/kling-video/v2.6/pro/image-to-video",);
   }
 
   /// Parity vs the legacy
@@ -221,22 +198,13 @@ mod tests {
   /// notice if fal ever flips back or further changes the schema.
   mod legacy_parity {
     use super::*;
-    use crate::requests_old::http::video::image::http_kling_v2p6_pro_image_to_video::{
-      kling_v2p6_pro_image_to_video, KlingV2p6ProImageToVideoInput,
-    };
+    use crate::requests_old::http::video::image::http_kling_v2p6_pro_image_to_video::{kling_v2p6_pro_image_to_video, KlingV2p6ProImageToVideoInput};
 
     /// Same `fal-ai/kling-video/v2.6/pro/image-to-video` path.
     #[test]
     fn endpoint_path_matches_legacy() {
-      let legacy = kling_v2p6_pro_image_to_video(KlingV2p6ProImageToVideoInput {
-        prompt: "p".to_string(),
-        image_url: "https://example.com/x.png".to_string(),
-        ..Default::default()
-      });
-      assert_eq!(
-        Kling2p6ProImageToVideoRequest::ENDPOINT,
-        legacy.endpoint,
-      );
+      let legacy = kling_v2p6_pro_image_to_video(KlingV2p6ProImageToVideoInput { prompt: "p".to_string(), image_url: "https://example.com/x.png".to_string(), ..Default::default() });
+      assert_eq!(Kling2p6ProImageToVideoRequest::ENDPOINT, legacy.endpoint,);
     }
 
     /// The image-URL field was renamed by fal: legacy `image_url` →
@@ -244,15 +212,7 @@ mod tests {
     /// current name and confirms the legacy field name is *not* emitted.
     #[test]
     fn new_module_emits_start_image_url_not_image_url() {
-      let new = Kling2p6ProImageToVideoRequest {
-        prompt: "p".to_string(),
-        start_image_url: "https://example.com/x.png".to_string(),
-        end_image_url: None,
-        duration: None,
-        negative_prompt: None,
-        generate_audio: None,
-        voice_ids: None,
-      };
+      let new = Kling2p6ProImageToVideoRequest { prompt: "p".to_string(), start_image_url: "https://example.com/x.png".to_string(), end_image_url: None, duration: None, negative_prompt: None, generate_audio: None, voice_ids: None };
       let json = serde_json::to_value(new.to_raw_request().unwrap()).unwrap();
       assert!(json.get("start_image_url").is_some(), "missing start_image_url: {json}");
       assert!(json.get("image_url").is_none(), "unexpected legacy image_url: {json}");
@@ -263,11 +223,7 @@ mod tests {
     /// archive (it shouldn't change; if it does we want to know).
     #[test]
     fn legacy_module_still_emits_image_url() {
-      let legacy = KlingV2p6ProImageToVideoInput {
-        prompt: "p".to_string(),
-        image_url: "https://example.com/x.png".to_string(),
-        ..Default::default()
-      };
+      let legacy = KlingV2p6ProImageToVideoInput { prompt: "p".to_string(), image_url: "https://example.com/x.png".to_string(), ..Default::default() };
       let json = serde_json::to_value(&legacy).unwrap();
       assert!(json.get("image_url").is_some(), "missing image_url: {json}");
       assert!(json.get("start_image_url").is_none(), "unexpected start_image_url: {json}");
@@ -289,13 +245,7 @@ mod tests {
       };
       let mut new_json = serde_json::to_value(new.to_raw_request().unwrap()).unwrap();
 
-      let legacy = KlingV2p6ProImageToVideoInput {
-        prompt: "shared prompt".to_string(),
-        image_url: "https://example.com/x.png".to_string(),
-        duration: Some("10".to_string()),
-        negative_prompt: Some("blurry".to_string()),
-        generate_audio: Some(false),
-      };
+      let legacy = KlingV2p6ProImageToVideoInput { prompt: "shared prompt".to_string(), image_url: "https://example.com/x.png".to_string(), duration: Some("10".to_string()), negative_prompt: Some("blurry".to_string()), generate_audio: Some(false) };
       let mut legacy_json = serde_json::to_value(&legacy).unwrap();
 
       // Strip the renamed image-URL field from each side, then compare.

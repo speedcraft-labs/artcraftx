@@ -36,25 +36,14 @@ mod tests {
   use super::*;
   use crate::windows::login_window::login_journey::NavigationAction;
 
-  const ALL_WEBSITES: &[LoginWebsite] = &[
-    LoginWebsite::ArtCraft,
-    LoginWebsite::OpenArt,
-    LoginWebsite::Higgsfield,
-    LoginWebsite::Runway,
-    LoginWebsite::Magnific,
-    LoginWebsite::Midjourney,
-    LoginWebsite::XAi,
-  ];
+  const ALL_WEBSITES: &[LoginWebsite] = &[LoginWebsite::ArtCraft, LoginWebsite::OpenArt, LoginWebsite::Higgsfield, LoginWebsite::Runway, LoginWebsite::Magnific, LoginWebsite::Midjourney, LoginWebsite::XAi];
 
   #[test]
   fn every_site_journey_starts_with_a_navigation() {
     for website in ALL_WEBSITES {
       let plan = login_site_for(*website).journey().plan();
       assert!(!plan.is_empty(), "{website} journey is empty");
-      assert!(
-        matches!(plan.first(), Some(NavigationAction::Navigate(_))),
-        "{website} journey must start with a navigation",
-      );
+      assert!(matches!(plan.first(), Some(NavigationAction::Navigate(_))), "{website} journey must start with a navigation",);
     }
   }
 
@@ -62,15 +51,9 @@ mod tests {
   fn every_site_has_cookie_urls_covering_its_destinations() {
     for website in ALL_WEBSITES {
       let site = login_site_for(*website);
-      let cookie_hosts: Vec<String> = site.cookie_urls()
-          .iter()
-          .map(|url| url.host_str().unwrap_or_default().to_string())
-          .collect();
+      let cookie_hosts: Vec<String> = site.cookie_urls().iter().map(|url| url.host_str().unwrap_or_default().to_string()).collect();
       for hostname in site.destination_hostnames() {
-        assert!(
-          cookie_hosts.iter().any(|host| host == hostname),
-          "{website} cookie urls {cookie_hosts:?} miss destination {hostname}",
-        );
+        assert!(cookie_hosts.iter().any(|host| host == hostname), "{website} cookie urls {cookie_hosts:?} miss destination {hostname}",);
       }
     }
   }
@@ -119,10 +102,7 @@ mod tests {
   #[test]
   fn midjourney_waits_for_the_auth_token_cookies() {
     let site = login_site_for(LoginWebsite::Midjourney);
-    assert_eq!(site.session_cookie_names(), &[
-      "__Host-Midjourney.AuthUserTokenV3_i",
-      "__Host-Midjourney.AuthUserTokenV3_r",
-    ]);
+    assert_eq!(site.session_cookie_names(), &["__Host-Midjourney.AuthUserTokenV3_i", "__Host-Midjourney.AuthUserTokenV3_r",]);
   }
 
   #[test]
@@ -133,7 +113,7 @@ mod tests {
     match &plan[2] {
       NavigationAction::RunScript(script) => {
         assert!(script.contains("app.runwayml.com/login"));
-      }
+      },
       other => panic!("expected RunScript, got {other:?}"),
     }
   }
@@ -148,7 +128,7 @@ mod tests {
         assert_eq!(url.host_str(), Some("www.magnific.com"));
         assert_eq!(url.path(), "/log-in");
         assert_eq!(url.query(), Some("client_id=magnific&lang=eno"));
-      }
+      },
       other => panic!("expected Navigate, got {other:?}"),
     }
   }
@@ -166,7 +146,7 @@ mod tests {
       NavigationAction::Navigate(url) => {
         assert_eq!(url.host_str(), Some(host));
         assert_eq!(url.path(), path);
-      }
+      },
       other => panic!("expected Navigate to {host}{path}, got {other:?}"),
     }
   }

@@ -16,9 +16,7 @@ use crate::state::data_dir::app_data_root::AppDataRoot;
 use crate::state::database::task_database::TaskDatabase;
 use crate::threads::third_party_task_polling_thread::handlers::higgsfield::handle_higgsfield_complete::handle_higgsfield_complete;
 use crate::threads::third_party_task_polling_thread::handlers::higgsfield::handle_higgsfield_failure::handle_higgsfield_failure;
-use crate::threads::third_party_task_polling_thread::handlers::higgsfield::higgsfield_failure_reason::{
-  build_failure_report, HiggsfieldFailureReport, HiggsfieldJobFailure, HiggsfieldJobFailureKind,
-};
+use crate::threads::third_party_task_polling_thread::handlers::higgsfield::higgsfield_failure_reason::{build_failure_report, HiggsfieldFailureReport, HiggsfieldJobFailure, HiggsfieldJobFailureKind};
 use crate::threads::third_party_task_polling_thread::handlers::higgsfield::higgsfield_poll_sessions::HiggsfieldPollSessions;
 use sqlite_identifiers::enums::task_failure_type::TaskFailureType;
 
@@ -41,15 +39,7 @@ pub async fn poll_higgsfield_tasks(
   }
 
   for task in tasks {
-    let result = poll_single_task(
-      app_handle,
-      app_data_root,
-      app_preferences,
-      task_database,
-      storyteller_creds_manager,
-      &sessions,
-      task,
-    ).await;
+    let result = poll_single_task(app_handle, app_data_root, app_preferences, task_database, storyteller_creds_manager, &sessions, task).await;
     if let Err(err) = result {
       error!("[HiggsfieldPolling] Error processing task {}: {:?}", task.id.as_str(), err);
     }
@@ -78,12 +68,7 @@ async fn poll_single_task(
   sessions: &[(String, HiggsfieldSession)],
   task: &Task,
 ) -> anyhow::Result<()> {
-  let job_ids: Vec<JobId> = task.provider_job_id.as_deref()
-      .map(split_higgsfield_job_ids)
-      .unwrap_or_default()
-      .into_iter()
-      .map(JobId::new)
-      .collect();
+  let job_ids: Vec<JobId> = task.provider_job_id.as_deref().map(split_higgsfield_job_ids).unwrap_or_default().into_iter().map(JobId::new).collect();
 
   if job_ids.is_empty() {
     warn!("[HiggsfieldPolling] Task {} has no job ids; marking as failed", task.id.as_str());
@@ -118,35 +103,24 @@ async fn poll_single_task(
       let maybe_server_reason = match session.job_status(&outcome.job_id).await {
         Ok(job) => job.fail_reason().map(str::to_string),
         Err(err) => {
-          warn!(
-            "[HiggsfieldPolling] Could not fetch fail_reason for job {} (task {}): {}",
-            outcome.job_id, task.id.as_str(), err,
-          );
+          warn!("[HiggsfieldPolling] Could not fetch fail_reason for job {} (task {}): {}", outcome.job_id, task.id.as_str(), err,);
           None
-        }
+        },
       };
-      failures.push(HiggsfieldJobFailure {
-        job_id: outcome.job_id.clone(),
-        kind: HiggsfieldJobFailureKind::TerminalStatus(outcome.status.clone()),
-        maybe_server_reason,
-      });
+      failures.push(HiggsfieldJobFailure { job_id: outcome.job_id.clone(), kind: HiggsfieldJobFailureKind::TerminalStatus(outcome.status.clone()), maybe_server_reason });
       continue;
     }
     match session.job_status(&outcome.job_id).await {
       Ok(job) if job.result_url().is_some() => finished.push(job),
       Ok(job) => {
         let maybe_server_reason = job.fail_reason().map(str::to_string);
-        failures.push(HiggsfieldJobFailure {
-          job_id: job.id.clone(),
-          kind: HiggsfieldJobFailureKind::CompletedWithoutResult,
-          maybe_server_reason,
-        });
-      }
+        failures.push(HiggsfieldJobFailure { job_id: job.id.clone(), kind: HiggsfieldJobFailureKind::CompletedWithoutResult, maybe_server_reason });
+      },
       Err(err) => {
         // Transient: try again next iteration rather than failing the task.
         warn!("[HiggsfieldPolling] Could not fetch job {} for task {}: {}", outcome.job_id, task.id.as_str(), err);
         return Ok(());
-      }
+      },
     }
   }
 
@@ -158,48 +132,26 @@ async fn poll_single_task(
 
   if !failures.is_empty() {
     let report = build_failure_report(&failures, outcomes.len());
-    warn!(
-      "[HiggsfieldPolling] Task {}: {} of {} job(s) failed; delivering the rest. Details: {}",
-      task.id.as_str(), failures.len(), outcomes.len(), report.log_details,
-    );
+    warn!("[HiggsfieldPolling] Task {}: {} of {} job(s) failed; delivering the rest. Details: {}", task.id.as_str(), failures.len(), outcomes.len(), report.log_details,);
   }
 
-  handle_higgsfield_complete(
-    app_handle,
-    app_data_root,
-    app_preferences,
-    task_database,
-    storyteller_creds_manager,
-    credential_id,
-    task,
-    &finished,
-  ).await;
+  handle_higgsfield_complete(app_handle, app_data_root, app_preferences, task_database, storyteller_creds_manager, credential_id, task, &finished).await;
 
   Ok(())
 }
 
 /// Ask each account for the jobs' status until one knows them.
-async fn find_job_set<'a>(
-  app_handle: &AppHandle,
-  app_data_root: &AppDataRoot,
-  sessions: &'a [(String, HiggsfieldSession)],
-  job_ids: &[JobId],
-  task: &Task,
-) -> Option<(&'a str, &'a HiggsfieldSession, JobSetProgress)> {
+async fn find_job_set<'a>(app_handle: &AppHandle, app_data_root: &AppDataRoot, sessions: &'a [(String, HiggsfieldSession)], job_ids: &[JobId], task: &Task) -> Option<(&'a str, &'a HiggsfieldSession, JobSetProgress)> {
   for (credential_id, session) in sessions {
     let batch = match session.job_status_batch(job_ids).await {
       Ok(batch) => batch,
       Err(err) => {
-        warn!(
-          "[HiggsfieldPolling] Status check failed for task {} on credential {}: {}{}",
-          task.id.as_str(), credential_id, err,
-          if err.needs_browser_reauth() { " (log into Higgsfield again)" } else { "" },
-        );
+        warn!("[HiggsfieldPolling] Status check failed for task {} on credential {}: {}{}", task.id.as_str(), credential_id, err, if err.needs_browser_reauth() { " (log into Higgsfield again)" } else { "" },);
         if err.needs_browser_reauth() {
           mark_higgsfield_relogin_required(app_handle, app_data_root, credential_id);
         }
         continue;
-      }
+      },
     };
 
     // An account that created none of these jobs reports them all missing.

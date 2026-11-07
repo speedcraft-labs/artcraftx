@@ -114,21 +114,9 @@ mod tests {
 
   #[test]
   fn maps_to_cookie_service_type() {
-    assert_eq!(
-      LoginWebsite::ArtCraft.credential_service(),
-      GenerationSource::ArtcraftCookies,
-    );
-    assert_eq!(
-      LoginWebsite::OpenArt.credential_service(),
-      GenerationSource::OpenArtCookies,
-    );
-    assert_eq!(
-      LoginWebsite::Higgsfield.credential_service(),
-      GenerationSource::HiggsfieldCookies,
-    );
-    assert_eq!(
-      LoginWebsite::Midjourney.credential_service(),
-      GenerationSource::MidjourneyCookies,
-    );
+    assert_eq!(LoginWebsite::ArtCraft.credential_service(), GenerationSource::ArtcraftCookies,);
+    assert_eq!(LoginWebsite::OpenArt.credential_service(), GenerationSource::OpenArtCookies,);
+    assert_eq!(LoginWebsite::Higgsfield.credential_service(), GenerationSource::HiggsfieldCookies,);
+    assert_eq!(LoginWebsite::Midjourney.credential_service(), GenerationSource::MidjourneyCookies,);
   }
 }

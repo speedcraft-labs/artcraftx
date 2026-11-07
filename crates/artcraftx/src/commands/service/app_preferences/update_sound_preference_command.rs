@@ -34,11 +34,7 @@ pub struct UpdateSoundPreferenceResponse {
 }
 
 #[tauri::command]
-pub async fn update_sound_preference_command(
-  request: UpdateSoundPreferenceRequest,
-  app: AppHandle,
-  app_prefs: State<'_, AppPreferencesManager>,
-) -> Result<UpdateSoundPreferenceResponse, String> {
+pub async fn update_sound_preference_command(request: UpdateSoundPreferenceRequest, app: AppHandle, app_prefs: State<'_, AppPreferencesManager>) -> Result<UpdateSoundPreferenceResponse, String> {
   info!("update_sound_preference_command called: {:?}", request);
 
   if let UpdateSoundPreferenceRequest::Set { event, sound: Some(sound) } = &request {
@@ -49,14 +45,14 @@ pub async fn update_sound_preference_command(
   }
 
   let prefs = app_prefs
-      .update(|prefs| match request {
-        UpdateSoundPreferenceRequest::Set { event, sound } => prefs.sounds.set(event, sound),
-        UpdateSoundPreferenceRequest::ResetToDefault { event } => prefs.sounds.reset_to_default(event),
-      })
-      .map_err(|err| {
-        error!("Error updating sound preference: {:?}", err);
-        format!("Error updating sound preference: {:?}", err)
-      })?;
+    .update(|prefs| match request {
+      UpdateSoundPreferenceRequest::Set { event, sound } => prefs.sounds.set(event, sound),
+      UpdateSoundPreferenceRequest::ResetToDefault { event } => prefs.sounds.reset_to_default(event),
+    })
+    .map_err(|err| {
+      error!("Error updating sound preference: {:?}", err);
+      format!("Error updating sound preference: {:?}", err)
+    })?;
 
   notify_app_preferences_changed(&app);
 
@@ -96,10 +92,7 @@ mod tests {
 
   #[test]
   fn decodes_reset() {
-    assert!(matches!(
-      decode(r#"{"action":"reset_to_default","event":"generation_success"}"#),
-      UpdateSoundPreferenceRequest::ResetToDefault { event: AppSoundEvent::GenerationSuccess },
-    ));
+    assert!(matches!(decode(r#"{"action":"reset_to_default","event":"generation_success"}"#), UpdateSoundPreferenceRequest::ResetToDefault { event: AppSoundEvent::GenerationSuccess },));
   }
 
   #[test]

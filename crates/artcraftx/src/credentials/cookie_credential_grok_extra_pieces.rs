@@ -81,22 +81,13 @@ impl CookieCredentialGrokExtraPieces {
       statsig_fetched_at: Some(now),
       statsig_refresh_at: Some(expires_at),
       statsig_material: Some(capture.material),
-      latest_statsig: Some(LatestGrokStatsig {
-        statsig_id: capture.statsig_id,
-        method: capture.method,
-        path: capture.path,
-        captured_at: capture.captured_at,
-        expires_at,
-      }),
+      latest_statsig: Some(LatestGrokStatsig { statsig_id: capture.statsig_id, method: capture.method, path: capture.path, captured_at: capture.captured_at, expires_at }),
     }
   }
 
   /// The latest captured `x-statsig-id`, if there is one and it hasn't expired.
   pub fn latest_statsig_if_fresh(&self, now: DateTime<Utc>) -> Option<&str> {
-    self.latest_statsig
-        .as_ref()
-        .filter(|latest| now < latest.expires_at)
-        .map(|latest| latest.statsig_id.as_str())
+    self.latest_statsig.as_ref().filter(|latest| now < latest.expires_at).map(|latest| latest.statsig_id.as_str())
   }
 
   /// Whether the stored statsig is missing or past its refresh time, so it
@@ -113,10 +104,7 @@ impl CookieCredentialGrokExtraPieces {
 
 /// Whether a cookie credential's Grok statsig data is absent or stale and
 /// should be re-captured. `None` (no `grok_data` at all) counts as stale.
-pub fn grok_statsig_needs_refresh(
-  grok_data: Option<&CookieCredentialGrokExtraPieces>,
-  now: DateTime<Utc>,
-) -> bool {
+pub fn grok_statsig_needs_refresh(grok_data: Option<&CookieCredentialGrokExtraPieces>, now: DateTime<Utc>) -> bool {
   grok_data.map_or(true, |data| data.is_stale(now))
 }
 
@@ -155,21 +143,13 @@ mod tests {
     let now = Utc::now();
     let data = CookieCredentialGrokExtraPieces::fresh(capture(now), now);
     assert_eq!(data.latest_statsig_if_fresh(now), Some(STATSIG_ID));
-    assert_eq!(
-      data.latest_statsig_if_fresh(now + chrono::Duration::minutes(STATSIG_REFRESH_MINUTES)),
-      None,
-    );
+    assert_eq!(data.latest_statsig_if_fresh(now + chrono::Duration::minutes(STATSIG_REFRESH_MINUTES)), None,);
   }
 
   #[test]
   fn material_without_latest_statsig_is_stale() {
     let now = Utc::now();
-    let data = CookieCredentialGrokExtraPieces {
-      statsig_fetched_at: Some(now),
-      statsig_refresh_at: Some(now + chrono::Duration::minutes(STATSIG_REFRESH_MINUTES)),
-      statsig_material: Some(capture(now).material),
-      latest_statsig: None,
-    };
+    let data = CookieCredentialGrokExtraPieces { statsig_fetched_at: Some(now), statsig_refresh_at: Some(now + chrono::Duration::minutes(STATSIG_REFRESH_MINUTES)), statsig_material: Some(capture(now).material), latest_statsig: None };
     assert!(data.is_stale(now));
     assert_eq!(data.latest_statsig_if_fresh(now), None);
   }
@@ -177,12 +157,7 @@ mod tests {
   #[test]
   fn material_without_refresh_time_is_stale() {
     let now = Utc::now();
-    let data = CookieCredentialGrokExtraPieces {
-      statsig_fetched_at: None,
-      statsig_refresh_at: None,
-      statsig_material: Some(capture(now).material),
-      latest_statsig: None,
-    };
+    let data = CookieCredentialGrokExtraPieces { statsig_fetched_at: None, statsig_refresh_at: None, statsig_material: Some(capture(now).material), latest_statsig: None };
     assert!(data.is_stale(now));
   }
 }

@@ -17,7 +17,7 @@ use serde::Deserialize;
 /// }
 /// ```
 #[derive(Deserialize)]
-pub (super) struct GrokApiUploadFileResponse {
+pub(super) struct GrokApiUploadFileResponse {
   #[serde(rename = "uploadId")]
   pub upload_id: Option<String>,
 
@@ -26,7 +26,7 @@ pub (super) struct GrokApiUploadFileResponse {
 }
 
 #[derive(Deserialize)]
-pub (super) struct GrokApiUploadFileMetadata {
+pub(super) struct GrokApiUploadFileMetadata {
   /// The uploaded file id, used to reference the file later.
   #[serde(rename = "fileMetadataId")]
   pub file_metadata_id: Option<String>,

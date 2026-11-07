@@ -60,7 +60,7 @@ impl PromptboxState {
       Err(err) => {
         warn!("Could not read prompt box state from {:?}; starting fresh: {}", path, err);
         Self::default()
-      }
+      },
     }
   }
 
@@ -132,11 +132,14 @@ mod tests {
 
   #[test]
   fn partial_or_unknown_fields_still_load() {
-    let state: PromptboxState = serde_json::from_str(r#"{
+    let state: PromptboxState = serde_json::from_str(
+      r#"{
       "version": 1,
       "image": { "selected_model": "nano_banana_pro", "future_field": true },
       "something_new": [1, 2, 3]
-    }"#).unwrap();
+    }"#,
+    )
+    .unwrap();
     assert_eq!(state.image.selected_model.as_deref(), Some("nano_banana_pro"));
     assert_eq!(state.image.selected_account_id, None);
     assert_eq!(state.video, ModalityPromptboxState::default());

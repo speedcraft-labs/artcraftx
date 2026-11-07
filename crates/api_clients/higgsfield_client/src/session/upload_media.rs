@@ -72,8 +72,7 @@ impl ReferenceMediaFile {
   /// Guess the type from the file name's extension.
   pub fn from_file_name(file_name: impl Into<String>, bytes: Vec<u8>) -> Result<Self, HiggsfieldClientError> {
     let file_name = file_name.into();
-    let mime_type = MediaMimeType::from_file_name(&file_name)
-        .ok_or_else(|| HiggsfieldClientError::InvalidRequest(format!("can't tell the media type of {file_name:?}; pass it explicitly")))?;
+    let mime_type = MediaMimeType::from_file_name(&file_name).ok_or_else(|| HiggsfieldClientError::InvalidRequest(format!("can't tell the media type of {file_name:?}; pass it explicitly")))?;
     Ok(Self { file_name, mime_type, bytes, force_ip_check: false, maybe_source_url: None })
   }
 
@@ -88,9 +87,7 @@ impl ReferenceMediaFile {
       return Err(HiggsfieldClientError::InvalidRequest(format!("{:?} has no bytes", self.file_name)));
     }
     if self.mime_type.is_audio() && AudioUploadExtension::for_mime_type(&self.mime_type).is_none() {
-      return Err(HiggsfieldClientError::InvalidRequest(format!(
-        "{:?}: audio uploads support only wav, mp3 or webm, not {}", self.file_name, self.mime_type,
-      )));
+      return Err(HiggsfieldClientError::InvalidRequest(format!("{:?}: audio uploads support only wav, mp3 or webm, not {}", self.file_name, self.mime_type,)));
     }
     Ok(())
   }
@@ -128,19 +125,31 @@ impl HiggsfieldSession {
     file.validate()?;
 
     let slot = match file.family() {
-      MediaFamily::Image => self.with_auth(|auth| {
-        let request = CreateReferenceMediaRequest::new(file.mime_type.clone());
-        async move { create_reference_media(CreateReferenceMediaArgs { request, auth: &auth, host: self.api_host() }).await }
-      }).await?,
-      MediaFamily::Video => self.with_auth(|auth| {
-        let request = CreateVideoUploadRequest::new(file.mime_type.clone());
-        async move { create_video_upload(CreateVideoUploadArgs { request, auth: &auth, host: self.api_host() }).await }
-      }).await?,
-      MediaFamily::Audio => self.with_auth(|auth| {
-        let extension = AudioUploadExtension::for_mime_type(&file.mime_type).expect("validated above");
-        let request = CreateAudioUploadRequest::new(extension, file.file_name.clone());
-        async move { create_audio_upload(CreateAudioUploadArgs { request, auth: &auth, host: self.api_host() }).await }
-      }).await?,
+      MediaFamily::Image => {
+        self
+          .with_auth(|auth| {
+            let request = CreateReferenceMediaRequest::new(file.mime_type.clone());
+            async move { create_reference_media(CreateReferenceMediaArgs { request, auth: &auth, host: self.api_host() }).await }
+          })
+          .await?
+      },
+      MediaFamily::Video => {
+        self
+          .with_auth(|auth| {
+            let request = CreateVideoUploadRequest::new(file.mime_type.clone());
+            async move { create_video_upload(CreateVideoUploadArgs { request, auth: &auth, host: self.api_host() }).await }
+          })
+          .await?
+      },
+      MediaFamily::Audio => {
+        self
+          .with_auth(|auth| {
+            let extension = AudioUploadExtension::for_mime_type(&file.mime_type).expect("validated above");
+            let request = CreateAudioUploadRequest::new(extension, file.file_name.clone());
+            async move { create_audio_upload(CreateAudioUploadArgs { request, auth: &auth, host: self.api_host() }).await }
+          })
+          .await?
+      },
     };
 
     self.upload_and_confirm(&slot, file).await
@@ -160,15 +169,15 @@ impl HiggsfieldSession {
 
     let mime_types: Vec<MediaMimeType> = files.iter().map(|file| file.mime_type.clone()).collect();
 
-    let slots = self.with_auth(|auth| {
-      let request = CreateMediaBatchRequest::new(mime_types.clone());
-      async move { create_media_batch(CreateMediaBatchArgs { request, auth: &auth, host: self.api_host() }).await }
-    }).await?;
+    let slots = self
+      .with_auth(|auth| {
+        let request = CreateMediaBatchRequest::new(mime_types.clone());
+        async move { create_media_batch(CreateMediaBatchArgs { request, auth: &auth, host: self.api_host() }).await }
+      })
+      .await?;
 
     if slots.len() != files.len() {
-      return Err(HiggsfieldClientError::InvalidRequest(format!(
-        "the server allocated {} upload slots for {} files", slots.len(), files.len(),
-      )).into());
+      return Err(HiggsfieldClientError::InvalidRequest(format!("the server allocated {} upload slots for {} files", slots.len(), files.len(),)).into());
     }
 
     let mut uploaded = Vec::with_capacity(files.len());
@@ -185,32 +194,38 @@ impl HiggsfieldSession {
     let ReferenceMediaFile { file_name, mime_type, bytes, force_ip_check, .. } = file;
     let byte_count = bytes.len();
 
-    upload_media_bytes(UploadMediaBytesArgs {
-      request: UploadMediaBytesRequest::for_slot(slot, bytes),
-      maybe_user_agent: self.maybe_user_agent(),
-    }).await?;
+    upload_media_bytes(UploadMediaBytesArgs { request: UploadMediaBytesRequest::for_slot(slot, bytes), maybe_user_agent: self.maybe_user_agent() }).await?;
 
     let confirmation: ConfirmMediaUploadResponse = match family {
-      MediaFamily::Image => self.with_auth(|auth| {
-        let mut request = ConfirmMediaUploadRequest::new(slot.id.clone(), file_name.clone());
-        request.force_ip_check = force_ip_check;
-        async move { confirm_media_upload(ConfirmMediaUploadArgs { request, auth: &auth, host: self.api_host() }).await }
-      }).await?,
-      MediaFamily::Video => self.with_auth(|auth| {
-        let mut request = ConfirmVideoUploadRequest::new(slot.id.clone());
-        request.maybe_force_ip_check = force_ip_check.then_some(true);
-        async move { confirm_video_upload(ConfirmVideoUploadArgs { request, auth: &auth, host: self.api_host() }).await }
-      }).await?,
-      MediaFamily::Audio => self.with_auth(|auth| {
-        let request = ConfirmAudioUploadRequest::new(slot.id.clone());
-        async move { confirm_audio_upload(ConfirmAudioUploadArgs { request, auth: &auth, host: self.api_host() }).await }
-      }).await?,
+      MediaFamily::Image => {
+        self
+          .with_auth(|auth| {
+            let mut request = ConfirmMediaUploadRequest::new(slot.id.clone(), file_name.clone());
+            request.force_ip_check = force_ip_check;
+            async move { confirm_media_upload(ConfirmMediaUploadArgs { request, auth: &auth, host: self.api_host() }).await }
+          })
+          .await?
+      },
+      MediaFamily::Video => {
+        self
+          .with_auth(|auth| {
+            let mut request = ConfirmVideoUploadRequest::new(slot.id.clone());
+            request.maybe_force_ip_check = force_ip_check.then_some(true);
+            async move { confirm_video_upload(ConfirmVideoUploadArgs { request, auth: &auth, host: self.api_host() }).await }
+          })
+          .await?
+      },
+      MediaFamily::Audio => {
+        self
+          .with_auth(|auth| {
+            let request = ConfirmAudioUploadRequest::new(slot.id.clone());
+            async move { confirm_audio_upload(ConfirmAudioUploadArgs { request, auth: &auth, host: self.api_host() }).await }
+          })
+          .await?
+      },
     };
 
-    info!(
-      "Higgsfield reference media {} uploaded ({} bytes, {}, status {})",
-      slot.id, byte_count, mime_type, confirmation.status,
-    );
+    info!("Higgsfield reference media {} uploaded ({} bytes, {}, status {})", slot.id, byte_count, mime_type, confirmation.status,);
 
     if confirmation.is_ip_detected() {
       return Err(HiggsfieldClientError::MediaProtectedContent { media_id: slot.id.clone() }.into());
@@ -236,10 +251,12 @@ impl HiggsfieldSession {
   /// `/fnf/video/{id}`). Used to confirm a previously uploaded reference
   /// still exists (and whether its IP check ran) before reusing its id.
   pub async fn get_media_status(&self, family: MediaStatusFamily, media_id: &MediaId) -> Result<GetMediaStatusResponse, HiggsfieldError> {
-    self.with_auth(|auth| {
-      let request = GetMediaStatusRequest::new(family, media_id.clone());
-      async move { get_media_status(GetMediaStatusArgs { request, auth: &auth, host: self.api_host() }).await }
-    }).await
+    self
+      .with_auth(|auth| {
+        let request = GetMediaStatusRequest::new(family, media_id.clone());
+        async move { get_media_status(GetMediaStatusArgs { request, auth: &auth, host: self.api_host() }).await }
+      })
+      .await
   }
 
   /// Poll the upload's status (`GET /fnf/media/{id}` for images,
@@ -250,10 +267,12 @@ impl HiggsfieldSession {
   pub async fn wait_for_media_ip_check(&self, family: MediaStatusFamily, media_id: &MediaId, timeout: Duration) -> Result<GetMediaStatusResponse, HiggsfieldError> {
     let started = Instant::now();
     loop {
-      let status = self.with_auth(|auth| {
-        let request = GetMediaStatusRequest::new(family, media_id.clone());
-        async move { get_media_status(GetMediaStatusArgs { request, auth: &auth, host: self.api_host() }).await }
-      }).await?;
+      let status = self
+        .with_auth(|auth| {
+          let request = GetMediaStatusRequest::new(family, media_id.clone());
+          async move { get_media_status(GetMediaStatusArgs { request, auth: &auth, host: self.api_host() }).await }
+        })
+        .await?;
 
       if status.is_ip_detected() {
         return Err(HiggsfieldClientError::MediaProtectedContent { media_id: media_id.clone() }.into());
@@ -293,11 +312,9 @@ mod tests {
 
   #[test]
   fn first_party_source_urls_are_refused() {
-    let file = ReferenceMediaFile::new("a.png", MediaMimeType::ImagePng, vec![1])
-        .with_source_url("https://cdn-2.fakeyou.com/media/a/image_a.png");
+    let file = ReferenceMediaFile::new("a.png", MediaMimeType::ImagePng, vec![1]).with_source_url("https://cdn-2.fakeyou.com/media/a/image_a.png");
     assert!(matches!(file.validate(), Err(HiggsfieldClientError::UploadSourceDomainBlocked { .. })));
-    let file = ReferenceMediaFile::new("a.png", MediaMimeType::ImagePng, vec![1])
-        .with_source_url("https://cdn.example.com/a.png");
+    let file = ReferenceMediaFile::new("a.png", MediaMimeType::ImagePng, vec![1]).with_source_url("https://cdn.example.com/a.png");
     assert!(file.validate().is_ok());
   }
 
@@ -305,8 +322,7 @@ mod tests {
   async fn empty_inputs_fail_before_network() {
     use crate::client::clerk_host::ClerkHost;
     use crate::client::higgsfield_host::HiggsfieldHost;
-    let session = HiggsfieldSession::from_cookie_header("__client=x")
-        .with_hosts(HiggsfieldHost::Custom("http://127.0.0.1:9".into()), ClerkHost::Custom("http://127.0.0.1:9".into()));
+    let session = HiggsfieldSession::from_cookie_header("__client=x").with_hosts(HiggsfieldHost::Custom("http://127.0.0.1:9".into()), ClerkHost::Custom("http://127.0.0.1:9".into()));
 
     let err = session.upload_reference_media(ReferenceMediaFile::new("a.png", MediaMimeType::ImagePng, vec![])).await.unwrap_err();
     assert!(matches!(err, HiggsfieldError::Client(HiggsfieldClientError::InvalidRequest(_))));

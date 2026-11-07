@@ -12,18 +12,10 @@ use sqlite_database::queries::update::update_task_status_with_rich_failure::{upd
 use sqlite_identifiers::enums::task_status::TaskStatus;
 use tauri::AppHandle;
 
-pub async fn handle_failed_job(
-  app_handle: &AppHandle,
-  job: &JobStatusPayload,
-  task: &Task,
-  task_database: &TaskDatabase,
-) -> AnyhowResult<()> {
+pub async fn handle_failed_job(app_handle: &AppHandle, job: &JobStatusPayload, task: &Task, task_database: &TaskDatabase) -> AnyhowResult<()> {
   info!("Marking storyteller job as failed: {:?}", task.id);
 
-  let maybe_failure_type = job.status
-      .maybe_failure_category
-      .as_ref()
-      .map(task_failure_type_from_frontend_failure_category_for_api);
+  let maybe_failure_type = job.status.maybe_failure_category.as_ref().map(task_failure_type_from_frontend_failure_category_for_api);
 
   update_task_status_with_rich_failure(UpdateTaskWithRichFailureArgs {
     db: task_database.get_connection(),
@@ -32,17 +24,13 @@ pub async fn handle_failed_job(
     maybe_failure_type,
     // NB: The job status endpoints don't carry a user-facing failure message.
     maybe_failure_message: None,
-  }).await?;
+  })
+  .await?;
 
   let service = to_generation_service_provider(task.provider);
   let action = to_generation_action(task.task_type);
 
-  let event = GenerationFailedEvent {
-    action,
-    service,
-    model: None,
-    reason: None,
-  };
+  let event = GenerationFailedEvent { action, service, model: None, reason: None };
 
   event.send_infallible(app_handle);
 

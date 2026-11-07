@@ -19,25 +19,13 @@ pub async fn poll_job_to_completion(session: &HiggsfieldSession, job_id: &JobId)
     // Tokens live ~60s; ask the session each time so long jobs don't 401.
     let auth = session.auth().await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
-    let batch = job_status_batch(JobStatusBatchArgs {
-      request: JobStatusBatchRequest { ids: ids.clone() },
-      auth: &auth,
-      host: session.api_host(),
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let batch = job_status_batch(JobStatusBatchArgs { request: JobStatusBatchRequest { ids: ids.clone() }, auth: &auth, host: session.api_host() }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
-    let item = batch.find(job_id)
-        .ok_or_else(|| anyhow::anyhow!("job {job_id} absent from batch response: {:?}", batch))?;
-    println!(
-      "[{:>4}s] POST /fnf/jobs/status-batch => {} status={} job_set_type={:?}",
-      started.elapsed().as_secs(), item.id, item.status, item.job_set_type,
-    );
+    let item = batch.find(job_id).ok_or_else(|| anyhow::anyhow!("job {job_id} absent from batch response: {:?}", batch))?;
+    println!("[{:>4}s] POST /fnf/jobs/status-batch => {} status={} job_set_type={:?}", started.elapsed().as_secs(), item.id, item.status, item.job_set_type,);
 
     if item.status.is_terminal() {
-      let job = job_status(JobStatusArgs {
-        request: JobStatusRequest { job_id: job_id.clone() },
-        auth: &auth,
-        host: session.api_host(),
-      }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+      let job = job_status(JobStatusArgs { request: JobStatusRequest { job_id: job_id.clone() }, auth: &auth, host: session.api_host() }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
       println!("\n===== GET /fnf/jobs/{job_id} (final) =====\n{:#?}", job);
       println!("result_url = {:?}", job.result_url());
@@ -59,16 +47,11 @@ pub async fn poll_jobs_to_completion(session: &HiggsfieldSession, job_ids: &[Job
   loop {
     let auth = session.auth().await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
-    let batch = job_status_batch(JobStatusBatchArgs {
-      request: JobStatusBatchRequest { ids: job_ids.to_vec() },
-      auth: &auth,
-      host: session.api_host(),
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let batch = job_status_batch(JobStatusBatchArgs { request: JobStatusBatchRequest { ids: job_ids.to_vec() }, auth: &auth, host: session.api_host() }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
     let mut all_terminal = true;
     for job_id in job_ids {
-      let item = batch.find(job_id)
-          .ok_or_else(|| anyhow::anyhow!("job {job_id} absent from batch response: {:?}", batch))?;
+      let item = batch.find(job_id).ok_or_else(|| anyhow::anyhow!("job {job_id} absent from batch response: {:?}", batch))?;
       println!("[{:>4}s] status-batch => {} status={}", started.elapsed().as_secs(), item.id, item.status);
       all_terminal &= item.status.is_terminal();
     }
@@ -76,14 +59,17 @@ pub async fn poll_jobs_to_completion(session: &HiggsfieldSession, job_ids: &[Job
     if all_terminal {
       let mut jobs = Vec::with_capacity(job_ids.len());
       for job_id in job_ids {
-        let job = job_status(JobStatusArgs {
-          request: JobStatusRequest { job_id: job_id.clone() },
-          auth: &auth,
-          host: session.api_host(),
-        }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+        let job = job_status(JobStatusArgs { request: JobStatusRequest { job_id: job_id.clone() }, auth: &auth, host: session.api_host() }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
         println!(
           "\n===== GET /fnf/jobs/{job_id} (final) =====\nstatus={} type={} size={:?}x{:?} quality={:?} thinking={:?} seed={:?}\nresult_url = {:?}",
-          job.status, job.job_set_type, job.params.width, job.params.height, job.params.quality, job.params.thinking, job.params.seed, job.result_url(),
+          job.status,
+          job.job_set_type,
+          job.params.width,
+          job.params.height,
+          job.params.quality,
+          job.params.thinking,
+          job.params.seed,
+          job.result_url(),
         );
         anyhow::ensure!(job.status.is_success(), "job {job_id} ended in state {} (reason: {:?})", job.status, job.fail_reason());
         jobs.push(job);

@@ -20,11 +20,7 @@ pub struct PromptboxStateManager {
 
 impl PromptboxStateManager {
   pub fn load_or_default(data_root: &AppDataRoot) -> Self {
-    Self {
-      state: CloneCell::with_owned(PromptboxState::load_or_default(data_root)),
-      data_root: data_root.clone(),
-      write_lock: Arc::new(Mutex::new(())),
-    }
+    Self { state: CloneCell::with_owned(PromptboxState::load_or_default(data_root)), data_root: data_root.clone(), write_lock: Arc::new(Mutex::new(())) }
   }
 
   pub fn get(&self) -> AnyhowResult<PromptboxState> {
@@ -70,19 +66,19 @@ mod tests {
     let manager = PromptboxStateManager::load_or_default(&data_root);
 
     let handles: Vec<_> = (0..THREADS)
-        .map(|thread_index| {
-          let manager = manager.clone();
-          thread::spawn(move || {
-            for i in 0..UPDATES_PER_THREAD {
-              manager
-                  .update(|state| {
-                    state.last_account_by_model.insert(format!("model_{thread_index}_{i}"), "credential".to_string());
-                  })
-                  .expect("update should never fail under contention");
-            }
-          })
+      .map(|thread_index| {
+        let manager = manager.clone();
+        thread::spawn(move || {
+          for i in 0..UPDATES_PER_THREAD {
+            manager
+              .update(|state| {
+                state.last_account_by_model.insert(format!("model_{thread_index}_{i}"), "credential".to_string());
+              })
+              .expect("update should never fail under contention");
+          }
         })
-        .collect();
+      })
+      .collect();
     for handle in handles {
       handle.join().unwrap();
     }

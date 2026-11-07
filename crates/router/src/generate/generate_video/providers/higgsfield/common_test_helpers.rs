@@ -14,13 +14,7 @@ use crate::generate::generate_video::video_generation_draft_or_request::VideoGen
 use crate::generate::generate_video::video_generation_request::VideoGenerationRequest;
 
 pub fn base_builder(model: RouterVideoModel) -> GenerateVideoRequestBuilder {
-  GenerateVideoRequestBuilder {
-    model,
-    provider: RouterProvider::Higgsfield,
-    prompt: Some("a shiba inu surfing a big wave".to_string()),
-    request_mismatch_mitigation_strategy: RequestMismatchMitigationStrategy::PayMoreUpgrade,
-    ..Default::default()
-  }
+  GenerateVideoRequestBuilder { model, provider: RouterProvider::Higgsfield, prompt: Some("a shiba inu surfing a big wave".to_string()), request_mismatch_mitigation_strategy: RequestMismatchMitigationStrategy::PayMoreUpgrade, ..Default::default() }
 }
 
 pub fn with_start_frame(mut builder: GenerateVideoRequestBuilder) -> GenerateVideoRequestBuilder {

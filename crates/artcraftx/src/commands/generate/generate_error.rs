@@ -24,10 +24,10 @@ pub enum GenerateError {
 
   /// We couldn't find a provider to dispatch the request to.
   NoProviderAvailable,
-  
+
   /// We pulled out Fal (for now) - it's impacting build speeds. We'll add it in the future.
   FalNoLongerSupported,
-  
+
   /// Wrong provider for the model
   BadProviderForModel {
     provider: GenerationSource,
@@ -65,7 +65,9 @@ pub enum BadInputReason {
   BothImageMaskMediaTokenAndBytesSupplied,
   CannotDetermineImageMimeType,
   /// A `local_path` media source doesn't point at an existing regular file.
-  LocalMediaFileNotFound { path: std::path::PathBuf },
+  LocalMediaFileNotFound {
+    path: std::path::PathBuf,
+  },
   /// A `bytes` media source arrived empty.
   EmptyMediaBytes,
   InvalidNumberOfInputImages {
@@ -104,10 +106,9 @@ impl CredentialProblemReason {
   /// and the credential-error modal so both say the same thing.
   pub fn user_message(&self) -> String {
     match self {
-      Self::NoCredentialSupplied => {
-        "No account selected. Pick an account in the account selector, \
-         or add one in Settings → Accounts.".to_string()
-      }
+      Self::NoCredentialSupplied => "No account selected. Pick an account in the account selector, \
+         or add one in Settings → Accounts."
+        .to_string(),
       Self::CredentialNotFound { credential_id } => format!(
         "The selected account no longer exists (credential {}). \
          Pick another account and try again.",
@@ -115,11 +116,8 @@ impl CredentialProblemReason {
       ),
       Self::CredentialNotUsable { reason, .. } => {
         format!("The selected account can't be used for this request: {}", reason)
-      }
-      Self::SessionExpired { service, .. } => format!(
-        "Your session has expired and {} needs you to login again.",
-        service_display_name(*service),
-      ),
+      },
+      Self::SessionExpired { service, .. } => format!("Your session has expired and {} needs you to login again.", service_display_name(*service),),
     }
   }
 }
@@ -130,10 +128,7 @@ fn service_display_name(service: GenerationSource) -> &'static str {
     GenerationSource::Higgsfield | GenerationSource::HiggsfieldCookies => "Higgsfield",
     GenerationSource::Grok | GenerationSource::GrokCookies | GenerationSource::XAiApi => "Grok",
     GenerationSource::Midjourney | GenerationSource::MidjourneyCookies => "Midjourney",
-    GenerationSource::Artcraft
-    | GenerationSource::ArtcraftLocal
-    | GenerationSource::ArtcraftCookies
-    | GenerationSource::ArtcraftApi => "ArtCraft",
+    GenerationSource::Artcraft | GenerationSource::ArtcraftLocal | GenerationSource::ArtcraftCookies | GenerationSource::ArtcraftApi => "ArtCraft",
     GenerationSource::Fal | GenerationSource::FalApi => "Fal",
     GenerationSource::MagnificCookies => "Magnific",
     GenerationSource::OpenArtCookies => "OpenArt",
@@ -184,7 +179,6 @@ pub enum ProviderFailureReason {
 }
 
 impl GenerateError {
-
   //
   // Bad input
   //
@@ -291,9 +285,7 @@ impl From<ArtcraftRouterError> for GenerateError {
         let provider = match err {
           ProviderError::Fal(_) => BillingProvider::Fal,
           ProviderError::Seedance2Pro(_) => BillingProvider::Kinovi,
-          ProviderError::Midjourney(_)
-          | ProviderError::MidjourneySubscriptionRequired(_)
-          | ProviderError::MidjourneySubmitRejected(_) => BillingProvider::Midjourney,
+          ProviderError::Midjourney(_) | ProviderError::MidjourneySubscriptionRequired(_) | ProviderError::MidjourneySubmitRejected(_) => BillingProvider::Midjourney,
           ProviderError::Storyteller(_) => BillingProvider::Artcraft,
           ProviderError::GmiCloud(_) => BillingProvider::Artcraft,
           ProviderError::GrokApi(_) => BillingProvider::Artcraft,

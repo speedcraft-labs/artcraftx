@@ -16,12 +16,7 @@ pub struct DataDomeResponseSignals<'a> {
 
 impl<'a> DataDomeResponseSignals<'a> {
   pub fn new(status_code: u16, body: &'a str) -> Self {
-    Self {
-      status_code,
-      body,
-      maybe_x_datadome: None,
-      maybe_x_dd_b: None,
-    }
+    Self { status_code, body, maybe_x_datadome: None, maybe_x_dd_b: None }
   }
 
   pub fn with_x_datadome(mut self, value: Option<&'a str>) -> Self {

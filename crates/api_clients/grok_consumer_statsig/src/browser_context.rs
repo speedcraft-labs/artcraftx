@@ -1,8 +1,7 @@
 /// Default WebView User-Agent. Must match the UA that obtained `cf_clearance`
 /// and the one the `grok_consumer_client` HTTP client uses (Cloudflare binds
 /// `cf_clearance` to the UA).
-pub const DEFAULT_USER_AGENT: &str =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0";
+pub const DEFAULT_USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0";
 
 /// What a WebView needs so its grok.com page load passes Cloudflare and can run
 /// Grok's signer.
@@ -28,9 +27,6 @@ impl BrowserContext {
   /// A context that only pins the User-Agent, relying on the shared WebKit
   /// cookie store for the session.
   pub fn with_user_agent(user_agent: impl Into<String>) -> Self {
-    Self {
-      user_agent: Some(user_agent.into()),
-      cookies: Vec::new(),
-    }
+    Self { user_agent: Some(user_agent.into()), cookies: Vec::new() }
   }
 }

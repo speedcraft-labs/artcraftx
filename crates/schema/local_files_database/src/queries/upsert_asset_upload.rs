@@ -32,15 +32,15 @@ pub async fn upsert_asset_upload(args: UpsertAssetUploadArgs<'_>) -> Result<(), 
       last_reused_at = NULL
     "#,
   )
-      .bind(args.service)
-      .bind(args.account_id)
-      .bind(args.file_hash_blake3)
-      .bind(args.service_id)
-      .bind(args.origin)
-      .bind(args.maybe_service_url)
-      .bind(args.maybe_file_size_bytes)
-      .bind(Utc::now())
-      .execute(args.db.get_pool())
-      .await?;
+  .bind(args.service)
+  .bind(args.account_id)
+  .bind(args.file_hash_blake3)
+  .bind(args.service_id)
+  .bind(args.origin)
+  .bind(args.maybe_service_url)
+  .bind(args.maybe_file_size_bytes)
+  .bind(Utc::now())
+  .execute(args.db.get_pool())
+  .await?;
   Ok(())
 }

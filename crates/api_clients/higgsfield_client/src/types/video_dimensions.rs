@@ -31,11 +31,7 @@ impl VideoDimensions {
       let rounded = value.round() as u32;
       if rounded % 2 == 0 { rounded } else { rounded + 1 }
     };
-    if ratio >= 1.0 {
-      Some(Self::new(round_even(short_side as f64 * ratio), short_side))
-    } else {
-      Some(Self::new(short_side, round_even(short_side as f64 / ratio)))
-    }
+    if ratio >= 1.0 { Some(Self::new(round_even(short_side as f64 * ratio), short_side)) } else { Some(Self::new(short_side, round_even(short_side as f64 / ratio))) }
   }
 }
 

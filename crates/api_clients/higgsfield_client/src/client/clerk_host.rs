@@ -33,10 +33,7 @@ impl ClerkHost {
   /// Build a full URL for an API path (which must start with `/`), with the
   /// version query parameters attached.
   pub(crate) fn url(&self, path: &str) -> String {
-    format!(
-      "{}{}?__clerk_api_version={}&_clerk_js_version={}",
-      self.base_url(), path, CLERK_API_VERSION, CLERK_JS_VERSION,
-    )
+    format!("{}{}?__clerk_api_version={}&_clerk_js_version={}", self.base_url(), path, CLERK_API_VERSION, CLERK_JS_VERSION,)
   }
 }
 

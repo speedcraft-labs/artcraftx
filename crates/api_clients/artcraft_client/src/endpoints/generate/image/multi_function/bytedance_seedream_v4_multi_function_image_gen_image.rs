@@ -9,10 +9,5 @@ pub async fn bytedance_seedream_v4_multi_function_image_gen(
   maybe_creds: Option<&StorytellerCredentialSet>,
   request: BytedanceSeedreamV4MultiFunctionImageGenRequest,
 ) -> Result<BytedanceSeedreamV4MultiFunctionImageGenResponse, StorytellerError> {
-  Ok(basic_json_post_request(
-    api_host,
-    BYTEDANCE_SEEDREAM_V4_MULTI_FUNCTION_IMAGE_GEN_PATH,
-    maybe_creds,
-    request,
-  ).await?)
+  Ok(basic_json_post_request(api_host, BYTEDANCE_SEEDREAM_V4_MULTI_FUNCTION_IMAGE_GEN_PATH, maybe_creds, request).await?)
 }

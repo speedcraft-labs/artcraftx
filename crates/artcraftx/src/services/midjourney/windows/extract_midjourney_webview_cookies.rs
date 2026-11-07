@@ -6,27 +6,15 @@ use std::collections::HashSet;
 use tauri::webview::Cookie;
 use tauri::WebviewWindow;
 
-static WWW_COOKIE_URL: Lazy<Url> = Lazy::new(|| {
-  Url::parse("https://www.midjourney.com").expect("URL should parse")
-});
+static WWW_COOKIE_URL: Lazy<Url> = Lazy::new(|| Url::parse("https://www.midjourney.com").expect("URL should parse"));
 
-static ROOT_COOKIE_URL: Lazy<Url> = Lazy::new(|| {
-  Url::parse("https://midjourney.com").expect("URL should parse")
-});
+static ROOT_COOKIE_URL: Lazy<Url> = Lazy::new(|| Url::parse("https://midjourney.com").expect("URL should parse"));
 
 pub fn extract_midjourney_webview_cookies(webview: &WebviewWindow) -> AnyhowResult<CookieStore> {
   let mut cookie_store = CookieStore::empty();
   let cookies = get_all_midjourney_cookies(webview)?;
   for cookie in cookies.iter() {
-    cookie_store.insert_captured(
-      CapturedCookie {
-        name: cookie.name().to_string(),
-        value: cookie.value().to_string(),
-        maybe_domain: cookie.domain().map(str::to_string),
-        maybe_path: cookie.path().map(str::to_string),
-      },
-      &WWW_COOKIE_URL,
-    );
+    cookie_store.insert_captured(CapturedCookie { name: cookie.name().to_string(), value: cookie.value().to_string(), maybe_domain: cookie.domain().map(str::to_string), maybe_path: cookie.path().map(str::to_string) }, &WWW_COOKIE_URL);
   }
   Ok(cookie_store)
 }

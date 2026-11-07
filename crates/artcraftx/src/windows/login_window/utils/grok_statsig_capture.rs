@@ -57,12 +57,7 @@ pub fn grok_statsig_init_script() -> String {
 /// fingerprint (SHA-locked), so the material is the seed alone — see
 /// [`StatsigMaterial::generate_statsig`].
 pub fn read_captured_statsig(webview: &WebviewWindow) -> Option<GrokStatsigCapture> {
-  let packed = webview
-      .cookies()
-      .ok()?
-      .into_iter()
-      .find(|cookie| cookie.name() == STATSIG_CAPTURE_COOKIE)
-      .map(|cookie| cookie.value().to_string())?;
+  let packed = webview.cookies().ok()?.into_iter().find(|cookie| cookie.name() == STATSIG_CAPTURE_COOKIE).map(|cookie| cookie.value().to_string())?;
 
   parse_packed_statsig(&packed)
 }
@@ -79,13 +74,7 @@ fn parse_packed_statsig(packed: &str) -> Option<GrokStatsigCapture> {
   let captured = decode_statsig(statsig_id, method, path, captured_at_ms / 1000).ok()?;
   let captured_at: DateTime<Utc> = DateTime::from_timestamp_millis(captured_at_ms)?;
 
-  Some(GrokStatsigCapture {
-    material: StatsigMaterial::from_seed_b64(captured.seed_b64),
-    statsig_id: statsig_id.to_string(),
-    method: method.trim().to_ascii_uppercase(),
-    path: path.trim().to_string(),
-    captured_at,
-  })
+  Some(GrokStatsigCapture { material: StatsigMaterial::from_seed_b64(captured.seed_b64), statsig_id: statsig_id.to_string(), method: method.trim().to_ascii_uppercase(), path: path.trim().to_string(), captured_at })
 }
 
 #[cfg(test)]
@@ -93,8 +82,7 @@ mod tests {
   use super::*;
 
   // A real browser-captured statsig for POST /conversations/new.
-  const CAPTURE: &str =
-    "XbHvyYh7hmNc+8sVAGnrpcuHN/MK+mgN63cmnBljOJaoCKu6zTPVw6C7HVv1wculKCNmYVum+L1h0IjFmtyZD/C53M+ZXg";
+  const CAPTURE: &str = "XbHvyYh7hmNc+8sVAGnrpcuHN/MK+mgN63cmnBljOJaoCKu6zTPVw6C7HVv1wculKCNmYVum+L1h0IjFmtyZD/C53M+ZXg";
 
   #[test]
   fn init_script_installs_sink_and_harness() {

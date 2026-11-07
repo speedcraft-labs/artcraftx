@@ -8,18 +8,12 @@ use crate::api::router_resolution::RouterResolution;
 use crate::errors::artcraft_router_error::ArtcraftRouterError;
 use crate::generate::generate_image::generate_image_request_builder::GenerateImageRequestBuilder;
 use crate::generate::generate_image::image_generation_draft_or_request::ImageGenerationDraftOrRequest;
-use crate::generate::generate_image::providers::higgsfield::common::{
-  check_reference_limit, finish, image_input_count, plan_batch_size, plan_seedream_aspect_ratio, require_prompt,
-  seedream_auto_resolution_hint, snap_resolution,
-};
+use crate::generate::generate_image::providers::higgsfield::common::{check_reference_limit, finish, image_input_count, plan_batch_size, plan_seedream_aspect_ratio, require_prompt, seedream_auto_resolution_hint, snap_resolution};
 use crate::generate::generate_image::providers::higgsfield::image_request::HiggsfieldImageRequest;
 
 pub const MAX_REFERENCE_IMAGES: usize = 14;
 
-const RESOLUTION_TIERS: &[(RouterResolution, Seedream5p0ProResolution)] = &[
-  (RouterResolution::OneK, Seedream5p0ProResolution::OneK),
-  (RouterResolution::TwoK, Seedream5p0ProResolution::TwoK),
-];
+const RESOLUTION_TIERS: &[(RouterResolution, Seedream5p0ProResolution)] = &[(RouterResolution::OneK, Seedream5p0ProResolution::OneK), (RouterResolution::TwoK, Seedream5p0ProResolution::TwoK)];
 
 pub fn build_higgsfield_seedream_5p0_pro(mut builder: GenerateImageRequestBuilder) -> Result<ImageGenerationDraftOrRequest, ArtcraftRouterError> {
   let strategy = builder.request_mismatch_mitigation_strategy;

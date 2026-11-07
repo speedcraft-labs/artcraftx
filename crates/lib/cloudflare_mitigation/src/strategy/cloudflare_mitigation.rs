@@ -56,16 +56,10 @@ pub fn mitigation_for(error: &CloudflareError, attempt: u32) -> CloudflareMitiga
     // An unexpected redirect is a client bug (wrong host/scheme), not
     // something waiting fixes.
     CloudflareError::MovedPermanently301 => CloudflareMitigation::GiveUp,
-    CloudflareError::RateLimited429 => {
-      CloudflareMitigation::RetryAfter(backoff(RATE_LIMIT_BASE_DELAY, RATE_LIMIT_MAX_DELAY, attempt))
-    }
-    CloudflareError::BadGateway502
-      | CloudflareError::ServiceUnavailable503
-      | CloudflareError::GatewayTimeout504
-      | CloudflareError::OriginError5xx(_)
-      | CloudflareError::TimeoutOccurred524 => {
+    CloudflareError::RateLimited429 => CloudflareMitigation::RetryAfter(backoff(RATE_LIMIT_BASE_DELAY, RATE_LIMIT_MAX_DELAY, attempt)),
+    CloudflareError::BadGateway502 | CloudflareError::ServiceUnavailable503 | CloudflareError::GatewayTimeout504 | CloudflareError::OriginError5xx(_) | CloudflareError::TimeoutOccurred524 => {
       CloudflareMitigation::RetryAfter(backoff(ORIGIN_FAILURE_BASE_DELAY, ORIGIN_FAILURE_MAX_DELAY, attempt))
-    }
+    },
   }
 }
 

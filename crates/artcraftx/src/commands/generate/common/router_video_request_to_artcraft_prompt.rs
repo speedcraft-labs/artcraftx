@@ -11,9 +11,7 @@ use artcraft_client::enums::common::generation::common_resolution::CommonResolut
 use core_types::enums::generation_source::GenerationSource;
 use uuid_utils::uuid::generate_random_uuid;
 
-pub fn router_video_request_to_artcraft_prompt(
-  request: &GenerateVideoRequestBuilder,
-) -> CreatePromptRequest {
+pub fn router_video_request_to_artcraft_prompt(request: &GenerateVideoRequestBuilder) -> CreatePromptRequest {
   CreatePromptRequest {
     uuid_idempotency_token: generate_random_uuid(),
     positive_prompt: request.prompt.clone(),
@@ -33,9 +31,7 @@ pub fn router_video_request_to_artcraft_prompt(
 
 fn determine_video_generation_mode(request: &GenerateVideoRequestBuilder) -> CommonGenerationMode {
   let has_keyframes = request.start_frame.is_some() || request.end_frame.is_some();
-  let has_references = request.reference_images.is_some()
-    || request.reference_videos.is_some()
-    || request.reference_audio.is_some();
+  let has_references = request.reference_images.is_some() || request.reference_videos.is_some() || request.reference_audio.is_some();
 
   if has_keyframes {
     CommonGenerationMode::Keyframe
@@ -85,9 +81,7 @@ fn video_model_to_common_model_type(model: RouterVideoModel) -> Option<CommonMod
     RouterVideoModel::GrokImagineVideo => Some(CommonModelType::GrokImagineVideo),
     RouterVideoModel::GrokImagineVideo1p5 => Some(CommonModelType::GrokImagineVideo1p5),
     // Higgsfield-only; storyteller-web has no prompt types for them.
-    RouterVideoModel::Seedance2p5
-    | RouterVideoModel::Seedance2p5Edit
-    | RouterVideoModel::MinimaxH3 => None,
+    RouterVideoModel::Seedance2p5 | RouterVideoModel::Seedance2p5Edit | RouterVideoModel::MinimaxH3 => None,
   }
 }
 
@@ -99,7 +93,7 @@ fn provider_to_generation_provider(provider: RouterProvider) -> GenerationSource
     RouterProvider::Higgsfield => GenerationSource::Higgsfield,
     RouterProvider::Midjourney => GenerationSource::Midjourney,
     // Unused providers -> ArtCraft
-    RouterProvider::Seedance2Pro => GenerationSource::Artcraft ,
+    RouterProvider::Seedance2Pro => GenerationSource::Artcraft,
     RouterProvider::GmiCloud => GenerationSource::Artcraft,
     RouterProvider::GrokApi => GenerationSource::Artcraft,
   }
@@ -163,8 +157,7 @@ mod tests {
       duration_seconds: None,
       video_batch_count: None,
       generate_audio: None,
-      request_mismatch_mitigation_strategy:
-        router::client::request_mismatch_mitigation_strategy::RequestMismatchMitigationStrategy::ErrorOut,
+      request_mismatch_mitigation_strategy: router::client::request_mismatch_mitigation_strategy::RequestMismatchMitigationStrategy::ErrorOut,
       idempotency_token: None,
     }
   }
@@ -215,10 +208,7 @@ mod tests {
   #[test]
   fn keyframe_mode_with_start_frame() {
     use router::api::image_ref::ImageRef;
-    let builder = GenerateVideoRequestBuilder {
-      start_frame: Some(ImageRef::Url("https://example.com/frame.jpg".to_string())),
-      ..base_builder()
-    };
+    let builder = GenerateVideoRequestBuilder { start_frame: Some(ImageRef::Url("https://example.com/frame.jpg".to_string())), ..base_builder() };
     let prompt = router_video_request_to_artcraft_prompt(&builder);
     assert_eq!(prompt.maybe_generation_mode, Some(CommonGenerationMode::Keyframe));
   }
@@ -226,10 +216,7 @@ mod tests {
   #[test]
   fn keyframe_mode_with_end_frame() {
     use router::api::image_ref::ImageRef;
-    let builder = GenerateVideoRequestBuilder {
-      end_frame: Some(ImageRef::Url("https://example.com/frame.jpg".to_string())),
-      ..base_builder()
-    };
+    let builder = GenerateVideoRequestBuilder { end_frame: Some(ImageRef::Url("https://example.com/frame.jpg".to_string())), ..base_builder() };
     let prompt = router_video_request_to_artcraft_prompt(&builder);
     assert_eq!(prompt.maybe_generation_mode, Some(CommonGenerationMode::Keyframe));
   }
@@ -237,10 +224,7 @@ mod tests {
   #[test]
   fn reference_mode_with_reference_images() {
     use router::api::image_list_ref::ImageListRef;
-    let builder = GenerateVideoRequestBuilder {
-      reference_images: Some(ImageListRef::Urls(vec!["https://example.com/ref.jpg".to_string()])),
-      ..base_builder()
-    };
+    let builder = GenerateVideoRequestBuilder { reference_images: Some(ImageListRef::Urls(vec!["https://example.com/ref.jpg".to_string()])), ..base_builder() };
     let prompt = router_video_request_to_artcraft_prompt(&builder);
     assert_eq!(prompt.maybe_generation_mode, Some(CommonGenerationMode::Reference));
   }
@@ -249,23 +233,14 @@ mod tests {
   fn keyframe_takes_priority_over_reference() {
     use router::api::image_ref::ImageRef;
     use router::api::image_list_ref::ImageListRef;
-    let builder = GenerateVideoRequestBuilder {
-      start_frame: Some(ImageRef::Url("https://example.com/frame.jpg".to_string())),
-      reference_images: Some(ImageListRef::Urls(vec!["https://example.com/ref.jpg".to_string()])),
-      ..base_builder()
-    };
+    let builder = GenerateVideoRequestBuilder { start_frame: Some(ImageRef::Url("https://example.com/frame.jpg".to_string())), reference_images: Some(ImageListRef::Urls(vec!["https://example.com/ref.jpg".to_string()])), ..base_builder() };
     let prompt = router_video_request_to_artcraft_prompt(&builder);
     assert_eq!(prompt.maybe_generation_mode, Some(CommonGenerationMode::Keyframe));
   }
 
   #[test]
   fn video_model_mapping() {
-    let models = [
-      (RouterVideoModel::Kling3p0Standard, CommonModelType::Kling3p0Standard),
-      (RouterVideoModel::Veo3, CommonModelType::Veo3),
-      (RouterVideoModel::Seedance2p0, CommonModelType::Seedance2p0),
-      (RouterVideoModel::Sora2, CommonModelType::Sora2),
-    ];
+    let models = [(RouterVideoModel::Kling3p0Standard, CommonModelType::Kling3p0Standard), (RouterVideoModel::Veo3, CommonModelType::Veo3), (RouterVideoModel::Seedance2p0, CommonModelType::Seedance2p0), (RouterVideoModel::Sora2, CommonModelType::Sora2)];
     for (router_model, expected) in models {
       let builder = GenerateVideoRequestBuilder { model: router_model, ..base_builder() };
       let prompt = router_video_request_to_artcraft_prompt(&builder);

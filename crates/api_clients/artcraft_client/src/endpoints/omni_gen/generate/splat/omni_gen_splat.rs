@@ -13,13 +13,6 @@ pub struct OmniGenSplatGenerateArgs<'a> {
   pub request: &'a OmniGenSplatCostAndGenerateRequest,
 }
 
-pub async fn omni_gen_splat_generate(
-  args: OmniGenSplatGenerateArgs<'_>,
-) -> Result<OmniGenSplatGenerateResponse, StorytellerError> {
-  Ok(api_or_web_json_post_request(
-    args.api_host,
-    OMNI_GEN_SPLAT_GENERATE_PATH,
-    args.api_or_web_creds,
-    args.request,
-  ).await?)
+pub async fn omni_gen_splat_generate(args: OmniGenSplatGenerateArgs<'_>) -> Result<OmniGenSplatGenerateResponse, StorytellerError> {
+  Ok(api_or_web_json_post_request(args.api_host, OMNI_GEN_SPLAT_GENERATE_PATH, args.api_or_web_creds, args.request).await?)
 }

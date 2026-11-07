@@ -4,7 +4,7 @@ use core_types::enums::generation_source::GenerationSource;
 use serde_derive::Serialize;
 
 /// Audio model to default to if none is specified
-const DEFAULT_AUDIO_MODEL : CommonAudioModel = CommonAudioModel::SunoMusic;
+const DEFAULT_AUDIO_MODEL: CommonAudioModel = CommonAudioModel::SunoMusic;
 
 /// Response body for the audio models endpoint.
 #[derive(Serialize, Clone)]
@@ -35,7 +35,6 @@ pub struct OmniGenAudioProviderModelDetails {
 
 #[derive(Serialize, Clone)]
 pub struct OmniGenAudioModelDetails {
-
   pub model: CommonAudioModel,
 
   #[serde(skip_serializing_if = "Option::is_none")]

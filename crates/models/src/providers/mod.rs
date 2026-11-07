@@ -34,11 +34,7 @@ pub(crate) mod tests_common {
   /// Every enabled model is offered by at least one provider, every offered
   /// model is a known enabled model, no provider lists a model twice, and
   /// every override describes the model it's attached to.
-  pub fn check_offerings<M: Copy + Eq + Hash + Debug, C>(
-    offerings: &[ProviderOffering<M, C>],
-    enabled_models: &[M],
-    model_of_config: impl Fn(&C) -> M,
-  ) {
+  pub fn check_offerings<M: Copy + Eq + Hash + Debug, C>(offerings: &[ProviderOffering<M, C>], enabled_models: &[M], model_of_config: impl Fn(&C) -> M) {
     let enabled: HashSet<M> = enabled_models.iter().copied().collect();
     let mut offered_anywhere: HashSet<M> = HashSet::new();
     let mut providers_seen = HashSet::new();

@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::mesh::image::hunyuan_3d_3p1_pro_image_to_mesh::raw_request::{
-  Hunyuan3d3p1ProImageToMeshInput, Hunyuan3d3p1ProImageToMeshOutput,
-};
+use crate::requests::api::mesh::image::hunyuan_3d_3p1_pro_image_to_mesh::raw_request::{Hunyuan3d3p1ProImageToMeshInput, Hunyuan3d3p1ProImageToMeshOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 /// Hunyuan 3D v3.1 Pro image-to-3D.
@@ -57,13 +55,7 @@ impl Hunyuan3d3p1ProImageToMeshRequest {
   /// True when any of the optional extra views is provided (billed as the
   /// multi-view add-on).
   pub fn uses_multi_view(&self) -> bool {
-    self.back_image_url.is_some()
-      || self.left_image_url.is_some()
-      || self.right_image_url.is_some()
-      || self.top_image_url.is_some()
-      || self.bottom_image_url.is_some()
-      || self.left_front_image_url.is_some()
-      || self.right_front_image_url.is_some()
+    self.back_image_url.is_some() || self.left_image_url.is_some() || self.right_image_url.is_some() || self.top_image_url.is_some() || self.bottom_image_url.is_some() || self.left_front_image_url.is_some() || self.right_front_image_url.is_some()
   }
 }
 
@@ -74,10 +66,13 @@ impl FalEndpoint for Hunyuan3d3p1ProImageToMeshRequest {
   type RawResponse = Hunyuan3d3p1ProImageToMeshOutput;
 
   fn to_raw_request(&self) -> Result<Self::RawRequest, FalErrorPlus> {
-    let generate_type = self.generate_type.map(|t| match t {
-      Hunyuan3d3p1ProImageToMeshGenerateType::Normal => "Normal",
-      Hunyuan3d3p1ProImageToMeshGenerateType::Geometry => "Geometry",
-    }.to_string());
+    let generate_type = self.generate_type.map(|t| {
+      match t {
+        Hunyuan3d3p1ProImageToMeshGenerateType::Normal => "Normal",
+        Hunyuan3d3p1ProImageToMeshGenerateType::Geometry => "Geometry",
+      }
+      .to_string()
+    });
 
     Ok(Self::RawRequest {
       input_image_url: self.image_url.clone(),
@@ -125,10 +120,7 @@ mod tests {
   async fn test_image_to_mesh_webhook() -> AnyhowResult<()> {
     let secret = read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt")?;
     let api_key = FalApiKey::from_str(&secret);
-    let request = Hunyuan3d3p1ProImageToMeshRequest {
-      image_url: ERNEST_SCARED_STUPID_IMAGE_URL.to_string(),
-      ..base_request()
-    };
+    let request = Hunyuan3d3p1ProImageToMeshRequest { image_url: ERNEST_SCARED_STUPID_IMAGE_URL.to_string(), ..base_request() };
     let result = request.send_webhook_request(&api_key, "https://example.com/webhook").await?;
     println!("Webhook result: {:?}", result);
     assert!(result.request_id.is_some() || result.gateway_request_id.is_some());
@@ -140,10 +132,7 @@ mod tests {
   async fn test_image_to_mesh_queue() -> AnyhowResult<()> {
     let secret = read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt")?;
     let api_key = FalApiKey::from_str(&secret);
-    let request = Hunyuan3d3p1ProImageToMeshRequest {
-      image_url: ERNEST_SCARED_STUPID_IMAGE_URL.to_string(),
-      ..base_request()
-    };
+    let request = Hunyuan3d3p1ProImageToMeshRequest { image_url: ERNEST_SCARED_STUPID_IMAGE_URL.to_string(), ..base_request() };
     let result = request.send_queue_request(&api_key).await?;
     println!("Queue result — request_id: {}", result.request_id);
     assert!(!result.request_id.is_empty());
@@ -189,10 +178,7 @@ mod tests {
   #[test]
   fn raw_request_omits_unset_optionals() {
     let json = serde_json::to_value(base_request().to_raw_request().unwrap()).unwrap();
-    assert_eq!(
-      json,
-      serde_json::json!({ "input_image_url": "https://example.com/front.jpg" }),
-    );
+    assert_eq!(json, serde_json::json!({ "input_image_url": "https://example.com/front.jpg" }),);
   }
 
   #[test]
@@ -216,10 +202,7 @@ mod tests {
 
   #[test]
   fn endpoint_path_is_canonical() {
-    assert_eq!(
-      Hunyuan3d3p1ProImageToMeshRequest::ENDPOINT,
-      "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d",
-    );
+    assert_eq!(Hunyuan3d3p1ProImageToMeshRequest::ENDPOINT, "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d",);
   }
 
   // NB: Pricing tests are in cost.rs

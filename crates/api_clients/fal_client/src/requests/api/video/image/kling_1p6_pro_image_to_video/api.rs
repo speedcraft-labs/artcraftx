@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::video::image::kling_1p6_pro_image_to_video::raw_request::{
-  Kling1p6ProImageToVideoInput, Kling1p6ProImageToVideoOutput,
-};
+use crate::requests::api::video::image::kling_1p6_pro_image_to_video::raw_request::{Kling1p6ProImageToVideoInput, Kling1p6ProImageToVideoOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 #[derive(Clone, Debug)]
@@ -67,11 +65,14 @@ impl FalEndpoint for Kling1p6ProImageToVideoRequest {
   fn to_raw_request(&self) -> Result<Self::RawRequest, FalErrorPlus> {
     let duration = self.duration.map(|d| d.to_str().to_string());
 
-    let aspect_ratio = self.aspect_ratio.map(|ar| match ar {
-      Kling1p6ProImageToVideoAspectRatio::Square => "1:1",
-      Kling1p6ProImageToVideoAspectRatio::SixteenByNine => "16:9",
-      Kling1p6ProImageToVideoAspectRatio::NineBySixteen => "9:16",
-    }.to_string());
+    let aspect_ratio = self.aspect_ratio.map(|ar| {
+      match ar {
+        Kling1p6ProImageToVideoAspectRatio::Square => "1:1",
+        Kling1p6ProImageToVideoAspectRatio::SixteenByNine => "16:9",
+        Kling1p6ProImageToVideoAspectRatio::NineBySixteen => "9:16",
+      }
+      .to_string()
+    });
 
     Ok(Self::RawRequest {
       prompt: self.prompt.clone(),
@@ -146,11 +147,7 @@ mod tests {
     let secret = read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt")?;
     let api_key = FalApiKey::from_str(&secret);
 
-    let aspect_ratios = [
-      Kling1p6ProImageToVideoAspectRatio::Square,
-      Kling1p6ProImageToVideoAspectRatio::SixteenByNine,
-      Kling1p6ProImageToVideoAspectRatio::NineBySixteen,
-    ];
+    let aspect_ratios = [Kling1p6ProImageToVideoAspectRatio::Square, Kling1p6ProImageToVideoAspectRatio::SixteenByNine, Kling1p6ProImageToVideoAspectRatio::NineBySixteen];
 
     for ar in aspect_ratios {
       println!("--- aspect ratio: {:?} ---", ar);
@@ -176,10 +173,7 @@ mod tests {
     let secret = read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt")?;
     let api_key = FalApiKey::from_str(&secret);
 
-    let durations = [
-      Kling1p6ProImageToVideoDuration::FiveSeconds,
-      Kling1p6ProImageToVideoDuration::TenSeconds,
-    ];
+    let durations = [Kling1p6ProImageToVideoDuration::FiveSeconds, Kling1p6ProImageToVideoDuration::TenSeconds];
 
     for dur in durations {
       println!("--- duration: {:?} ---", dur);

@@ -2,11 +2,7 @@ use crate::datadome_error::DataDomeError;
 use crate::datadome_response_signals::DataDomeResponseSignals;
 
 /// Hosts DataDome serves its challenge / block pages from.
-const DATADOME_PAGE_HOSTS: &[&str] = &[
-  "captcha-delivery.com",
-  "geo.captcha-delivery.com",
-  "ct.captcha-delivery.com",
-];
+const DATADOME_PAGE_HOSTS: &[&str] = &["captcha-delivery.com", "geo.captcha-delivery.com", "ct.captcha-delivery.com"];
 
 /// Decide whether a response is a DataDome response and which kind.
 ///

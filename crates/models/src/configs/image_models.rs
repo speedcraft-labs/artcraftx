@@ -13,9 +13,7 @@ pub static IMAGE_MODELS: Lazy<Vec<ImageModelConfig>> = Lazy::new(image_models);
 
 /// Look up one model's config.
 pub fn image_model_config(model: ImageModel) -> &'static ImageModelConfig {
-  IMAGE_MODELS.iter()
-      .find(|config| config.model == model)
-      .expect("every ImageModel variant has a config (see tests)")
+  IMAGE_MODELS.iter().find(|config| config.model == model).expect("every ImageModel variant has a config (see tests)")
 }
 
 fn image_models() -> Vec<ImageModelConfig> {
@@ -48,14 +46,8 @@ const NANO_BANANA_ASPECT_RATIOS: &[CommonAspectRatio] = &[
   CommonAspectRatio::TallNineBySixteen,
 ];
 
-const FLUX_1_ASPECT_RATIOS: &[CommonAspectRatio] = &[
-  CommonAspectRatio::Square,
-  CommonAspectRatio::SquareHd,
-  CommonAspectRatio::WideFourByThree,
-  CommonAspectRatio::WideSixteenByNine,
-  CommonAspectRatio::TallThreeByFour,
-  CommonAspectRatio::TallNineBySixteen,
-];
+const FLUX_1_ASPECT_RATIOS: &[CommonAspectRatio] =
+  &[CommonAspectRatio::Square, CommonAspectRatio::SquareHd, CommonAspectRatio::WideFourByThree, CommonAspectRatio::WideSixteenByNine, CommonAspectRatio::TallThreeByFour, CommonAspectRatio::TallNineBySixteen];
 
 const MIDJOURNEY_ASPECT_RATIOS: &[CommonAspectRatio] = &[
   CommonAspectRatio::Auto,
@@ -83,14 +75,8 @@ const SEEDREAM_5_PRO_ASPECT_RATIOS: &[CommonAspectRatio] = &[
   CommonAspectRatio::TallNineBySixteen,
 ];
 
-const ANGLES_ASPECT_RATIOS: &[CommonAspectRatio] = &[
-  CommonAspectRatio::Square,
-  CommonAspectRatio::SquareHd,
-  CommonAspectRatio::WideFourByThree,
-  CommonAspectRatio::WideSixteenByNine,
-  CommonAspectRatio::TallThreeByFour,
-  CommonAspectRatio::TallNineBySixteen,
-];
+const ANGLES_ASPECT_RATIOS: &[CommonAspectRatio] =
+  &[CommonAspectRatio::Square, CommonAspectRatio::SquareHd, CommonAspectRatio::WideFourByThree, CommonAspectRatio::WideSixteenByNine, CommonAspectRatio::TallThreeByFour, CommonAspectRatio::TallNineBySixteen];
 
 const OPENAI_QUALITIES: &[CommonQuality] = &[CommonQuality::High, CommonQuality::Medium, CommonQuality::Low];
 
@@ -458,13 +444,7 @@ fn black_forest_labs_models() -> Vec<ImageModelConfig> {
       text_prompt_max_length: Some(4000),
       image_refs_supported: true,
       image_refs_max: Some(6),
-      aspect_ratio_options: vec![
-        CommonAspectRatio::Square,
-        CommonAspectRatio::WideFourByThree,
-        CommonAspectRatio::WideSixteenByNine,
-        CommonAspectRatio::TallThreeByFour,
-        CommonAspectRatio::TallNineBySixteen,
-      ],
+      aspect_ratio_options: vec![CommonAspectRatio::Square, CommonAspectRatio::WideFourByThree, CommonAspectRatio::WideSixteenByNine, CommonAspectRatio::TallThreeByFour, CommonAspectRatio::TallNineBySixteen],
       aspect_ratio_default: Some(CommonAspectRatio::Square),
       batch_size_max: 4,
       batch_size_default: 4,
@@ -531,11 +511,7 @@ fn midjourney_models() -> Vec<ImageModelConfig> {
     ..Default::default()
   };
 
-  vec![
-    midjourney(ImageModel::Midjourney8, "Midjourney v8", "Stunning style and quality"),
-    midjourney(ImageModel::Midjourney7, "Midjourney v7", "Stunning style and quality"),
-    midjourney(ImageModel::Midjourney7Niji, "Midjourney v7 Niji", "Anime style"),
-  ]
+  vec![midjourney(ImageModel::Midjourney8, "Midjourney v8", "Stunning style and quality"), midjourney(ImageModel::Midjourney7, "Midjourney v7", "Stunning style and quality"), midjourney(ImageModel::Midjourney7Niji, "Midjourney v7 Niji", "Anime style")]
 }
 
 // ── Grok (first-party imagine websocket; see `enqueue_image_generation.rs`) ──
@@ -551,13 +527,7 @@ fn grok_models() -> Vec<ImageModelConfig> {
       selector_badges: strings(&["10 sec."]),
       progress_bar_ms: 15_000,
       text_prompt_max_length: Some(4096),
-      aspect_ratio_options: vec![
-        CommonAspectRatio::Square,
-        CommonAspectRatio::WideThreeByTwo,
-        CommonAspectRatio::WideSixteenByNine,
-        CommonAspectRatio::TallTwoByThree,
-        CommonAspectRatio::TallNineBySixteen,
-      ],
+      aspect_ratio_options: vec![CommonAspectRatio::Square, CommonAspectRatio::WideThreeByTwo, CommonAspectRatio::WideSixteenByNine, CommonAspectRatio::TallTwoByThree, CommonAspectRatio::TallNineBySixteen],
       aspect_ratio_default: Some(CommonAspectRatio::Square),
       // NB: Grok's imagine websocket returns two images per prompt.
       batch_size_min: 2,

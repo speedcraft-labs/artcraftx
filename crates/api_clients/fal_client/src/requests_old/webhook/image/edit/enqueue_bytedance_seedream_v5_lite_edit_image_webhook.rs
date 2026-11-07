@@ -64,54 +64,40 @@ impl FalRequestCostCalculator for EnqueueBytedanceSeedreamV5LiteEditImageRequest
   }
 }
 
-pub async fn enqueue_bytedance_seedream_v5_lite_edit_image_webhook<R: IntoUrl>(
-  args: EnqueueBytedanceSeedreamV5LiteEditImageArgs<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
+pub async fn enqueue_bytedance_seedream_v5_lite_edit_image_webhook<R: IntoUrl>(args: EnqueueBytedanceSeedreamV5LiteEditImageArgs<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
 
-  let num_images = req.num_images
-      .map(|n| match n {
-        EnqueueBytedanceSeedreamV5LiteEditImageNumImages::One => 1,
-        EnqueueBytedanceSeedreamV5LiteEditImageNumImages::Two => 2,
-        EnqueueBytedanceSeedreamV5LiteEditImageNumImages::Three => 3,
-        EnqueueBytedanceSeedreamV5LiteEditImageNumImages::Four => 4,
-      });
+  let num_images = req.num_images.map(|n| match n {
+    EnqueueBytedanceSeedreamV5LiteEditImageNumImages::One => 1,
+    EnqueueBytedanceSeedreamV5LiteEditImageNumImages::Two => 2,
+    EnqueueBytedanceSeedreamV5LiteEditImageNumImages::Three => 3,
+    EnqueueBytedanceSeedreamV5LiteEditImageNumImages::Four => 4,
+  });
 
-  let max_images = req.max_images
-      .map(|n| match n {
-        EnqueueBytedanceSeedreamV5LiteEditImageMaxImages::One => 1,
-        EnqueueBytedanceSeedreamV5LiteEditImageMaxImages::Two => 2,
-        EnqueueBytedanceSeedreamV5LiteEditImageMaxImages::Three => 3,
-        EnqueueBytedanceSeedreamV5LiteEditImageMaxImages::Four => 4,
-      });
+  let max_images = req.max_images.map(|n| match n {
+    EnqueueBytedanceSeedreamV5LiteEditImageMaxImages::One => 1,
+    EnqueueBytedanceSeedreamV5LiteEditImageMaxImages::Two => 2,
+    EnqueueBytedanceSeedreamV5LiteEditImageMaxImages::Three => 3,
+    EnqueueBytedanceSeedreamV5LiteEditImageMaxImages::Four => 4,
+  });
 
-  let image_size = req.image_size
-      .map(|s| match s {
-        EnqueueBytedanceSeedreamV5LiteEditImageSize::Square => "square",
-        EnqueueBytedanceSeedreamV5LiteEditImageSize::SquareHd => "square_hd",
-        EnqueueBytedanceSeedreamV5LiteEditImageSize::PortraitFourThree => "portrait_4_3",
-        EnqueueBytedanceSeedreamV5LiteEditImageSize::PortraitSixteenNine => "portrait_16_9",
-        EnqueueBytedanceSeedreamV5LiteEditImageSize::LandscapeFourThree => "landscape_4_3",
-        EnqueueBytedanceSeedreamV5LiteEditImageSize::LandscapeSixteenNine => "landscape_16_9",
-        EnqueueBytedanceSeedreamV5LiteEditImageSize::Auto2k => "auto_2K",
-        EnqueueBytedanceSeedreamV5LiteEditImageSize::Auto3k => "auto_3K",
-      })
-      .map(|s| s.to_string());
+  let image_size = req
+    .image_size
+    .map(|s| match s {
+      EnqueueBytedanceSeedreamV5LiteEditImageSize::Square => "square",
+      EnqueueBytedanceSeedreamV5LiteEditImageSize::SquareHd => "square_hd",
+      EnqueueBytedanceSeedreamV5LiteEditImageSize::PortraitFourThree => "portrait_4_3",
+      EnqueueBytedanceSeedreamV5LiteEditImageSize::PortraitSixteenNine => "portrait_16_9",
+      EnqueueBytedanceSeedreamV5LiteEditImageSize::LandscapeFourThree => "landscape_4_3",
+      EnqueueBytedanceSeedreamV5LiteEditImageSize::LandscapeSixteenNine => "landscape_16_9",
+      EnqueueBytedanceSeedreamV5LiteEditImageSize::Auto2k => "auto_2K",
+      EnqueueBytedanceSeedreamV5LiteEditImageSize::Auto3k => "auto_3K",
+    })
+    .map(|s| s.to_string());
 
-  let input = SeedreamV5LiteEditImageInput {
-    prompt: req.prompt,
-    image_urls: req.image_urls,
-    num_images,
-    max_images,
-    image_size,
-    enable_safety_checker: Some(false),
-  };
+  let input = SeedreamV5LiteEditImageInput { prompt: req.prompt, image_urls: req.image_urls, num_images, max_images, image_size, enable_safety_checker: Some(false) };
 
-  http_seedream_5_edit_image(input)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await
-      .map_err(|err| classify_fal_error(err))
+  http_seedream_5_edit_image(input).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await.map_err(|err| classify_fal_error(err))
 }
 
 #[cfg(test)]

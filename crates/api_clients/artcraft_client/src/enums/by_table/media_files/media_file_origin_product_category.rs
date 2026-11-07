@@ -223,7 +223,7 @@ mod tests {
       assert_eq!(MediaFileOriginProductCategory::from_str("voice_conversion").unwrap(), MediaFileOriginProductCategory::VoiceConversion);
       assert_eq!(MediaFileOriginProductCategory::from_str("zs_voice").unwrap(), MediaFileOriginProductCategory::ZeroShotVoice);
       assert_eq!(MediaFileOriginProductCategory::from_str("mocap").unwrap(), MediaFileOriginProductCategory::Mocap);
-      assert_eq!(MediaFileOriginProductCategory::from_str("image_gen").unwrap(),MediaFileOriginProductCategory::ImageGeneration);
+      assert_eq!(MediaFileOriginProductCategory::from_str("image_gen").unwrap(), MediaFileOriginProductCategory::ImageGeneration);
       assert_eq!(MediaFileOriginProductCategory::from_str("video_gen").unwrap(), MediaFileOriginProductCategory::VideoGeneration);
       assert_eq!(MediaFileOriginProductCategory::from_str("video_edit").unwrap(), MediaFileOriginProductCategory::VideoEdit);
       assert_eq!(MediaFileOriginProductCategory::from_str("world_gen").unwrap(), MediaFileOriginProductCategory::WorldGeneration);
@@ -276,7 +276,7 @@ mod tests {
 
     #[test]
     fn serialized_length_ok_for_database() {
-      const MAX_LENGTH : usize = 16;
+      const MAX_LENGTH: usize = 16;
       for variant in MediaFileOriginProductCategory::all_variants() {
         let serialized = variant.to_str();
         assert!(serialized.len() > 0, "variant {:?} is too short", variant);

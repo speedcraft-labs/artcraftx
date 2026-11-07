@@ -45,18 +45,10 @@ impl ImageDimensions {
     };
 
     // ratio = width / height. The long side goes to whichever is bigger.
-    let short_side_exact = if ratio >= 1.0 {
-      long_side as f64 / ratio
-    } else {
-      long_side as f64 * ratio
-    };
+    let short_side_exact = if ratio >= 1.0 { long_side as f64 / ratio } else { long_side as f64 * ratio };
     let short_side = (short_side_exact as u32 / DIMENSION_STEP) * DIMENSION_STEP;
 
-    if ratio >= 1.0 {
-      Some(Self::new(long_side, short_side))
-    } else {
-      Some(Self::new(short_side, long_side))
-    }
+    if ratio >= 1.0 { Some(Self::new(long_side, short_side)) } else { Some(Self::new(short_side, long_side)) }
   }
 }
 

@@ -21,10 +21,8 @@ pub struct AppCredentialsDir {
 impl DataSubdir for AppCredentialsDir {
   const DIRECTORY_NAME: &'static str = "credentials";
 
-  fn new_from<P: AsRef<Path>> (dir: P) -> Self {
-    Self {
-      path: dir.as_ref().to_path_buf(),
-    }
+  fn new_from<P: AsRef<Path>>(dir: P) -> Self {
+    Self { path: dir.as_ref().to_path_buf() }
   }
 
   fn path(&self) -> &Path {
@@ -39,17 +37,9 @@ impl AppCredentialsDir {
   /// single malformed (possibly hand-written) file can't take down every
   /// other credential. Only a directory listing failure is an error.
   pub fn load_credentials(&self) -> Result<Vec<AuthCredential>, ArtcraftXError> {
-    let entries = std::fs::read_dir(&self.path)
-        .map_err(|source| ArtcraftXCredentialError::DirectoryReadError {
-          path: self.path.clone(),
-          source,
-        })?;
+    let entries = std::fs::read_dir(&self.path).map_err(|source| ArtcraftXCredentialError::DirectoryReadError { path: self.path.clone(), source })?;
 
-    let mut paths: Vec<PathBuf> = entries
-        .filter_map(|entry| entry.ok())
-        .map(|entry| entry.path())
-        .filter(|path| path.is_file() && has_toml_extension(path))
-        .collect();
+    let mut paths: Vec<PathBuf> = entries.filter_map(|entry| entry.ok()).map(|entry| entry.path()).filter(|path| path.is_file() && has_toml_extension(path)).collect();
     paths.sort();
 
     let mut credentials = Vec::new();
@@ -62,10 +52,7 @@ impl AppCredentialsDir {
           if seen_ids.contains(&credential.id) {
             credential.id = generate_id_not_in(&seen_ids);
             if let Err(err) = self.save_credential(&credential) {
-              log::warn!(
-                "Could not persist deduplicated credential id for {:?}: {}",
-                credential.source_path, err,
-              );
+              log::warn!("Could not persist deduplicated credential id for {:?}: {}", credential.source_path, err,);
             }
           }
           seen_ids.insert(credential.id.clone());
@@ -114,18 +101,10 @@ impl AppCredentialsDir {
   /// Resolve a credential id (a bare file name like `fal_api_2.toml`) to a
   /// path inside this directory, rejecting anything that could escape it.
   pub fn resolve_credential_file(&self, file_name: &str) -> Result<PathBuf, ArtcraftXError> {
-    let is_bare_file_name = !file_name.is_empty()
-        && !file_name.contains('/')
-        && !file_name.contains('\\')
-        && !file_name.contains("..");
-    let is_toml = Path::new(file_name)
-        .extension()
-        .map(|ext| ext.eq_ignore_ascii_case("toml"))
-        .unwrap_or(false);
+    let is_bare_file_name = !file_name.is_empty() && !file_name.contains('/') && !file_name.contains('\\') && !file_name.contains("..");
+    let is_toml = Path::new(file_name).extension().map(|ext| ext.eq_ignore_ascii_case("toml")).unwrap_or(false);
     if !is_bare_file_name || !is_toml {
-      return Err(ArtcraftXCredentialError::InvalidFileName {
-        file_name: file_name.to_string(),
-      }.into());
+      return Err(ArtcraftXCredentialError::InvalidFileName { file_name: file_name.to_string() }.into());
     }
     Ok(self.path.join(file_name))
   }
@@ -137,29 +116,21 @@ impl AppCredentialsDir {
   }
 
   /// Find a credential by its id, the stable primary identifier.
-  pub fn find_credential_by_id(
-    &self,
-    id: &str,
-  ) -> Result<Option<AuthCredential>, ArtcraftXError> {
-    Ok(self.load_credentials()?
-        .into_iter()
-        .find(|credential| credential.id.as_str() == id))
+  pub fn find_credential_by_id(&self, id: &str) -> Result<Option<AuthCredential>, ArtcraftXError> {
+    Ok(self.load_credentials()?.into_iter().find(|credential| credential.id.as_str() == id))
   }
 
   /// Generate an id no existing credential uses. Collisions are
   /// astronomically unlikely; the check guards against them anyway.
   pub fn generate_unique_credential_id(&self) -> CredentialId {
-    let existing: HashSet<CredentialId> = self.load_credentials()
-        .map(|credentials| credentials.into_iter().map(|c| c.id).collect())
-        .unwrap_or_default();
+    let existing: HashSet<CredentialId> = self.load_credentials().map(|credentials| credentials.into_iter().map(|c| c.id).collect()).unwrap_or_default();
     generate_id_not_in(&existing)
   }
 
   /// Delete a credential file by id (file name).
   pub fn delete_credential_file(&self, file_name: &str) -> Result<(), ArtcraftXError> {
     let path = self.resolve_credential_file(file_name)?;
-    std::fs::remove_file(&path)
-        .map_err(|source| ArtcraftXCredentialError::FileDeleteError { path, source }.into())
+    std::fs::remove_file(&path).map_err(|source| ArtcraftXCredentialError::FileDeleteError { path, source }.into())
   }
 }
 
@@ -173,9 +144,7 @@ fn generate_id_not_in(taken: &HashSet<CredentialId>) -> CredentialId {
 }
 
 fn has_toml_extension(path: &Path) -> bool {
-  path.extension()
-      .map(|ext| ext.eq_ignore_ascii_case("toml"))
-      .unwrap_or(false)
+  path.extension().map(|ext| ext.eq_ignore_ascii_case("toml")).unwrap_or(false)
 }
 
 #[cfg(test)]
@@ -191,16 +160,8 @@ mod tests {
   #[test]
   fn loads_all_valid_toml_files() {
     let dir = tempfile::tempdir().unwrap();
-    write_file(
-      dir.path(),
-      "artcraft_user1.toml",
-      "service = \"artcraft_cookies\"\n[[cookie.cookies]]\nname = \"a\"\nvalue = \"b\"\ndomain = \"storyteller.ai\"\n",
-    );
-    write_file(
-      dir.path(),
-      "fal_api_key.toml",
-      "service = \"fal_api\"\n[api_key]\napi_key = \"fal-key-123\"\n",
-    );
+    write_file(dir.path(), "artcraft_user1.toml", "service = \"artcraft_cookies\"\n[[cookie.cookies]]\nname = \"a\"\nvalue = \"b\"\ndomain = \"storyteller.ai\"\n");
+    write_file(dir.path(), "fal_api_key.toml", "service = \"fal_api\"\n[api_key]\napi_key = \"fal-key-123\"\n");
     // Non-toml and malformed files must not break the load.
     write_file(dir.path(), "notes.txt", "not a credential");
     write_file(dir.path(), "broken.toml", "service = \"fal_api\"");
@@ -218,14 +179,8 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let creds_dir = AppCredentialsDir::new_from(dir.path());
 
-    let credential = AuthCredential {
-      id: CredentialId::generate(),
-      service: GenerationSource::FalApi,
-      name: None,
-      secret: CredentialSecret::ApiKey(ApiKeyCredential::new("fal-key-123")),
-      user_info: None,
-      source_path: creds_dir.file_path_for("fal_api_key"),
-    };
+    let credential =
+      AuthCredential { id: CredentialId::generate(), service: GenerationSource::FalApi, name: None, secret: CredentialSecret::ApiKey(ApiKeyCredential::new("fal-key-123")), user_info: None, source_path: creds_dir.file_path_for("fal_api_key") };
     creds_dir.save_credential(&credential).unwrap();
 
     let credentials = creds_dir.load_credentials().unwrap();
@@ -254,11 +209,7 @@ mod tests {
   #[test]
   fn missing_id_is_backfilled_and_stable_across_loads() {
     let dir = tempfile::tempdir().unwrap();
-    write_file(
-      dir.path(),
-      "fal_api.toml",
-      "service = \"fal_api\"\n[api_key]\napi_key = \"fal-key-123\"\n",
-    );
+    write_file(dir.path(), "fal_api.toml", "service = \"fal_api\"\n[api_key]\napi_key = \"fal-key-123\"\n");
 
     let creds_dir = AppCredentialsDir::new_from(dir.path());
     let first_load = creds_dir.load_credentials().unwrap();
@@ -296,11 +247,7 @@ mod tests {
   #[test]
   fn find_credential_by_id_matches() {
     let dir = tempfile::tempdir().unwrap();
-    write_file(
-      dir.path(),
-      "fal_api.toml",
-      "id = \"credential_findme\"\nservice = \"fal_api\"\n[api_key]\napi_key = \"x\"\n",
-    );
+    write_file(dir.path(), "fal_api.toml", "id = \"credential_findme\"\nservice = \"fal_api\"\n[api_key]\napi_key = \"x\"\n");
 
     let creds_dir = AppCredentialsDir::new_from(dir.path());
     let found = creds_dir.find_credential_by_id("credential_findme").unwrap();
@@ -324,16 +271,8 @@ mod tests {
   #[test]
   fn delete_removes_the_right_file() {
     let dir = tempfile::tempdir().unwrap();
-    write_file(
-      dir.path(),
-      "fal_api.toml",
-      "service = \"fal_api\"\n[api_key]\napi_key = \"key-one\"\n",
-    );
-    write_file(
-      dir.path(),
-      "fal_api_2.toml",
-      "service = \"fal_api\"\n[api_key]\napi_key = \"key-two\"\n",
-    );
+    write_file(dir.path(), "fal_api.toml", "service = \"fal_api\"\n[api_key]\napi_key = \"key-one\"\n");
+    write_file(dir.path(), "fal_api_2.toml", "service = \"fal_api\"\n[api_key]\napi_key = \"key-two\"\n");
 
     let creds_dir = AppCredentialsDir::new_from(dir.path());
     creds_dir.delete_credential_file("fal_api.toml").unwrap();

@@ -14,11 +14,7 @@ use crate::utils::media_source_ref::MediaSourceRef;
 /// Returns `Ok(None)` when the input is `None` or an empty list — the
 /// caller can then omit the field from the wire request entirely. (The
 /// downstream Midjourney API rejects empty arrays.)
-pub(crate) async fn resolve_and_upload_image_list(
-  session: &Seedance2ProSession,
-  list: Option<ImageListRef>,
-  maybe_map: Option<&HashMap<MediaFileToken, String>>,
-) -> Result<Option<Vec<String>>, ArtcraftRouterError> {
+pub(crate) async fn resolve_and_upload_image_list(session: &Seedance2ProSession, list: Option<ImageListRef>, maybe_map: Option<&HashMap<MediaFileToken, String>>) -> Result<Option<Vec<String>>, ArtcraftRouterError> {
   let sources = match list {
     None => return Ok(None),
     Some(list) if list.is_empty() => return Ok(None),

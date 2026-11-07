@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::mesh::image::tripo3d_h3p1_image_to_mesh::raw_request::{
-  Tripo3dH3p1ImageToMeshInput, Tripo3dH3p1ImageToMeshOutput,
-};
+use crate::requests::api::mesh::image::tripo3d_h3p1_image_to_mesh::raw_request::{Tripo3dH3p1ImageToMeshInput, Tripo3dH3p1ImageToMeshOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 /// Tripo3D H3.1 image-to-3D.
@@ -162,10 +160,7 @@ mod tests {
   async fn test_image_to_mesh_webhook() -> AnyhowResult<()> {
     let secret = read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt")?;
     let api_key = FalApiKey::from_str(&secret);
-    let request = Tripo3dH3p1ImageToMeshRequest {
-      image_url: ERNEST_SCARED_STUPID_IMAGE_URL.to_string(),
-      ..base_request()
-    };
+    let request = Tripo3dH3p1ImageToMeshRequest { image_url: ERNEST_SCARED_STUPID_IMAGE_URL.to_string(), ..base_request() };
     let result = request.send_webhook_request(&api_key, "https://example.com/webhook").await?;
     println!("Webhook result: {:?}", result);
     assert!(result.request_id.is_some() || result.gateway_request_id.is_some());
@@ -177,10 +172,7 @@ mod tests {
   async fn test_image_to_mesh_queue() -> AnyhowResult<()> {
     let secret = read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt")?;
     let api_key = FalApiKey::from_str(&secret);
-    let request = Tripo3dH3p1ImageToMeshRequest {
-      image_url: ERNEST_SCARED_STUPID_IMAGE_URL.to_string(),
-      ..base_request()
-    };
+    let request = Tripo3dH3p1ImageToMeshRequest { image_url: ERNEST_SCARED_STUPID_IMAGE_URL.to_string(), ..base_request() };
     let result = request.send_queue_request(&api_key).await?;
     println!("Queue result — request_id: {}", result.request_id);
     assert!(!result.request_id.is_empty());

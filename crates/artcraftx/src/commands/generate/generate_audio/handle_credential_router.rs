@@ -26,69 +26,39 @@ use crate::state::data_dir::app_data_root::AppDataRoot;
 /// Credential-driven audio generation: resolve the stored credential named
 /// by the request's `credential_id`, then route to that credential's service
 /// via the router. The router owns upload + dispatch mechanics per provider.
-pub async fn handle_credential_router(
-  request: &TauriGenerateAudioRequest,
-  app_data_root: &AppDataRoot,
-  ledger: &AssetUploadLedger,
-) -> Result<TaskEnqueueSuccess, GenerateError> {
+pub async fn handle_credential_router(request: &TauriGenerateAudioRequest, app_data_root: &AppDataRoot, ledger: &AssetUploadLedger) -> Result<TaskEnqueueSuccess, GenerateError> {
   // Reject unusable media sources (missing local files, empty bytes) before
   // any provider work.
   validate_sources(request.audio_media_sources().iter().flatten())?;
   validate_sources(request.image_media_sources().iter().flatten())?;
 
-  let credential = resolve_generation_credential(
-    request.credential_id.as_deref(),
-    app_data_root,
-  )?;
+  let credential = resolve_generation_credential(request.credential_id.as_deref(), app_data_root)?;
 
-  info!(
-    "handle_credential_router (audio): credential={} service={}",
-    credential.id.as_str(),
-    credential.service,
-  );
+  info!("handle_credential_router (audio): credential={} service={}", credential.id.as_str(), credential.service,);
 
   match credential.service {
-    GenerationSource::Artcraft
-    | GenerationSource::ArtcraftLocal
-    | GenerationSource::ArtcraftCookies => {
-      handle_artcraft_credential(request, &credential, ledger).await
-    }
-    other => Err(credential_not_usable(
-      &credential,
-      &format!("accounts for service {} can't generate audio yet", other),
-    )),
+    GenerationSource::Artcraft | GenerationSource::ArtcraftLocal | GenerationSource::ArtcraftCookies => handle_artcraft_credential(request, &credential, ledger).await,
+    other => Err(credential_not_usable(&credential, &format!("accounts for service {} can't generate audio yet", other))),
   }
 }
 
 /// Generate via the router's Artcraft provider, authenticating with the
 /// stored session cookies. Artcraft's API is token-native; local files and
 /// bytes upload to ArtCraft here, at generate time.
-async fn handle_artcraft_credential(
-  request: &TauriGenerateAudioRequest,
-  credential: &AuthCredential,
-  ledger: &AssetUploadLedger,
-) -> Result<TaskEnqueueSuccess, GenerateError> {
+async fn handle_artcraft_credential(request: &TauriGenerateAudioRequest, credential: &AuthCredential, ledger: &AssetUploadLedger) -> Result<TaskEnqueueSuccess, GenerateError> {
   let tauri_model = request.model.ok_or(GenerateError::no_model_specified())?;
 
   let router_model = tauri_audio_model_to_router_model(tauri_model);
   let generation_model = tauri_audio_model_to_generation_model(tauri_model);
 
-  let api_host = maybe_artcraft_api_host_for_service(credential.service)
-      .expect("caller only routes ArtCraft services here");
+  let api_host = maybe_artcraft_api_host_for_service(credential.service).expect("caller only routes ArtCraft services here");
 
   let creds = storyteller_creds_from_credential(credential)?;
 
-  let audio_references = sources_to_artcraft_tokens(
-    request.audio_media_sources(), ArtcraftMediaKind::Audio, Some(&creds), &api_host, ledger,
-  ).await?.map(AudioListRef::MediaFileTokens);
-  let image_references = sources_to_artcraft_tokens(
-    request.image_media_sources(), ArtcraftMediaKind::Image, Some(&creds), &api_host, ledger,
-  ).await?.map(ImageListRef::MediaFileTokens);
+  let audio_references = sources_to_artcraft_tokens(request.audio_media_sources(), ArtcraftMediaKind::Audio, Some(&creds), &api_host, ledger).await?.map(AudioListRef::MediaFileTokens);
+  let image_references = sources_to_artcraft_tokens(request.image_media_sources(), ArtcraftMediaKind::Image, Some(&creds), &api_host, ledger).await?.map(ImageListRef::MediaFileTokens);
 
-  let client = RouterClient::Artcraft(RouterArtcraftClient::new(
-    api_host,
-    creds,
-  ));
+  let client = RouterClient::Artcraft(RouterArtcraftClient::new(api_host, creds));
 
   let router_request = GenerateAudioRequestBuilder {
     model: router_model,
@@ -116,31 +86,22 @@ async fn handle_artcraft_credential(
     Ok(AudioGenerationDraftOrRequest::Request(generation_request)) => generation_request,
     Ok(AudioGenerationDraftOrRequest::Draft(draft)) => {
       warn!("Artcraft build unexpectedly produced a draft: {:?}", draft);
-      return Err(GenerateError::NotYetImplemented(
-        "Artcraft requests should not require a draft phase".to_string(),
-      ));
-    }
+      return Err(GenerateError::NotYetImplemented("Artcraft requests should not require a draft phase".to_string()));
+    },
     Err(err) => {
       warn!("Could not build Artcraft router request: {:?}", err);
       return Err(err.into());
-    }
+    },
   };
 
-  let response = generation_request.send_request(&client).await
-      .map_err(|err| {
-        warn!("Artcraft router audio generation failed: {:?}", err);
-        GenerateError::from(err)
-      })?;
+  let response = generation_request.send_request(&client).await.map_err(|err| {
+    warn!("Artcraft router audio generation failed: {:?}", err);
+    GenerateError::from(err)
+  })?;
 
-  let payload = response.get_artcraft_payload()
-      .ok_or(GenerateError::ResponseHadNoJobTokens)?;
+  let payload = response.get_artcraft_payload().ok_or(GenerateError::ResponseHadNoJobTokens)?;
 
-  info!(
-    "Router audio generation enqueued: inference_job_token={}, all_tokens={:?}, response={:?}",
-    payload.inference_job_token.as_str(),
-    payload.all_inference_job_tokens,
-    response,
-  );
+  info!("Router audio generation enqueued: inference_job_token={}, all_tokens={:?}, response={:?}", payload.inference_job_token.as_str(), payload.all_inference_job_tokens, response,);
 
   Ok(TaskEnqueueSuccess {
     task_type: TaskType::AudioGeneration,

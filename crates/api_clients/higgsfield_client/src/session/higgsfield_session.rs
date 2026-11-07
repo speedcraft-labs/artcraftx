@@ -63,8 +63,7 @@ impl HiggsfieldSession {
   /// From captured browser cookies. If they include a `__session` JWT it
   /// seeds the token (even expired, it tells us the session id).
   pub fn from_cookies(cookies: HiggsfieldCookies) -> Self {
-    let seed = cookies.maybe_session_jwt()
-        .and_then(|jwt| ClerkSessionToken::parse(jwt).ok());
+    let seed = cookies.maybe_session_jwt().and_then(|jwt| ClerkSessionToken::parse(jwt).ok());
     let maybe_session_id = seed.as_ref().map(|token| token.session_id().to_string());
 
     // DataDome expects the header to echo its cookie; a browser's JS does
@@ -112,10 +111,7 @@ impl HiggsfieldSession {
   /// NB: like the other builders, call this before cloning the session —
   /// it replaces the shared state.
   pub fn with_initial_token(mut self, token: ClerkSessionToken) -> Self {
-    self.state = Arc::new(Mutex::new(SessionState {
-      maybe_session_id: Some(token.session_id().to_string()),
-      maybe_token: Some(token),
-    }));
+    self.state = Arc::new(Mutex::new(SessionState { maybe_session_id: Some(token.session_id().to_string()), maybe_token: Some(token) }));
     self
   }
 
@@ -177,10 +173,7 @@ impl HiggsfieldSession {
   /// retry, since the token may have been revoked or rotated server-side.
   /// Bot-protection refusals are NOT retried — a new token can't pass a
   /// challenge; check `needs_browser_reauth()` on the error instead.
-  pub async fn with_auth<T, Fut>(
-    &self,
-    call: impl Fn(HiggsfieldAuth) -> Fut,
-  ) -> Result<T, HiggsfieldError>
+  pub async fn with_auth<T, Fut>(&self, call: impl Fn(HiggsfieldAuth) -> Fut) -> Result<T, HiggsfieldError>
   where
     Fut: std::future::Future<Output = Result<T, HiggsfieldError>>,
   {
@@ -191,7 +184,7 @@ impl HiggsfieldSession {
         warn!("Higgsfield request was unauthorized; minting a new session token and retrying once");
         let token = self.refresh().await?;
         call(self.auth_for(token)).await
-      }
+      },
       Err(err) => Err(err),
     }
   }
@@ -199,12 +192,7 @@ impl HiggsfieldSession {
   // ── Private ──
 
   fn auth_for(&self, token: ClerkSessionToken) -> HiggsfieldAuth {
-    HiggsfieldAuth {
-      bearer_token: token.into_jwt(),
-      maybe_cookie_header: Some(self.cookies.as_header_value().to_string()),
-      maybe_datadome_client_id: self.maybe_datadome_client_id.clone(),
-      maybe_user_agent: self.maybe_user_agent.clone(),
-    }
+    HiggsfieldAuth { bearer_token: token.into_jwt(), maybe_cookie_header: Some(self.cookies.as_header_value().to_string()), maybe_datadome_client_id: self.maybe_datadome_client_id.clone(), maybe_user_agent: self.maybe_user_agent.clone() }
   }
 
   async fn fresh_token(&self, now: DateTime<Utc>) -> Result<ClerkSessionToken, HiggsfieldError> {
@@ -226,16 +214,13 @@ impl HiggsfieldSession {
           // The remembered session may be gone; look the client up again.
           warn!("Minting for Clerk session {} failed ({}); re-discovering the session", session_id, err);
           self.discover_session_token().await?
-        }
+        },
         Err(err) => return Err(err),
       },
       None => self.discover_session_token().await?,
     };
 
-    info!(
-      "Higgsfield session token minted for {} (expires {}, {}s from now)",
-      token.session_id(), token.expires_at(), token.remaining(Utc::now()).num_seconds(),
-    );
+    info!("Higgsfield session token minted for {} (expires {}, {}s from now)", token.session_id(), token.expires_at(), token.remaining(Utc::now()).num_seconds(),);
 
     state.maybe_session_id = Some(token.session_id().to_string());
     state.maybe_token = Some(token.clone());
@@ -243,23 +228,14 @@ impl HiggsfieldSession {
   }
 
   async fn mint_for_session(&self, session_id: &str) -> Result<ClerkSessionToken, HiggsfieldError> {
-    clerk_session_tokens(ClerkSessionTokensArgs {
-      request: ClerkSessionTokensRequest { session_id: session_id.to_string(), maybe_organization_id: None },
-      cookies: &self.cookies,
-      maybe_user_agent: self.maybe_user_agent.as_deref(),
-      host: &self.clerk_host,
-    }).await
+    clerk_session_tokens(ClerkSessionTokensArgs { request: ClerkSessionTokensRequest { session_id: session_id.to_string(), maybe_organization_id: None }, cookies: &self.cookies, maybe_user_agent: self.maybe_user_agent.as_deref(), host: &self.clerk_host })
+      .await
   }
 
   /// Ask Clerk which session is active. Its reply already includes a fresh
   /// token; use that, minting explicitly only if it didn't.
   async fn discover_session_token(&self) -> Result<ClerkSessionToken, HiggsfieldError> {
-    let client = clerk_client(ClerkClientArgs {
-      request: ClerkClientRequest,
-      cookies: &self.cookies,
-      maybe_user_agent: self.maybe_user_agent.as_deref(),
-      host: &self.clerk_host,
-    }).await?;
+    let client = clerk_client(ClerkClientArgs { request: ClerkClientRequest, cookies: &self.cookies, maybe_user_agent: self.maybe_user_agent.as_deref(), host: &self.clerk_host }).await?;
 
     // `clerk_client` guarantees an active session on success.
     let session = client.active_session().expect("clerk_client returns Err without an active session");
@@ -275,13 +251,13 @@ impl HiggsfieldSession {
 impl std::fmt::Debug for HiggsfieldSession {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.debug_struct("HiggsfieldSession")
-        .field("cookies", &self.cookies)
-        .field("maybe_user_agent", &self.maybe_user_agent)
-        .field("has_datadome_client_id", &self.maybe_datadome_client_id.is_some())
-        .field("api_host", &self.api_host)
-        .field("clerk_host", &self.clerk_host)
-        .field("refresh_margin", &self.refresh_margin)
-        .finish()
+      .field("cookies", &self.cookies)
+      .field("maybe_user_agent", &self.maybe_user_agent)
+      .field("has_datadome_client_id", &self.maybe_datadome_client_id.is_some())
+      .field("api_host", &self.api_host)
+      .field("clerk_host", &self.clerk_host)
+      .field("refresh_margin", &self.refresh_margin)
+      .finish()
   }
 }
 
@@ -308,9 +284,7 @@ mod tests {
     let far_future = (Utc::now() + Duration::hours(1)).timestamp();
     let token = fake_clerk_token(far_future);
     // Unroutable hosts: any network attempt would fail loudly.
-    let session = HiggsfieldSession::from_cookie_header("__client=x")
-        .with_hosts(HiggsfieldHost::Custom("http://127.0.0.1:9".into()), ClerkHost::Custom("http://127.0.0.1:9".into()))
-        .with_initial_token(token.clone());
+    let session = HiggsfieldSession::from_cookie_header("__client=x").with_hosts(HiggsfieldHost::Custom("http://127.0.0.1:9".into()), ClerkHost::Custom("http://127.0.0.1:9".into())).with_initial_token(token.clone());
 
     let auth = session.auth().await.unwrap();
     assert_eq!(auth.bearer_token, token.jwt());
@@ -320,9 +294,7 @@ mod tests {
   #[tokio::test]
   async fn expired_seed_token_triggers_mint() {
     let expired = fake_clerk_token((Utc::now() - Duration::minutes(5)).timestamp());
-    let session = HiggsfieldSession::from_cookie_header("__client=x")
-        .with_hosts(HiggsfieldHost::Custom("http://127.0.0.1:9".into()), ClerkHost::Custom("http://127.0.0.1:9".into()))
-        .with_initial_token(expired);
+    let session = HiggsfieldSession::from_cookie_header("__client=x").with_hosts(HiggsfieldHost::Custom("http://127.0.0.1:9".into()), ClerkHost::Custom("http://127.0.0.1:9".into())).with_initial_token(expired);
 
     // The mint goes to the unroutable Clerk host and fails as a network
     // error — proving a refresh was attempted rather than the stale token
@@ -334,8 +306,7 @@ mod tests {
 
   #[tokio::test]
   async fn missing_client_cookie_fails_before_network() {
-    let session = HiggsfieldSession::from_cookie_header("__session=abc")
-        .with_hosts(HiggsfieldHost::Custom("http://127.0.0.1:9".into()), ClerkHost::Custom("http://127.0.0.1:9".into()));
+    let session = HiggsfieldSession::from_cookie_header("__session=abc").with_hosts(HiggsfieldHost::Custom("http://127.0.0.1:9".into()), ClerkHost::Custom("http://127.0.0.1:9".into()));
     let err = session.auth().await.unwrap_err();
     assert!(err.is_auth_failure());
     assert!(matches!(err, HiggsfieldError::Client(_)));
@@ -356,9 +327,7 @@ mod tests {
   #[tokio::test]
   async fn user_agent_and_datadome_id_flow_into_auth() {
     let far_future = (Utc::now() + Duration::hours(1)).timestamp();
-    let session = HiggsfieldSession::from_cookie_header("__client=x; datadome=dd-id")
-        .with_user_agent("  Mozilla/5.0 Test  ")
-        .with_initial_token(fake_clerk_token(far_future));
+    let session = HiggsfieldSession::from_cookie_header("__client=x; datadome=dd-id").with_user_agent("  Mozilla/5.0 Test  ").with_initial_token(fake_clerk_token(far_future));
     let auth = session.auth().await.unwrap();
     assert_eq!(auth.maybe_user_agent.as_deref(), Some("Mozilla/5.0 Test"));
     assert_eq!(auth.maybe_datadome_client_id.as_deref(), Some("dd-id"));

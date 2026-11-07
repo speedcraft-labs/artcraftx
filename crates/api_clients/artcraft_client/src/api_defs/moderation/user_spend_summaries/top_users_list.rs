@@ -1,8 +1,7 @@
 use serde_derive::{Deserialize, Serialize};
 use crate::tokens::users::UserToken;
 
-pub const MODERATOR_TOP_USERS_LIST_PATH: &str =
-  "/v1/moderation/user_spend_summaries/top_users_list";
+pub const MODERATOR_TOP_USERS_LIST_PATH: &str = "/v1/moderation/user_spend_summaries/top_users_list";
 
 /// Net-spend window that selects which column `top_users_list` sorts by.
 #[derive(Deserialize, Serialize, Clone, Copy)]
