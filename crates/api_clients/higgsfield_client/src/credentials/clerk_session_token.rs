@@ -45,8 +45,7 @@ impl ClerkSessionToken {
   /// `sid`, and `sub` claims.
   pub fn parse(jwt: impl Into<String>) -> Result<Self, HiggsfieldClientError> {
     let jwt = jwt.into().trim().to_string();
-    let claims = ClerkSessionClaims::parse_claims(&jwt)
-        .map_err(|err| HiggsfieldClientError::InvalidSessionToken(format!("{:?}", err)))?;
+    let claims = ClerkSessionClaims::parse_claims(&jwt).map_err(|err| HiggsfieldClientError::InvalidSessionToken(format!("{:?}", err)))?;
     Ok(Self { jwt, claims })
   }
 
@@ -84,14 +83,10 @@ impl ClerkSessionToken {
 
 impl ParseJwtClaims for ClerkSessionClaims {
   fn extract_claims(common_claims: CommonClaims, extra_claims: Map<String, Value>) -> Result<Self, JwtError> {
-    let string_claim = |name: &str| -> Option<String> {
-      extra_claims.get(name).and_then(|value| value.as_str()).map(|s| s.to_string())
-    };
+    let string_claim = |name: &str| -> Option<String> { extra_claims.get(name).and_then(|value| value.as_str()).map(|s| s.to_string()) };
 
-    let session_id = string_claim("sid")
-        .ok_or_else(|| JwtError::CustomClaimsFieldError("no sid claim".to_string()))?;
-    let user_id = string_claim("sub")
-        .ok_or_else(|| JwtError::CustomClaimsFieldError("no sub claim".to_string()))?;
+    let session_id = string_claim("sid").ok_or_else(|| JwtError::CustomClaimsFieldError("no sid claim".to_string()))?;
+    let user_id = string_claim("sub").ok_or_else(|| JwtError::CustomClaimsFieldError("no sub claim".to_string()))?;
 
     Ok(Self {
       issued_at: common_claims.created,

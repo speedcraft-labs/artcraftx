@@ -9,10 +9,7 @@ pub const CF_CLEARANCE_COOKIE: &str = "cf_clearance";
 /// Whether a cookie header carries a clearance at all. Without one, a
 /// challenge is a normal first contact rather than a broken replay.
 pub fn cookie_header_has_clearance(cookie_header: &str) -> bool {
-  cookie_header
-      .split(';')
-      .filter_map(|pair| pair.trim().split_once('='))
-      .any(|(name, value)| name.trim() == CF_CLEARANCE_COOKIE && !value.trim().is_empty())
+  cookie_header.split(';').filter_map(|pair| pair.trim().split_once('=')).any(|(name, value)| name.trim() == CF_CLEARANCE_COOKIE && !value.trim().is_empty())
 }
 
 /// The browser profile an HTTP client must use to replay cookies captured
@@ -21,10 +18,7 @@ pub fn cookie_header_has_clearance(cookie_header: &str) -> bool {
 ///
 /// When the capturing UA wasn't recorded, fall back to the profile the
 /// integration pins on both sides (e.g. `MIDJOURNEY_USER_AGENT`).
-pub fn profile_for_captured_user_agent(
-  maybe_captured_user_agent: Option<&str>,
-  fallback: BrowserProfile,
-) -> BrowserProfile {
+pub fn profile_for_captured_user_agent(maybe_captured_user_agent: Option<&str>, fallback: BrowserProfile) -> BrowserProfile {
   match maybe_captured_user_agent.map(str::trim).filter(|ua| !ua.is_empty()) {
     Some(user_agent) => BrowserProfile::matching_user_agent(user_agent),
     None => fallback,

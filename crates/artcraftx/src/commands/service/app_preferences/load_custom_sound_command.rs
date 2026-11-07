@@ -12,10 +12,7 @@ use tauri::State;
 /// no custom sound or the file has since gone missing; the frontend treats
 /// that as "play nothing".
 #[tauri::command]
-pub async fn load_custom_sound_command(
-  event: AppSoundEvent,
-  app_prefs: State<'_, AppPreferencesManager>,
-) -> Result<Response, String> {
+pub async fn load_custom_sound_command(event: AppSoundEvent, app_prefs: State<'_, AppPreferencesManager>) -> Result<Response, String> {
   info!("load_custom_sound_command called for {:?}", event);
 
   let prefs = app_prefs.get().map_err(|err| {
@@ -23,11 +20,7 @@ pub async fn load_custom_sound_command(
     format!("Error reading app preferences: {:?}", err)
   })?;
 
-  let path = prefs
-      .sounds
-      .get(event)
-      .and_then(|sound| sound.custom_wav_path())
-      .ok_or_else(|| format!("No custom sound is configured for {:?}", event))?;
+  let path = prefs.sounds.get(event).and_then(|sound| sound.custom_wav_path()).ok_or_else(|| format!("No custom sound is configured for {:?}", event))?;
 
   let bytes = std::fs::read(path).map_err(|err| {
     warn!("Custom sound for {:?} could not be read from {}: {}", event, path.display(), err);

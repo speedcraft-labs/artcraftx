@@ -59,11 +59,13 @@ impl HiggsfieldError {
       Self::Client(HiggsfieldClientError::MediaProtectedContent { .. }) => Some(
         "Higgsfield's intellectual property check rejected one of your reference images or videos: \
          it appears to contain a recognizable person or copyrighted content, so Higgsfield won't use it. \
-         Please choose different reference media.".to_string(),
+         Please choose different reference media."
+          .to_string(),
       ),
       Self::Client(HiggsfieldClientError::MediaIpCheckTimedOut { .. }) => Some(
         "Higgsfield's intellectual property check on your reference media didn't finish in time. \
-         Please try again in a moment.".to_string(),
+         Please try again in a moment."
+          .to_string(),
       ),
       _ => None,
     }

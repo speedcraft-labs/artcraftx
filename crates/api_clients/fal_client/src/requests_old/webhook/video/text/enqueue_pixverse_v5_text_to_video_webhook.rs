@@ -58,47 +58,48 @@ pub enum EnqueuePixverseV5TextToVideoStyle {
   Cyberpunk,
 }
 
-pub async fn enqueue_pixverse_v5_text_to_video_webhook<R: IntoUrl>(
-  args: EnqueuePixverseV5TextToVideoArgs<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
-
+pub async fn enqueue_pixverse_v5_text_to_video_webhook<R: IntoUrl>(args: EnqueuePixverseV5TextToVideoArgs<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
 
-  let duration = req.duration
-      .map(|resolution| match resolution {
-        EnqueuePixverseV5TextToVideoDurationSeconds::Five => "5",
-        EnqueuePixverseV5TextToVideoDurationSeconds::Eight=> "8",
-      })
-      .map(|s| s.to_string());
+  let duration = req
+    .duration
+    .map(|resolution| match resolution {
+      EnqueuePixverseV5TextToVideoDurationSeconds::Five => "5",
+      EnqueuePixverseV5TextToVideoDurationSeconds::Eight => "8",
+    })
+    .map(|s| s.to_string());
 
-  let aspect_ratio = req.aspect_ratio
-      .map(|aspect_ratio| match aspect_ratio {
-        EnqueuePixverseV5TextToVideoAspectRatio::Square => "1:1",
-        EnqueuePixverseV5TextToVideoAspectRatio::SixteenByNine => "16:9",
-        EnqueuePixverseV5TextToVideoAspectRatio::FourByThree => "4:3",
-        EnqueuePixverseV5TextToVideoAspectRatio::NineBySixteen => "9:16",
-        EnqueuePixverseV5TextToVideoAspectRatio::ThreeByFour => "3:4",
-      })
-      .map(|s| s.to_string());
+  let aspect_ratio = req
+    .aspect_ratio
+    .map(|aspect_ratio| match aspect_ratio {
+      EnqueuePixverseV5TextToVideoAspectRatio::Square => "1:1",
+      EnqueuePixverseV5TextToVideoAspectRatio::SixteenByNine => "16:9",
+      EnqueuePixverseV5TextToVideoAspectRatio::FourByThree => "4:3",
+      EnqueuePixverseV5TextToVideoAspectRatio::NineBySixteen => "9:16",
+      EnqueuePixverseV5TextToVideoAspectRatio::ThreeByFour => "3:4",
+    })
+    .map(|s| s.to_string());
 
-  let resolution = req.resolution
-      .map(|resolution| match resolution {
-        EnqueuePixverseV5TextToVideoResolution::ThreeSixtyP => "360p",
-        EnqueuePixverseV5TextToVideoResolution::FiveFortyP => "540p",
-        EnqueuePixverseV5TextToVideoResolution::SevenTwentyP => "720p",
-        EnqueuePixverseV5TextToVideoResolution::TenEightyP => "1080p",
-      })
-      .map(|s| s.to_string());
+  let resolution = req
+    .resolution
+    .map(|resolution| match resolution {
+      EnqueuePixverseV5TextToVideoResolution::ThreeSixtyP => "360p",
+      EnqueuePixverseV5TextToVideoResolution::FiveFortyP => "540p",
+      EnqueuePixverseV5TextToVideoResolution::SevenTwentyP => "720p",
+      EnqueuePixverseV5TextToVideoResolution::TenEightyP => "1080p",
+    })
+    .map(|s| s.to_string());
 
-  let style = req.style
-      .map(|style| match style {
-        EnqueuePixverseV5TextToVideoStyle::Anime => "anime",
-        EnqueuePixverseV5TextToVideoStyle::Animation3d => "3d_animation",
-        EnqueuePixverseV5TextToVideoStyle::Clay => "clay",
-        EnqueuePixverseV5TextToVideoStyle::Comic => "comic",
-        EnqueuePixverseV5TextToVideoStyle::Cyberpunk => "cyberpunk",
-      })
-      .map(|s| s.to_string());
+  let style = req
+    .style
+    .map(|style| match style {
+      EnqueuePixverseV5TextToVideoStyle::Anime => "anime",
+      EnqueuePixverseV5TextToVideoStyle::Animation3d => "3d_animation",
+      EnqueuePixverseV5TextToVideoStyle::Clay => "clay",
+      EnqueuePixverseV5TextToVideoStyle::Comic => "comic",
+      EnqueuePixverseV5TextToVideoStyle::Cyberpunk => "cyberpunk",
+    })
+    .map(|s| s.to_string());
 
   let request = PixverseV5TextToVideoInput {
     prompt: req.prompt,
@@ -112,10 +113,7 @@ pub async fn enqueue_pixverse_v5_text_to_video_webhook<R: IntoUrl>(
     seed: None,
   };
 
-  let result = pixverse_v5_text_to_video(request)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await;
+  let result = pixverse_v5_text_to_video(request).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await;
 
   result.map_err(|err| classify_fal_error(err))
 }
@@ -123,7 +121,10 @@ pub async fn enqueue_pixverse_v5_text_to_video_webhook<R: IntoUrl>(
 #[cfg(test)]
 mod tests {
   use crate::creds::fal_api_key::FalApiKey;
-  use crate::requests_old::webhook::video::text::enqueue_pixverse_v5_text_to_video_webhook::{enqueue_pixverse_v5_text_to_video_webhook, EnqueuePixverseV5TextToVideoArgs, EnqueuePixverseV5TextToVideoRequest, EnqueuePixverseV5TextToVideoAspectRatio, EnqueuePixverseV5TextToVideoDurationSeconds, EnqueuePixverseV5TextToVideoResolution, EnqueuePixverseV5TextToVideoStyle};
+  use crate::requests_old::webhook::video::text::enqueue_pixverse_v5_text_to_video_webhook::{
+    enqueue_pixverse_v5_text_to_video_webhook, EnqueuePixverseV5TextToVideoArgs, EnqueuePixverseV5TextToVideoRequest, EnqueuePixverseV5TextToVideoAspectRatio, EnqueuePixverseV5TextToVideoDurationSeconds, EnqueuePixverseV5TextToVideoResolution,
+    EnqueuePixverseV5TextToVideoStyle,
+  };
   use errors::AnyhowResult;
   use std::fs::read_to_string;
 

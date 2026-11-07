@@ -9,9 +9,7 @@ pub static AUDIO_MODELS: Lazy<Vec<AudioModelConfig>> = Lazy::new(audio_models);
 
 /// Look up one model's config.
 pub fn audio_model_config(model: AudioModel) -> &'static AudioModelConfig {
-  AUDIO_MODELS.iter()
-      .find(|config| config.model == model)
-      .expect("every AudioModel variant has a config (see tests)")
+  AUDIO_MODELS.iter().find(|config| config.model == model).expect("every AudioModel variant has a config (see tests)")
 }
 
 fn strings(items: &[&str]) -> Vec<String> {

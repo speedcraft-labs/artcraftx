@@ -48,13 +48,7 @@ pub struct HarvestConfig {
 
 impl Default for HarvestConfig {
   fn default() -> Self {
-    Self {
-      start_url: GROK_URL.to_string(),
-      user_agent: Some(DEFAULT_USER_AGENT.to_string()),
-      capture_secs: DEFAULT_CAPTURE_SECS,
-      visible: true,
-      any_thread: false,
-    }
+    Self { start_url: GROK_URL.to_string(), user_agent: Some(DEFAULT_USER_AGENT.to_string()), capture_secs: DEFAULT_CAPTURE_SECS, visible: true, any_thread: false }
   }
 }
 
@@ -94,32 +88,24 @@ pub fn harvest_statsigs(config: HarvestConfig) -> AnyhowResult<Vec<CapturedStats
     builder.build()
   };
 
-  let window = WindowBuilder::new()
-      .with_title("Grok statsig harvester")
-      .with_visible(config.visible)
-      .build(&event_loop)?;
+  let window = WindowBuilder::new().with_title("Grok statsig harvester").with_visible(config.visible).build(&event_loop)?;
 
   let sink = captures.clone();
-  let ipc_handler = move |request: wry::http::Request<String>| {
-    match serde_json::from_str::<HarnessReport>(request.body()) {
-      Ok(report) => {
-        let captured_at_unix = report.captured_at_ms / 1000;
-        match decode_statsig(&report.statsig_id, &report.method, &report.path, captured_at_unix) {
-          Ok(entry) => {
-            info!("captured statsig: {} {}", entry.method, entry.path);
-            sink.lock().expect("harvest sink poisoned").push(entry);
-          }
-          Err(err) => debug!("ignoring unparseable statsig report: {err}"),
-        }
+  let ipc_handler = move |request: wry::http::Request<String>| match serde_json::from_str::<HarnessReport>(request.body()) {
+    Ok(report) => {
+      let captured_at_unix = report.captured_at_ms / 1000;
+      match decode_statsig(&report.statsig_id, &report.method, &report.path, captured_at_unix) {
+        Ok(entry) => {
+          info!("captured statsig: {} {}", entry.method, entry.path);
+          sink.lock().expect("harvest sink poisoned").push(entry);
+        },
+        Err(err) => debug!("ignoring unparseable statsig report: {err}"),
       }
-      Err(err) => debug!("ignoring non-report IPC message: {err}"),
-    }
+    },
+    Err(err) => debug!("ignoring non-report IPC message: {err}"),
   };
 
-  let mut builder = WebViewBuilder::new()
-      .with_url(&config.start_url)
-      .with_initialization_script(MINT_HARNESS_SCRIPT)
-      .with_ipc_handler(ipc_handler);
+  let mut builder = WebViewBuilder::new().with_url(&config.start_url).with_initialization_script(MINT_HARNESS_SCRIPT).with_ipc_handler(ipc_handler);
   if let Some(user_agent) = &config.user_agent {
     builder = builder.with_user_agent(user_agent);
   }
@@ -158,11 +144,7 @@ mod tests {
   #[test]
   #[ignore]
   fn harvest_and_print() {
-    let captures = harvest_statsigs(HarvestConfig {
-      capture_secs: 60,
-      any_thread: true,
-      ..Default::default()
-    }).expect("harvest failed");
+    let captures = harvest_statsigs(HarvestConfig { capture_secs: 60, any_thread: true, ..Default::default() }).expect("harvest failed");
 
     println!("\ncaptured {} statsig(s):", captures.len());
     for entry in &captures {

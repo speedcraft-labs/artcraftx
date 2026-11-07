@@ -127,18 +127,7 @@ impl Kling3p0Request {
   /// A text-to-video request with the web app's defaults (enhance on, sound
   /// on, credits).
   pub fn text_to_video(prompt: impl Into<String>, aspect_ratio: KlingAspectRatio, resolution: Kling3p0Resolution, duration: VideoDurationSeconds) -> Self {
-    Self {
-      prompt: prompt.into(),
-      aspect_ratio,
-      resolution,
-      duration,
-      enhance_prompt: true,
-      sound: true,
-      kling_element_ids: Vec::new(),
-      medias: Vec::new(),
-      use_unlim: false,
-      maybe_dimensions: None,
-    }
+    Self { prompt: prompt.into(), aspect_ratio, resolution, duration, enhance_prompt: true, sound: true, kling_element_ids: Vec::new(), medias: Vec::new(), use_unlim: false, maybe_dimensions: None }
   }
 
   fn validate(&self) -> Result<(), HiggsfieldClientError> {
@@ -160,8 +149,7 @@ impl Kling3p0Request {
     if let Some(dimensions) = self.maybe_dimensions {
       return Ok(dimensions);
     }
-    VideoDimensions::for_aspect_ratio(&self.aspect_ratio.to_image_aspect_ratio(), &self.resolution.to_video_resolution())
-        .ok_or_else(|| HiggsfieldClientError::InvalidRequest("can't derive video dimensions; pass maybe_dimensions".to_string()))
+    VideoDimensions::for_aspect_ratio(&self.aspect_ratio.to_image_aspect_ratio(), &self.resolution.to_video_resolution()).ok_or_else(|| HiggsfieldClientError::InvalidRequest("can't derive video dimensions; pass maybe_dimensions".to_string()))
   }
 
   fn to_body(&self) -> Result<Kling3p0RequestBody, HiggsfieldClientError> {
@@ -260,8 +248,8 @@ mod tests {
     // Captured from the web app 2026-08-31 (ids scrubbed): with square
     // frames the web app sent `1:1` and 720x720 at 720p.
     let request = Kling3p0Request::text_to_video("a shiba inu skateboarding down a hill", KlingAspectRatio::Square1x1, Kling3p0Resolution::P720, VideoDurationSeconds::new(3))
-        .with_media(MediaReference::start_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b1", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png")))
-        .with_media(MediaReference::end_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b2", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png")));
+      .with_media(MediaReference::start_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b1", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png")))
+      .with_media(MediaReference::end_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b2", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png")));
     let actual: Value = serde_json::to_value(request.to_body().unwrap()).unwrap();
     let expected: Value = serde_json::from_str(r#"{"params":{"prompt":"a shiba inu skateboarding down a hill","enhance_prompt":true,"aspect_ratio":"1:1","mode":"std","sound":"on","duration":3,"multi_shots":false,"multi_shot_mode":"auto","kling_element_ids":[],"medias":[{"role":"start_image","data":{"id":"00000000-0000-4000-8000-0000000000b1","type":"media_input","url":"https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png"}},{"role":"end_image","data":{"id":"00000000-0000-4000-8000-0000000000b2","type":"media_input","url":"https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png"}}],"width":720,"height":720},"use_unlim":false,"use_free_gens":false}"#).unwrap();
     assert_eq!(actual, expected);

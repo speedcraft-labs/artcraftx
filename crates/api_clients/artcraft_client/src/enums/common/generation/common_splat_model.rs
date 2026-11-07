@@ -1,4 +1,3 @@
-
 /// Splat models available for generation.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -71,23 +70,14 @@ mod tests {
     ];
     for (json_str, expected) in cases {
       let json = format!("\"{}\"", json_str);
-      let deserialized: CommonSplatModel = serde_json::from_str(&json)
-        .unwrap_or_else(|e| panic!("Failed to deserialize {:?}: {}", json_str, e));
+      let deserialized: CommonSplatModel = serde_json::from_str(&json).unwrap_or_else(|e| panic!("Failed to deserialize {:?}: {}", json_str, e));
       assert_eq!(deserialized, expected, "Failed for {:?}", json_str);
     }
   }
 
   #[test]
   fn test_round_trip() {
-    let all = [
-      CommonSplatModel::Marble0p1Mini,
-      CommonSplatModel::Marble0p1Plus,
-      CommonSplatModel::Marble1p0,
-      CommonSplatModel::Marble1p0Draft,
-      CommonSplatModel::Marble1p1,
-      CommonSplatModel::Marble1p1Plus,
-      CommonSplatModel::TripoSplat,
-    ];
+    let all = [CommonSplatModel::Marble0p1Mini, CommonSplatModel::Marble0p1Plus, CommonSplatModel::Marble1p0, CommonSplatModel::Marble1p0Draft, CommonSplatModel::Marble1p1, CommonSplatModel::Marble1p1Plus, CommonSplatModel::TripoSplat];
     for variant in all {
       let json = serde_json::to_string(&variant).unwrap();
       let deserialized: CommonSplatModel = serde_json::from_str(&json).unwrap();

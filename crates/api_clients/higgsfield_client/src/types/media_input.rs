@@ -72,11 +72,14 @@ mod tests {
   fn serializes_like_the_web_app() {
     let input = MediaInput::uploaded("00000000-0000-4000-8000-000000000001", "https://cdn.example.com/user_x/00000000-0000-4000-8000-000000000001.png");
     let actual: Value = serde_json::to_value(&input).unwrap();
-    assert_eq!(actual, json!({
-      "id": "00000000-0000-4000-8000-000000000001",
-      "type": "media_input",
-      "url": "https://cdn.example.com/user_x/00000000-0000-4000-8000-000000000001.png",
-    }));
+    assert_eq!(
+      actual,
+      json!({
+        "id": "00000000-0000-4000-8000-000000000001",
+        "type": "media_input",
+        "url": "https://cdn.example.com/user_x/00000000-0000-4000-8000-000000000001.png",
+      })
+    );
   }
 
   #[test]

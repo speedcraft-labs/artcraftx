@@ -117,19 +117,7 @@ impl Seedance2p0Request {
   /// A text-to-video request with the web app's defaults (1 clip, audio on,
   /// high bitrate, `std` mode, credits).
   pub fn text_to_video(prompt: impl Into<String>, aspect_ratio: SeedanceVideoAspectRatio, resolution: Seedance2p0Resolution, duration: VideoDurationSeconds) -> Self {
-    Self {
-      prompt: prompt.into(),
-      aspect_ratio,
-      resolution,
-      duration,
-      batch_size: ImageBatchSize::One,
-      generate_audio: true,
-      bitrate_mode: VideoBitrateMode::High,
-      mode: VideoMode::Std,
-      medias: Vec::new(),
-      use_unlim: false,
-      maybe_dimensions: None,
-    }
+    Self { prompt: prompt.into(), aspect_ratio, resolution, duration, batch_size: ImageBatchSize::One, generate_audio: true, bitrate_mode: VideoBitrateMode::High, mode: VideoMode::Std, medias: Vec::new(), use_unlim: false, maybe_dimensions: None }
   }
 
   fn validate(&self) -> Result<(), HiggsfieldClientError> {
@@ -160,8 +148,7 @@ impl Seedance2p0Request {
     if let Some(dimensions) = self.maybe_dimensions {
       return Ok(dimensions);
     }
-    VideoDimensions::for_aspect_ratio(&self.wire_aspect_ratio(), &self.resolution.to_video_resolution())
-        .ok_or_else(|| HiggsfieldClientError::InvalidRequest("can't derive video dimensions; pass maybe_dimensions".to_string()))
+    VideoDimensions::for_aspect_ratio(&self.wire_aspect_ratio(), &self.resolution.to_video_resolution()).ok_or_else(|| HiggsfieldClientError::InvalidRequest("can't derive video dimensions; pass maybe_dimensions".to_string()))
   }
 
   fn to_body(&self) -> Result<Seedance2p0RequestBody, HiggsfieldClientError> {
@@ -259,8 +246,8 @@ mod tests {
     // media-upload agreement); the shape and roles come from the web app's
     // bundle and match the other models' captured bodies.
     let request = Seedance2p0Request::text_to_video("p", SeedanceVideoAspectRatio::Landscape16x9, Seedance2p0Resolution::P480, VideoDurationSeconds::new(4))
-        .with_media(MediaReference::image(MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png")))
-        .with_media(MediaReference::audio(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b2", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png")));
+      .with_media(MediaReference::image(MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png")))
+      .with_media(MediaReference::audio(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b2", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png")));
     let body: Value = serde_json::to_value(request.to_body().unwrap()).unwrap();
     let medias = body["params"]["medias"].as_array().unwrap();
     assert_eq!(medias.len(), 2);
@@ -273,8 +260,16 @@ mod tests {
   fn media_roles() {
     assert_eq!(Seedance2p0Request::MEDIA_ROLES, &[MediaRole::Image, MediaRole::StartImage, MediaRole::EndImage, MediaRole::Video, MediaRole::Audio]);
     let base = || Seedance2p0Request::text_to_video("p", SeedanceVideoAspectRatio::Landscape16x9, Seedance2p0Resolution::P480, VideoDurationSeconds::new(4));
-    assert!(base().with_media(MediaReference::start_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b1", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png"))).with_media(MediaReference::end_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b2", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png"))).validate().is_ok());
-    let two_starts = base().with_media(MediaReference::start_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b1", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png"))).with_media(MediaReference::start_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b2", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png")));
+    assert!(
+      base()
+        .with_media(MediaReference::start_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b1", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png")))
+        .with_media(MediaReference::end_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b2", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png")))
+        .validate()
+        .is_ok()
+    );
+    let two_starts = base()
+      .with_media(MediaReference::start_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b1", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png")))
+      .with_media(MediaReference::start_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b2", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png")));
     assert!(matches!(two_starts.validate(), Err(HiggsfieldClientError::InvalidRequest(_))));
   }
 

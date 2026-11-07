@@ -19,11 +19,9 @@ pub struct TaskList {
   pub tasks: Vec<Task>,
 }
 
-pub async fn list_tasks_by_provider_and_tokens(
-  args: ListTasksArgs<'_>,
-) -> Result<TaskList, SqliteTasksError> {
-
-  let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(r#"
+pub async fn list_tasks_by_provider_and_tokens(args: ListTasksArgs<'_>) -> Result<TaskList, SqliteTasksError> {
+  let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
+    r#"
     SELECT
       id,
       task_status,
@@ -40,7 +38,8 @@ pub async fn list_tasks_by_provider_and_tokens(
       frontend_subscriber_payload
     FROM tasks
     WHERE provider =
-  "#);
+  "#,
+  );
 
   // TODO(bt,2025-07-15): Fix this. The sqlx mysql queries never required temporaries
   let provider = args.provider.to_string();
@@ -71,24 +70,18 @@ pub async fn list_tasks_by_provider_and_tokens(
       id: TaskId::new_from_str(&task.id),
       status: TaskStatus::from_str(&task.task_status)?,
       task_type: TaskType::from_str(&task.task_type)?,
-      model_type: task.model_type
-          .map(|model| TaskModelType::from_str(&model))
-          .transpose()?,
+      model_type: task.model_type.map(|model| TaskModelType::from_str(&model)).transpose()?,
       provider: GenerationSource::from_str(&task.provider)?,
       provider_job_id: task.provider_job_id,
       is_batch_generation: task.is_batch_generation,
       queue_status_url: task.queue_status_url,
       queue_response_url: task.queue_response_url,
       prompt_token: task.prompt_token,
-      frontend_caller: task.frontend_caller
-          .map(|caller| TauriCommandCaller::from_str(&caller))
-          .transpose()?,
+      frontend_caller: task.frontend_caller.map(|caller| TauriCommandCaller::from_str(&caller)).transpose()?,
       frontend_subscriber_id: task.frontend_subscriber_id,
       frontend_subscriber_payload: task.frontend_subscriber_payload,
     });
   }
 
-  Ok(TaskList {
-    tasks,
-  })
+  Ok(TaskList { tasks })
 }

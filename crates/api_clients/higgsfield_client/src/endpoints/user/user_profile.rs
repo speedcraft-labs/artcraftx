@@ -123,11 +123,7 @@ mod tests {
       session.maybe_datadome_client_id().is_some(),
     );
 
-    let response = user_profile(UserProfileArgs {
-      request: UserProfileRequest,
-      auth: &auth,
-      host: &HiggsfieldHost::Higgsfield,
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let response = user_profile(UserProfileArgs { request: UserProfileRequest, auth: &auth, host: &HiggsfieldHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
     println!("\n===== /fnf/user/profile =====\n{:#?}", response);
 
@@ -144,11 +140,7 @@ mod tests {
     setup_test_logging();
 
     let auth = load_higgsfield_test_auth().await?;
-    let response = user_profile(UserProfileArgs {
-      request: UserProfileRequest,
-      auth: &auth,
-      host: &HiggsfieldHost::Higgsfield,
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let response = user_profile(UserProfileArgs { request: UserProfileRequest, auth: &auth, host: &HiggsfieldHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
     println!("Profile: {:?}", response);
     assert!(!response.username.is_empty());

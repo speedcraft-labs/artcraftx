@@ -32,9 +32,7 @@ use crate::api::image_ref::ImageRef;
 use crate::api::video_list_ref::VideoListRef;
 use crate::errors::artcraft_router_error::ArtcraftRouterError;
 use crate::errors::provider_error::ProviderError;
-use crate::utils::media_source_ref::{
-  extension_from_name_hint, resolve_media_source_bytes, MediaSourceRef, ResolvedMediaBytes,
-};
+use crate::utils::media_source_ref::{extension_from_name_hint, resolve_media_source_bytes, MediaSourceRef, ResolvedMediaBytes};
 
 pub use crate::utils::media_source_ref::{resolve_media_token, resolve_media_tokens};
 
@@ -148,12 +146,7 @@ pub struct HiggsfieldUploadContext<'a> {
 
 /// Upload every source in `list`, in order. `None` / empty lists upload
 /// nothing.
-pub async fn upload_media_list(
-  context: HiggsfieldUploadContext<'_>,
-  list: Option<HiggsfieldMediaSources>,
-  kind: HiggsfieldMediaKind,
-  ip_check: bool,
-) -> Result<Vec<MediaInput>, ArtcraftRouterError> {
+pub async fn upload_media_list(context: HiggsfieldUploadContext<'_>, list: Option<HiggsfieldMediaSources>, kind: HiggsfieldMediaKind, ip_check: bool) -> Result<Vec<MediaInput>, ArtcraftRouterError> {
   let sources = match list {
     None => return Ok(Vec::new()),
     Some(sources) => sources.0,
@@ -166,16 +159,10 @@ pub async fn upload_media_list(
 }
 
 /// Upload a single image reference (a keyframe), if present.
-pub async fn upload_image_ref(
-  context: HiggsfieldUploadContext<'_>,
-  image_ref: Option<ImageRef>,
-  ip_check: bool,
-) -> Result<Option<MediaInput>, ArtcraftRouterError> {
+pub async fn upload_image_ref(context: HiggsfieldUploadContext<'_>, image_ref: Option<ImageRef>, ip_check: bool) -> Result<Option<MediaInput>, ArtcraftRouterError> {
   match image_ref {
     None => Ok(None),
-    Some(image_ref) => {
-      Ok(Some(upload_source_to_higgsfield(context, image_ref.into(), HiggsfieldMediaKind::Image, ip_check).await?))
-    }
+    Some(image_ref) => Ok(Some(upload_source_to_higgsfield(context, image_ref.into(), HiggsfieldMediaKind::Image, ip_check).await?)),
   }
 }
 
@@ -189,15 +176,9 @@ pub async fn upload_image_ref(
 /// The first-party-domain guard applies only to caller-supplied `Url`
 /// sources: a token that resolves to our own CDN is a deliberate library
 /// pick, and local paths / bytes never had a URL at all.
-pub async fn upload_source_to_higgsfield(
-  context: HiggsfieldUploadContext<'_>,
-  source: MediaSourceRef,
-  kind: HiggsfieldMediaKind,
-  ip_check: bool,
-) -> Result<MediaInput, ArtcraftRouterError> {
+pub async fn upload_source_to_higgsfield(context: HiggsfieldUploadContext<'_>, source: MediaSourceRef, kind: HiggsfieldMediaKind, ip_check: bool) -> Result<MediaInput, ArtcraftRouterError> {
   if let MediaSourceRef::Url(url) = &source {
-    check_upload_source_url(url)
-        .map_err(|err| ArtcraftRouterError::from(ProviderError::Higgsfield(err.into())))?;
+    check_upload_source_url(url).map_err(|err| ArtcraftRouterError::from(ProviderError::Higgsfield(err.into())))?;
   }
   let resolved = resolve_media_source_bytes(source, context.maybe_map).await?;
 
@@ -215,40 +196,27 @@ pub async fn upload_source_to_higgsfield(
 
   let byte_count = resolved.bytes.len() as u64;
   let file = reference_media_file(resolved, kind, ip_check);
-  info!(
-    "Uploading {:?} reference to Higgsfield ({} bytes, {}, ip_check={})",
-    kind, file.bytes.len(), file.mime_type, ip_check,
-  );
+  info!("Uploading {:?} reference to Higgsfield ({} bytes, {}, ip_check={})", kind, file.bytes.len(), file.mime_type, ip_check,);
   if let Some(observer) = context.maybe_observer {
     observer.on_uploading(kind.label(), byte_count, ip_check);
   }
   let uploaded = session_upload(context.session, file).await?;
 
   if let Some(cache) = context.maybe_cache {
-    cache.record_upload(&file_hash, byte_count, &CachedAssetUpload::uploaded(
-      uploaded.id.as_str(),
-      Some(uploaded.url.clone()),
-    )).await;
+    cache.record_upload(&file_hash, byte_count, &CachedAssetUpload::uploaded(uploaded.id.as_str(), Some(uploaded.url.clone()))).await;
   }
   Ok(uploaded)
 }
 
 async fn session_upload(session: &HiggsfieldSession, file: ReferenceMediaFile) -> Result<MediaInput, ArtcraftRouterError> {
-  session.upload_reference_media(file).await
-      .map_err(|err| ArtcraftRouterError::from(ProviderError::Higgsfield(err)))
+  session.upload_reference_media(file).await.map_err(|err| ArtcraftRouterError::from(ProviderError::Higgsfield(err)))
 }
 
 /// The cached upload for `file_hash`, if Higgsfield still honours it. Any
 /// problem — no cached URL, a failed status read, a missing or flagged
 /// upload, or a required IP check that never ran — forgets the entry and
 /// answers `None` so the caller uploads afresh.
-async fn reusable_upload(
-  session: &HiggsfieldSession,
-  cache: &dyn AssetUploadCache,
-  file_hash: &str,
-  kind: HiggsfieldMediaKind,
-  ip_check: bool,
-) -> Option<MediaInput> {
+async fn reusable_upload(session: &HiggsfieldSession, cache: &dyn AssetUploadCache, file_hash: &str, kind: HiggsfieldMediaKind, ip_check: bool) -> Option<MediaInput> {
   let cached = cache.find_upload(file_hash).await?;
   let media_id = MediaId::new(cached.service_id.clone());
 
@@ -268,18 +236,18 @@ async fn reusable_upload(
         warn!("Cached Higgsfield upload {} is flagged as protected content; uploading again", media_id);
         cache.forget_upload(file_hash).await;
         return None;
-      }
+      },
       Ok(status) if ip_check && !status.is_ip_check_finished() => {
         info!("Cached Higgsfield upload {} never had its IP check; uploading again with one", media_id);
         cache.forget_upload(file_hash).await;
         return None;
-      }
-      Ok(_) => {}
+      },
+      Ok(_) => {},
       Err(err) => {
         warn!("Could not confirm cached Higgsfield upload {} ({}); uploading again", media_id, err);
         cache.forget_upload(file_hash).await;
         return None;
-      }
+      },
     }
   }
 
@@ -290,20 +258,14 @@ async fn reusable_upload(
 /// "previous generation" reference by job id — no upload, and no IP check,
 /// since it never left Higgsfield. The job is confirmed to still exist with
 /// a result, and the fresh result URL is used (CDN URLs are time-limited).
-async fn reusable_generation_result(
-  session: &HiggsfieldSession,
-  cache: &dyn AssetUploadCache,
-  file_hash: &str,
-  kind: HiggsfieldMediaKind,
-  job_id: MediaId,
-) -> Option<MediaInput> {
+async fn reusable_generation_result(session: &HiggsfieldSession, cache: &dyn AssetUploadCache, file_hash: &str, kind: HiggsfieldMediaKind, job_id: MediaId) -> Option<MediaInput> {
   let job = match session.job_status(&JobId::new(job_id.as_str())).await {
     Ok(job) => job,
     Err(err) => {
       warn!("Could not confirm Higgsfield generation {} still exists ({}); uploading instead", job_id, err);
       cache.forget_upload(file_hash).await;
       return None;
-    }
+    },
   };
   let Some(url) = job.result_url() else {
     warn!("Higgsfield generation {} no longer has a result; uploading instead", job_id);
@@ -337,10 +299,7 @@ pub fn reference_media_file(resolved: ResolvedMediaBytes, kind: HiggsfieldMediaK
 /// no extension, or lie), then the name hint's extension, then the kind's
 /// default. A type from the wrong family for `kind` is ignored.
 pub fn media_mime_type_for(maybe_name_hint: Option<&str>, bytes: &[u8], kind: HiggsfieldMediaKind) -> MediaMimeType {
-  sniff_mime_type(bytes)
-      .or_else(|| maybe_name_hint.and_then(mime_type_from_name_hint))
-      .filter(|mime_type| kind.accepts(mime_type))
-      .unwrap_or_else(|| kind.fallback_mime_type())
+  sniff_mime_type(bytes).or_else(|| maybe_name_hint.and_then(mime_type_from_name_hint)).filter(|mime_type| kind.accepts(mime_type)).unwrap_or_else(|| kind.fallback_mime_type())
 }
 
 /// Extension-based MIME guess for a URL, filesystem path, or bare file name.
@@ -468,24 +427,14 @@ mod tests {
 
     #[test]
     fn reference_file_carries_extension_ip_check_and_source_url() {
-      let resolved = ResolvedMediaBytes {
-        bytes: MP4.to_vec(),
-        maybe_name_hint: Some("https://cdn.example.com/x".into()),
-        maybe_source_url: Some("https://cdn.example.com/x".into()),
-        description: "url https://cdn.example.com/x".into(),
-      };
+      let resolved = ResolvedMediaBytes { bytes: MP4.to_vec(), maybe_name_hint: Some("https://cdn.example.com/x".into()), maybe_source_url: Some("https://cdn.example.com/x".into()), description: "url https://cdn.example.com/x".into() };
       let file = reference_media_file(resolved, HiggsfieldMediaKind::Video, true);
       assert_eq!(file.file_name, "reference.mp4");
       assert_eq!(file.mime_type, MediaMimeType::VideoMp4);
       assert!(file.force_ip_check);
       assert_eq!(file.maybe_source_url.as_deref(), Some("https://cdn.example.com/x"));
 
-      let resolved = ResolvedMediaBytes {
-        bytes: PNG.to_vec(),
-        maybe_name_hint: Some("/local/x.png".into()),
-        maybe_source_url: None,
-        description: "local file /local/x.png".into(),
-      };
+      let resolved = ResolvedMediaBytes { bytes: PNG.to_vec(), maybe_name_hint: Some("/local/x.png".into()), maybe_source_url: None, description: "local file /local/x.png".into() };
       let file = reference_media_file(resolved, HiggsfieldMediaKind::Image, false);
       assert_eq!(file.file_name, "reference.png");
       assert!(!file.force_ip_check);
@@ -532,8 +481,7 @@ mod tests {
 
     /// A session whose every request fails (nothing listens on port 9).
     fn unreachable_session() -> HiggsfieldSession {
-      HiggsfieldSession::from_cookie_header("__client=x")
-          .with_hosts(HiggsfieldHost::Custom("http://127.0.0.1:9".into()), ClerkHost::Custom("http://127.0.0.1:9".into()))
+      HiggsfieldSession::from_cookie_header("__client=x").with_hosts(HiggsfieldHost::Custom("http://127.0.0.1:9".into()), ClerkHost::Custom("http://127.0.0.1:9".into()))
     }
 
     #[tokio::test]
@@ -599,14 +547,8 @@ mod tests {
       let mut map = HashMap::new();
       map.insert(token.clone(), "https://cdn.example.com/abc.png".to_string());
       assert_eq!(resolve_media_token(Some(&map), &token).unwrap(), "https://cdn.example.com/abc.png");
-      assert!(matches!(
-        resolve_media_token(None, &token),
-        Err(ArtcraftRouterError::Client(ClientError::MediaFileToUrlMapNotProvided)),
-      ));
-      assert!(matches!(
-        resolve_media_token(Some(&map), &MediaFileToken::new_from_str("m_missing")),
-        Err(ArtcraftRouterError::Client(ClientError::MediaFileTokenNotFoundInMap { .. })),
-      ));
+      assert!(matches!(resolve_media_token(None, &token), Err(ArtcraftRouterError::Client(ClientError::MediaFileToUrlMapNotProvided)),));
+      assert!(matches!(resolve_media_token(Some(&map), &MediaFileToken::new_from_str("m_missing")), Err(ArtcraftRouterError::Client(ClientError::MediaFileTokenNotFoundInMap { .. })),));
     }
 
     #[test]
@@ -617,11 +559,7 @@ mod tests {
       assert_eq!(videos.len(), 1);
       let audio: HiggsfieldMediaSources = AudioListRef::Urls(vec![]).into();
       assert!(audio.is_empty());
-      let mixed: HiggsfieldMediaSources = ImageListRef::Sources(vec![
-        ImageRef::MediaFileToken(MediaFileToken::new_from_str("m_2")),
-        ImageRef::LocalPath(PathBuf::from("/tmp/a.png")),
-        ImageRef::Bytes(MediaBytes::new(vec![1, 2, 3])),
-      ]).into();
+      let mixed: HiggsfieldMediaSources = ImageListRef::Sources(vec![ImageRef::MediaFileToken(MediaFileToken::new_from_str("m_2")), ImageRef::LocalPath(PathBuf::from("/tmp/a.png")), ImageRef::Bytes(MediaBytes::new(vec![1, 2, 3]))]).into();
       assert_eq!(mixed.len(), 3);
       assert!(matches!(mixed.0[1], MediaSourceRef::LocalPath(_)));
       assert!(matches!(mixed.0[2], MediaSourceRef::Bytes(_)));

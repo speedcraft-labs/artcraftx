@@ -21,16 +21,7 @@ pub struct MultiRouterClientBuilder {
 
 impl MultiRouterClientBuilder {
   pub fn new() -> Self {
-    Self {
-      artcraft_client: None,
-      fal_client: None,
-      gmicloud_client: None,
-      grok_api_client: None,
-      grok_client: None,
-      higgsfield_client: None,
-      midjourney_client: None,
-      seedance2pro_client: None,
-    }
+    Self { artcraft_client: None, fal_client: None, gmicloud_client: None, grok_api_client: None, grok_client: None, higgsfield_client: None, midjourney_client: None, seedance2pro_client: None }
   }
 
   pub fn set_artcraft_client(mut self, client: RouterArtcraftClient) -> Self {
@@ -72,7 +63,6 @@ impl MultiRouterClientBuilder {
     self.seedance2pro_client = Some(client);
     self
   }
-
 
   pub fn build(self) -> MultiRouterClient {
     MultiRouterClient {

@@ -41,7 +41,6 @@ pub enum Gemini25FlashTextToImageImageImageQuality {
   High, // Default
 }
 
-
 #[derive(Serialize, Deserialize)]
 pub struct Gemini25FlashTextToImageImageResponse {
   pub success: bool,

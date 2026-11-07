@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::video::text::veo_3_fast::raw_request::{
-  Veo3FastTextToVideoInput, Veo3FastTextToVideoOutput,
-};
+use crate::requests::api::video::text::veo_3_fast::raw_request::{Veo3FastTextToVideoInput, Veo3FastTextToVideoOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 #[derive(Clone, Debug)]
@@ -226,17 +224,7 @@ mod tests {
 
   #[test]
   fn raw_request_omits_unset_optionals() {
-    let request = Veo3FastTextToVideoRequest {
-      prompt: "minimal".to_string(),
-      aspect_ratio: None,
-      duration: None,
-      resolution: None,
-      negative_prompt: None,
-      generate_audio: None,
-      seed: None,
-      auto_fix: None,
-      safety_tolerance: None,
-    };
+    let request = Veo3FastTextToVideoRequest { prompt: "minimal".to_string(), aspect_ratio: None, duration: None, resolution: None, negative_prompt: None, generate_audio: None, seed: None, auto_fix: None, safety_tolerance: None };
     let json = serde_json::to_value(request.to_raw_request().unwrap()).unwrap();
     assert_eq!(json, serde_json::json!({ "prompt": "minimal" }));
   }

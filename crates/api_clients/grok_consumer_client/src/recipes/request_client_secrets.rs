@@ -18,35 +18,19 @@ pub struct RequestClientSecretsArgs<'a> {
 /// minted by a real browser (see the `grok_consumer_statsig` crate) and passed
 /// through [`GrokRequestHeaders`](crate::credentials::grok_request_headers).
 pub async fn request_client_secrets(args: RequestClientSecretsArgs<'_>) -> Result<GrokClientSecrets, GrokError> {
-  let index = get_index(GetIndexPageArgs {
-    cookie: args.cookies.as_str(),
-  }).await?;
+  let index = get_index(GetIndexPageArgs { cookie: args.cookies.as_str() }).await?;
   let html = &index.body;
 
-  let baggage = parse_index_baggage(html)
-      .ok_or_else(|| GrokGenericApiError::IndexHtmlDidNotIncludeExpectedData {
-        message: "Index did not include baggage.".to_string()
-      })?;
+  let baggage = parse_index_baggage(html).ok_or_else(|| GrokGenericApiError::IndexHtmlDidNotIncludeExpectedData { message: "Index did not include baggage.".to_string() })?;
 
-  let sentry_trace = parse_index_sentry_trace(html)
-      .ok_or_else(|| GrokGenericApiError::IndexHtmlDidNotIncludeExpectedData {
-        message: "Index did not include sentry trace.".to_string()
-      })?;
+  let sentry_trace = parse_index_sentry_trace(html).ok_or_else(|| GrokGenericApiError::IndexHtmlDidNotIncludeExpectedData { message: "Index did not include sentry trace.".to_string() })?;
 
-  let user_id = parse_index_user_id(html)
-      .ok_or_else(|| GrokGenericApiError::IndexHtmlDidNotIncludeExpectedData {
-        message: "Index did not include user id.".to_string()
-      })?;
+  let user_id = parse_index_user_id(html).ok_or_else(|| GrokGenericApiError::IndexHtmlDidNotIncludeExpectedData { message: "Index did not include user id.".to_string() })?;
 
   // NB: Optional.
   let maybe_user_email = parse_index_user_email(html);
 
-  Ok(GrokClientSecrets {
-    baggage,
-    sentry_trace,
-    user_id,
-    user_email: maybe_user_email,
-  })
+  Ok(GrokClientSecrets { baggage, sentry_trace, user_id, user_email: maybe_user_email })
 }
 
 #[cfg(test)]
@@ -60,9 +44,7 @@ mod tests {
   async fn test() -> AnyhowResult<()> {
     let cookies = load_grok_test_secrets()?.cookies;
 
-    let secrets = request_client_secrets(RequestClientSecretsArgs {
-      cookies: &cookies,
-    }).await?;
+    let secrets = request_client_secrets(RequestClientSecretsArgs { cookies: &cookies }).await?;
 
     println!("Baggage: {:?}", secrets.baggage);
     println!("Sentry trace: {:?}", secrets.sentry_trace);

@@ -93,10 +93,7 @@ impl GrokImageWebsocket {
   /// Open a fresh imagine websocket authenticated with the given cookie header.
   pub async fn connect(cookies: &str) -> Result<Self, GrokError> {
     let socket = open_socket(cookies).await?;
-    Ok(Self {
-      cookies: Arc::from(cookies),
-      socket: Arc::new(Mutex::new(socket)),
-    })
+    Ok(Self { cookies: Arc::from(cookies), socket: Arc::new(Mutex::new(socket)) })
   }
 
   /// Reconnect in place. All clones share the same handle, so they all see the
@@ -112,12 +109,7 @@ impl GrokImageWebsocket {
   /// `--mode`) to the prompt; pass `&PromptFlags::default()` for none.
   ///
   /// Returns the prompt's request id, which every resulting frame carries.
-  pub async fn send_fast_image_prompt(
-    &self,
-    prompt: &str,
-    aspect_ratio: FastAspectRatio,
-    flags: &PromptFlags,
-  ) -> Result<RequestId, GrokError> {
+  pub async fn send_fast_image_prompt(&self, prompt: &str, aspect_ratio: FastAspectRatio, flags: &PromptFlags) -> Result<RequestId, GrokError> {
     let message = WebsocketClientMessage::new_fast_image_prompt(prompt, aspect_ratio, flags);
     self.send_json(&message).await?;
     Ok(message.request_id())
@@ -127,23 +119,13 @@ impl GrokImageWebsocket {
   /// (e.g. the socket dropped between prompts).
   ///
   /// [`send_fast_image_prompt`]: Self::send_fast_image_prompt
-  pub async fn send_fast_image_prompt_with_retry(
-    &self,
-    prompt: &str,
-    aspect_ratio: FastAspectRatio,
-    flags: &PromptFlags,
-  ) -> Result<RequestId, GrokError> {
+  pub async fn send_fast_image_prompt_with_retry(&self, prompt: &str, aspect_ratio: FastAspectRatio, flags: &PromptFlags) -> Result<RequestId, GrokError> {
     self.send_with_retry(WebsocketClientMessage::new_fast_image_prompt(prompt, aspect_ratio, flags)).await
   }
 
   /// Send a **quality** ("pro") image prompt — slower, higher quality. Quality
   /// mode supports the larger [`QualityAspectRatio`] set.
-  pub async fn send_quality_image_prompt(
-    &self,
-    prompt: &str,
-    aspect_ratio: QualityAspectRatio,
-    flags: &PromptFlags,
-  ) -> Result<RequestId, GrokError> {
+  pub async fn send_quality_image_prompt(&self, prompt: &str, aspect_ratio: QualityAspectRatio, flags: &PromptFlags) -> Result<RequestId, GrokError> {
     let message = WebsocketClientMessage::new_quality_image_prompt(prompt, aspect_ratio, flags);
     self.send_json(&message).await?;
     Ok(message.request_id())
@@ -153,12 +135,7 @@ impl GrokImageWebsocket {
   /// fails.
   ///
   /// [`send_quality_image_prompt`]: Self::send_quality_image_prompt
-  pub async fn send_quality_image_prompt_with_retry(
-    &self,
-    prompt: &str,
-    aspect_ratio: QualityAspectRatio,
-    flags: &PromptFlags,
-  ) -> Result<RequestId, GrokError> {
+  pub async fn send_quality_image_prompt_with_retry(&self, prompt: &str, aspect_ratio: QualityAspectRatio, flags: &PromptFlags) -> Result<RequestId, GrokError> {
     self.send_with_retry(WebsocketClientMessage::new_quality_image_prompt(prompt, aspect_ratio, flags)).await
   }
 
@@ -175,7 +152,7 @@ impl GrokImageWebsocket {
           if attempt < SEND_ATTEMPTS {
             self.reconnect().await?;
           }
-        }
+        },
       }
     }
 
@@ -184,12 +161,9 @@ impl GrokImageWebsocket {
 
   /// Serialize and send any client message as a text frame.
   pub async fn send_json<T: Serialize>(&self, message: &T) -> Result<(), GrokError> {
-    let json = serde_json::to_string(message)
-        .map_err(GrokClientError::WebsocketRequestSerializationError)?;
+    let json = serde_json::to_string(message).map_err(GrokClientError::WebsocketRequestSerializationError)?;
     let mut socket = self.socket.lock().await;
-    socket.send(Message::text(json))
-        .await
-        .map_err(GrokClientError::WebsocketSendError)?;
+    socket.send(Message::text(json)).await.map_err(GrokClientError::WebsocketSendError)?;
     Ok(())
   }
 
@@ -227,17 +201,12 @@ impl GrokImageWebsocket {
       };
 
       match &message {
-        WebsocketServerMessage::Error(error) => events.push(ImageWebsocketEvent::Failed {
-          request_id: error.request_id.clone().map(RequestId),
-          message: error.err_msg.clone(),
-          err_code: error.err_code.clone(),
-          raw_frame: text,
-        }),
+        WebsocketServerMessage::Error(error) => events.push(ImageWebsocketEvent::Failed { request_id: error.request_id.clone().map(RequestId), message: error.err_msg.clone(), err_code: error.err_code.clone(), raw_frame: text }),
         _ => {
           if let Some(image) = completed_image(&message) {
             events.push(ImageWebsocketEvent::Completed(image));
           }
-        }
+        },
       }
     }
 
@@ -251,11 +220,7 @@ impl GrokImageWebsocket {
 
   /// Poll until `image_count` completed images arrive or `timeout` elapses.
   /// Non-image frames (progress updates, session notices, blobs) are skipped.
-  pub async fn collect_n_images(
-    &self,
-    image_count: usize,
-    timeout: Duration,
-  ) -> Result<Vec<CompletedImage>, GrokError> {
+  pub async fn collect_n_images(&self, image_count: usize, timeout: Duration) -> Result<Vec<CompletedImage>, GrokError> {
     let deadline = Instant::now() + timeout;
     let mut images = Vec::new();
 
@@ -295,7 +260,7 @@ impl GrokImageWebsocket {
         Some(_) => {
           warn!("Received non-text websocket message; ignoring.");
           Ok(None)
-        }
+        },
         None => Ok(None),
       },
     }
@@ -307,12 +272,8 @@ impl GrokImageWebsocket {
 /// other code is surfaced generically. Both carry the full raw frame.
 fn error_frame_to_grok_error(error: &ErrorMessage, raw_frame: &str) -> GrokError {
   match error.err_code.as_deref() {
-    Some(ERR_CODE_RATE_LIMIT_EXCEEDED) => {
-      GrokSpecificApiError::ImageRateLimitExceeded { body: raw_frame.to_string() }.into()
-    }
-    _ => {
-      GrokGenericApiError::UnexpectedWebsocketErrorFrame { body: raw_frame.to_string() }.into()
-    }
+    Some(ERR_CODE_RATE_LIMIT_EXCEEDED) => GrokSpecificApiError::ImageRateLimitExceeded { body: raw_frame.to_string() }.into(),
+    _ => GrokGenericApiError::UnexpectedWebsocketErrorFrame { body: raw_frame.to_string() }.into(),
   }
 }
 
@@ -327,54 +288,43 @@ fn completed_image(message: &WebsocketServerMessage) -> Option<CompletedImage> {
     return None;
   }
 
-  Some(CompletedImage {
-    request_id: RequestId(image.request_id.clone().unwrap_or_default()),
-    url: image.url.clone()?,
-    user_prompt: image.prompt.clone().unwrap_or_default(),
-    enriched_prompt: image.full_prompt.clone().unwrap_or_default(),
-  })
+  Some(CompletedImage { request_id: RequestId(image.request_id.clone().unwrap_or_default()), url: image.url.clone()?, user_prompt: image.prompt.clone().unwrap_or_default(), enriched_prompt: image.full_prompt.clone().unwrap_or_default() })
 }
 
 /// Open a raw imagine websocket. HTTP/1.1 websocket handshakes are sensitive to
 /// header casing and order, and Cloudflare rejects lowercased names, so we send
 /// an explicit, ordered header set (via `default_headers(false)`).
 async fn open_socket(cookies: &str) -> Result<WebSocket, GrokError> {
-  let client = Client::builder()
-      .emulation(Emulation::Firefox143)
-      .connection_verbose(true)
-      .connect_timeout(CONNECT_TIMEOUT)
-      .build()
-      .map_err(GrokClientError::WreqClientError)?;
+  let client = Client::builder().emulation(Emulation::Firefox143).connection_verbose(true).connect_timeout(CONNECT_TIMEOUT).build().map_err(GrokClientError::WreqClientError)?;
 
-  let response = client.websocket(WEBSOCKET_URL)
-      .default_headers(false)
-      .orig_headers(get_firefox_websocket_http_1_1_headers())
-      .header(COOKIE, cookies)
-      .header(ORIGIN, "https://grok.com")
-      .header(USER_AGENT, FIREFOX_143_MAC_USER_AGENT)
-      .header(SEC_WEBSOCKET_EXTENSIONS, "permessage-deflate")
-      .header(ACCEPT, "*/*")
-      .header(ACCEPT_LANGUAGE, "en-US,en;q=0.5")
-      .header("Sec-Fetch-Dest", "empty")
-      .header("Sec-Fetch-Mode", "websocket")
-      .header("Sec-Fetch-Site", "same-origin")
-      .header(PRAGMA, "no-cache")
-      .header(CACHE_CONTROL, "no-cache")
-      .send()
-      .await
-      .map_err(GrokClientError::WreqClientError)?;
+  let response = client
+    .websocket(WEBSOCKET_URL)
+    .default_headers(false)
+    .orig_headers(get_firefox_websocket_http_1_1_headers())
+    .header(COOKIE, cookies)
+    .header(ORIGIN, "https://grok.com")
+    .header(USER_AGENT, FIREFOX_143_MAC_USER_AGENT)
+    .header(SEC_WEBSOCKET_EXTENSIONS, "permessage-deflate")
+    .header(ACCEPT, "*/*")
+    .header(ACCEPT_LANGUAGE, "en-US,en;q=0.5")
+    .header("Sec-Fetch-Dest", "empty")
+    .header("Sec-Fetch-Mode", "websocket")
+    .header("Sec-Fetch-Site", "same-origin")
+    .header(PRAGMA, "no-cache")
+    .header(CACHE_CONTROL, "no-cache")
+    .send()
+    .await
+    .map_err(GrokClientError::WreqClientError)?;
 
   let status = response.status();
   match status.as_u16() {
-    101 => {}
+    101 => {},
     401 => return Err(GrokGenericApiError::LikelyWebsocketAuthentication401.into()),
     403 => return Err(GrokGenericApiError::LikelyWebsocketCloudflare403.into()),
     _ => return Err(GrokGenericApiError::UnexpectedWebsocketUpgradeStatusCode(status).into()),
   }
 
-  response.into_websocket()
-      .await
-      .map_err(|err| GrokGenericApiError::WreqWebsocketUpgradeError(err).into())
+  response.into_websocket().await.map_err(|err| GrokGenericApiError::WreqWebsocketUpgradeError(err).into())
 }
 
 #[cfg(test)]
@@ -400,8 +350,7 @@ mod tests {
 
   #[test]
   fn completed_image_from_real_frame() {
-    let image = completed_image(&parse_frame("real_image_complete.json"))
-        .expect("a finished (100%) image with a url");
+    let image = completed_image(&parse_frame("real_image_complete.json")).expect("a finished (100%) image with a url");
 
     assert_eq!(image.request_id.to_string(), "ab3fa8e9-92ed-4f1b-a350-7a897e264d54");
     assert!(image.url.starts_with("https://imagine-public.x.ai/"));
@@ -427,7 +376,7 @@ mod tests {
         // The distinct error carries the full raw frame.
         assert!(body.contains("rate_limit_exceeded"));
         assert!(body.contains("Image rate limit exceeded"));
-      }
+      },
       other => panic!("expected ImageRateLimitExceeded, got {:?}", other),
     }
   }
@@ -442,7 +391,7 @@ mod tests {
     match error_frame_to_grok_error(&error, raw) {
       GrokError::ApiGeneric(GrokGenericApiError::UnexpectedWebsocketErrorFrame { body }) => {
         assert_eq!(body, raw);
-      }
+      },
       other => panic!("expected UnexpectedWebsocketErrorFrame, got {:?}", other),
     }
   }
@@ -455,11 +404,7 @@ mod tests {
 
     let websocket = GrokImageWebsocket::connect(secrets.cookies.as_str()).await?;
 
-    websocket.send_fast_image_prompt_with_retry(
-      "A dinosaur on stilts walking on the beach",
-      FastAspectRatio::WideThreeByTwo,
-      &PromptFlags::default(),
-    ).await?;
+    websocket.send_fast_image_prompt_with_retry("A dinosaur on stilts walking on the beach", FastAspectRatio::WideThreeByTwo, &PromptFlags::default()).await?;
 
     match websocket.collect_images(Duration::from_secs(30)).await {
       Ok(images) => {
@@ -468,12 +413,12 @@ mod tests {
           info!("Image: {} ({})", image.url, image.request_id.to_string());
         }
         assert!(!images.is_empty(), "expected at least one completed image");
-      }
+      },
       // Out of quota is a valid "the plumbing works" outcome; surface it
       // clearly rather than failing.
       Err(GrokError::ApiSpecific(GrokSpecificApiError::ImageRateLimitExceeded { body })) => {
         info!("Image rate limit / quota exhausted (expected when out of quota): {body}");
-      }
+      },
       Err(err) => return Err(err.into()),
     }
 

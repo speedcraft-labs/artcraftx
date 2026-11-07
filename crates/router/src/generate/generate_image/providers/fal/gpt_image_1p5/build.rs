@@ -1,11 +1,5 @@
-use fal_client::requests::api::image::edit::gpt_image_1p5_edit_image::api::{
-  GptImage1p5EditImageNumImages, GptImage1p5EditImageQuality,
-  GptImage1p5EditImageRequest, GptImage1p5EditImageSize,
-};
-use fal_client::requests::api::image::text::gpt_image_1p5_text_to_image::api::{
-  GptImage1p5TextToImageNumImages, GptImage1p5TextToImageQuality,
-  GptImage1p5TextToImageRequest, GptImage1p5TextToImageSize,
-};
+use fal_client::requests::api::image::edit::gpt_image_1p5_edit_image::api::{GptImage1p5EditImageNumImages, GptImage1p5EditImageQuality, GptImage1p5EditImageRequest, GptImage1p5EditImageSize};
+use fal_client::requests::api::image::text::gpt_image_1p5_text_to_image::api::{GptImage1p5TextToImageNumImages, GptImage1p5TextToImageQuality, GptImage1p5TextToImageRequest, GptImage1p5TextToImageSize};
 
 use crate::api::router_aspect_ratio::RouterAspectRatio;
 use crate::api::router_quality::RouterQuality;
@@ -19,9 +13,7 @@ use crate::generate::generate_image::image_generation_draft_or_request::ImageGen
 use crate::generate::generate_image::image_generation_request::ImageGenerationRequest;
 use crate::generate::generate_image::providers::fal::gpt_image_1p5::request::FalGptImage1p5RequestState;
 
-pub fn build_fal_gpt_image_1p5(
-  builder: GenerateImageRequestBuilder,
-) -> Result<ImageGenerationDraftOrRequest, ArtcraftRouterError> {
+pub fn build_fal_gpt_image_1p5(builder: GenerateImageRequestBuilder) -> Result<ImageGenerationDraftOrRequest, ArtcraftRouterError> {
   let prompt = builder.prompt.clone().unwrap_or_default();
   let image_urls = resolve_image_urls(builder.image_inputs.clone())?;
   let num_images = plan_num_images(builder.image_batch_count, builder.request_mismatch_mitigation_strategy)?;
@@ -29,14 +21,7 @@ pub fn build_fal_gpt_image_1p5(
   let quality = plan_quality(builder.quality);
 
   let state = if image_urls.is_empty() {
-    FalGptImage1p5RequestState::TextToImage(GptImage1p5TextToImageRequest {
-      prompt,
-      num_images: to_t2i_num_images(num_images),
-      image_size: image_size.map(to_t2i_image_size),
-      background: None,
-      quality: Some(to_t2i_quality(quality)),
-      output_format: None,
-    })
+    FalGptImage1p5RequestState::TextToImage(GptImage1p5TextToImageRequest { prompt, num_images: to_t2i_num_images(num_images), image_size: image_size.map(to_t2i_image_size), background: None, quality: Some(to_t2i_quality(quality)), output_format: None })
   } else {
     FalGptImage1p5RequestState::EditImage(GptImage1p5EditImageRequest {
       prompt,
@@ -51,9 +36,7 @@ pub fn build_fal_gpt_image_1p5(
     })
   };
 
-  Ok(ImageGenerationDraftOrRequest::Request(
-    ImageGenerationRequest::FalGptImage1p5(state),
-  ))
+  Ok(ImageGenerationDraftOrRequest::Request(ImageGenerationRequest::FalGptImage1p5(state)))
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -78,10 +61,7 @@ enum PlannedImageSize {
   Tall,
 }
 
-fn plan_num_images(
-  count: Option<u16>,
-  strategy: RequestMismatchMitigationStrategy,
-) -> Result<PlannedNumImages, ArtcraftRouterError> {
+fn plan_num_images(count: Option<u16>, strategy: RequestMismatchMitigationStrategy) -> Result<PlannedNumImages, ArtcraftRouterError> {
   let count = count.unwrap_or(1);
   match count {
     0 => Err(ArtcraftRouterError::Client(ClientError::UserRequestedZeroGenerations)),
@@ -90,12 +70,7 @@ fn plan_num_images(
     3 => Ok(PlannedNumImages::Three),
     4 => Ok(PlannedNumImages::Four),
     _ => match strategy {
-      RequestMismatchMitigationStrategy::ErrorOut => {
-        Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption {
-          field: "image_batch_count",
-          value: format!("{}", count),
-        }))
-      }
+      RequestMismatchMitigationStrategy::ErrorOut => Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "image_batch_count", value: format!("{}", count) })),
       _ => Ok(PlannedNumImages::Four),
     },
   }
@@ -111,14 +86,8 @@ fn plan_quality(quality: Option<RouterQuality>) -> PlannedQuality {
 
 fn plan_image_size(aspect_ratio: Option<RouterAspectRatio>) -> Option<PlannedImageSize> {
   match aspect_ratio {
-    None
-    | Some(RouterAspectRatio::Auto)
-    | Some(RouterAspectRatio::Auto2k)
-    | Some(RouterAspectRatio::Auto3k)
-    | Some(RouterAspectRatio::Auto4k) => None,
-    Some(RouterAspectRatio::Square) | Some(RouterAspectRatio::SquareHd) => {
-      Some(PlannedImageSize::Square)
-    }
+    None | Some(RouterAspectRatio::Auto) | Some(RouterAspectRatio::Auto2k) | Some(RouterAspectRatio::Auto3k) | Some(RouterAspectRatio::Auto4k) => None,
+    Some(RouterAspectRatio::Square) | Some(RouterAspectRatio::SquareHd) => Some(PlannedImageSize::Square),
     Some(RouterAspectRatio::WideThreeByTwo)
     | Some(RouterAspectRatio::WideFourByThree)
     | Some(RouterAspectRatio::WideFiveByFour)
@@ -184,15 +153,11 @@ fn to_edit_image_size(s: PlannedImageSize) -> GptImage1p5EditImageSize {
   }
 }
 
-fn resolve_image_urls(
-  image_inputs: Option<ImageListRef>,
-) -> Result<Vec<String>, ArtcraftRouterError> {
+fn resolve_image_urls(image_inputs: Option<ImageListRef>) -> Result<Vec<String>, ArtcraftRouterError> {
   match image_inputs {
     None => Ok(vec![]),
     Some(ImageListRef::Urls(urls)) => Ok(urls),
-    Some(ImageListRef::MediaFileTokens(_)) => {
-      Err(ArtcraftRouterError::Client(ClientError::FalOnlySupportsUrls))
-    }
+    Some(ImageListRef::MediaFileTokens(_)) => Err(ArtcraftRouterError::Client(ClientError::FalOnlySupportsUrls)),
     Some(ImageListRef::Sources(refs)) => refs
       .into_iter()
       .map(|image_ref| match image_ref {
@@ -231,22 +196,14 @@ mod tests {
   }
 
   fn unwrap_t2i(result: Result<ImageGenerationDraftOrRequest, ArtcraftRouterError>) -> GptImage1p5TextToImageRequest {
-    let ImageGenerationDraftOrRequest::Request(
-      ImageGenerationRequest::FalGptImage1p5(
-        FalGptImage1p5RequestState::TextToImage(req)
-      )
-    ) = result.expect("build should succeed") else {
+    let ImageGenerationDraftOrRequest::Request(ImageGenerationRequest::FalGptImage1p5(FalGptImage1p5RequestState::TextToImage(req))) = result.expect("build should succeed") else {
       panic!("expected GPT Image 1.5 text-to-image request")
     };
     req
   }
 
   fn unwrap_edit(result: Result<ImageGenerationDraftOrRequest, ArtcraftRouterError>) -> GptImage1p5EditImageRequest {
-    let ImageGenerationDraftOrRequest::Request(
-      ImageGenerationRequest::FalGptImage1p5(
-        FalGptImage1p5RequestState::EditImage(req)
-      )
-    ) = result.expect("build should succeed") else {
+    let ImageGenerationDraftOrRequest::Request(ImageGenerationRequest::FalGptImage1p5(FalGptImage1p5RequestState::EditImage(req))) = result.expect("build should succeed") else {
       panic!("expected GPT Image 1.5 edit-image request")
     };
     req
@@ -267,100 +224,51 @@ mod tests {
     let text_req = unwrap_t2i(build_fal_gpt_image_1p5(base_builder()));
     assert_eq!(text_req.prompt, "a cat in space");
 
-    let edit_req = unwrap_edit(build_fal_gpt_image_1p5(GenerateImageRequestBuilder {
-      image_inputs: Some(ImageListRef::Urls(vec!["https://example.com/img.jpg".to_string()])),
-      ..base_builder()
-    }));
+    let edit_req = unwrap_edit(build_fal_gpt_image_1p5(GenerateImageRequestBuilder { image_inputs: Some(ImageListRef::Urls(vec!["https://example.com/img.jpg".to_string()])), ..base_builder() }));
     assert_eq!(edit_req.image_urls, vec!["https://example.com/img.jpg"]);
   }
 
   #[test]
   fn media_file_tokens_are_rejected() {
-    let result = build_fal_gpt_image_1p5(GenerateImageRequestBuilder {
-      image_inputs: Some(ImageListRef::MediaFileTokens(vec![])),
-      ..base_builder()
-    });
-    assert!(matches!(
-      result,
-      Err(ArtcraftRouterError::Client(ClientError::FalOnlySupportsUrls))
-    ));
+    let result = build_fal_gpt_image_1p5(GenerateImageRequestBuilder { image_inputs: Some(ImageListRef::MediaFileTokens(vec![])), ..base_builder() });
+    assert!(matches!(result, Err(ArtcraftRouterError::Client(ClientError::FalOnlySupportsUrls))));
   }
 
   #[test]
   fn num_images_maps_exhaustively_for_text_and_edit() {
-    let cases = [
-      (1, "One"),
-      (2, "Two"),
-      (3, "Three"),
-      (4, "Four"),
-    ];
+    let cases = [(1, "One"), (2, "Two"), (3, "Three"), (4, "Four")];
 
     for (count, expected) in cases {
-      let req = unwrap_t2i(build_fal_gpt_image_1p5(GenerateImageRequestBuilder {
-        image_batch_count: Some(count),
-        ..base_builder()
-      }));
+      let req = unwrap_t2i(build_fal_gpt_image_1p5(GenerateImageRequestBuilder { image_batch_count: Some(count), ..base_builder() }));
       assert_debug(req.num_images, expected);
     }
 
     for (count, expected) in cases {
-      let req = unwrap_edit(build_fal_gpt_image_1p5(GenerateImageRequestBuilder {
-        image_inputs: Some(ImageListRef::Urls(vec!["https://example.com/img.jpg".to_string()])),
-        image_batch_count: Some(count),
-        ..base_builder()
-      }));
+      let req = unwrap_edit(build_fal_gpt_image_1p5(GenerateImageRequestBuilder { image_inputs: Some(ImageListRef::Urls(vec!["https://example.com/img.jpg".to_string()])), image_batch_count: Some(count), ..base_builder() }));
       assert_debug(req.num_images, expected);
     }
   }
 
   #[test]
   fn num_images_rejects_zero_and_handles_overflow_by_strategy() {
-    assert!(matches!(
-      build_fal_gpt_image_1p5(GenerateImageRequestBuilder {
-        image_batch_count: Some(0),
-        ..base_builder()
-      }),
-      Err(ArtcraftRouterError::Client(ClientError::UserRequestedZeroGenerations))
-    ));
-    assert!(matches!(
-      build_fal_gpt_image_1p5(GenerateImageRequestBuilder {
-        image_batch_count: Some(5),
-        ..base_builder()
-      }),
-      Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { .. }))
-    ));
+    assert!(matches!(build_fal_gpt_image_1p5(GenerateImageRequestBuilder { image_batch_count: Some(0), ..base_builder() }), Err(ArtcraftRouterError::Client(ClientError::UserRequestedZeroGenerations))));
+    assert!(matches!(build_fal_gpt_image_1p5(GenerateImageRequestBuilder { image_batch_count: Some(5), ..base_builder() }), Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { .. }))));
 
-    let req = unwrap_t2i(build_fal_gpt_image_1p5(GenerateImageRequestBuilder {
-      image_batch_count: Some(5),
-      request_mismatch_mitigation_strategy: RequestMismatchMitigationStrategy::PayMoreUpgrade,
-      ..base_builder()
-    }));
+    let req = unwrap_t2i(build_fal_gpt_image_1p5(GenerateImageRequestBuilder { image_batch_count: Some(5), request_mismatch_mitigation_strategy: RequestMismatchMitigationStrategy::PayMoreUpgrade, ..base_builder() }));
     assert_debug(req.num_images, "Four");
   }
 
   #[test]
   fn quality_maps_exhaustively_for_text_and_edit() {
-    let cases = [
-      (None, "Some(High)"),
-      (Some(RouterQuality::Low), "Some(Low)"),
-      (Some(RouterQuality::Medium), "Some(Medium)"),
-      (Some(RouterQuality::High), "Some(High)"),
-    ];
+    let cases = [(None, "Some(High)"), (Some(RouterQuality::Low), "Some(Low)"), (Some(RouterQuality::Medium), "Some(Medium)"), (Some(RouterQuality::High), "Some(High)")];
 
     for (quality, expected) in cases {
-      let req = unwrap_t2i(build_fal_gpt_image_1p5(GenerateImageRequestBuilder {
-        quality,
-        ..base_builder()
-      }));
+      let req = unwrap_t2i(build_fal_gpt_image_1p5(GenerateImageRequestBuilder { quality, ..base_builder() }));
       assert_debug(req.quality, expected);
     }
 
     for (quality, expected) in cases {
-      let req = unwrap_edit(build_fal_gpt_image_1p5(GenerateImageRequestBuilder {
-        image_inputs: Some(ImageListRef::Urls(vec!["https://example.com/img.jpg".to_string()])),
-        quality,
-        ..base_builder()
-      }));
+      let req = unwrap_edit(build_fal_gpt_image_1p5(GenerateImageRequestBuilder { image_inputs: Some(ImageListRef::Urls(vec!["https://example.com/img.jpg".to_string()])), quality, ..base_builder() }));
       assert_debug(req.quality, expected);
     }
   }
@@ -390,19 +298,12 @@ mod tests {
     ];
 
     for (aspect_ratio, expected) in cases {
-      let req = unwrap_t2i(build_fal_gpt_image_1p5(GenerateImageRequestBuilder {
-        aspect_ratio,
-        ..base_builder()
-      }));
+      let req = unwrap_t2i(build_fal_gpt_image_1p5(GenerateImageRequestBuilder { aspect_ratio, ..base_builder() }));
       assert_debug(req.image_size, expected);
     }
 
     for (aspect_ratio, expected) in cases {
-      let req = unwrap_edit(build_fal_gpt_image_1p5(GenerateImageRequestBuilder {
-        image_inputs: Some(ImageListRef::Urls(vec!["https://example.com/img.jpg".to_string()])),
-        aspect_ratio,
-        ..base_builder()
-      }));
+      let req = unwrap_edit(build_fal_gpt_image_1p5(GenerateImageRequestBuilder { image_inputs: Some(ImageListRef::Urls(vec!["https://example.com/img.jpg".to_string()])), aspect_ratio, ..base_builder() }));
       assert_debug(req.image_size, expected);
     }
   }

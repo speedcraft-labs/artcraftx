@@ -9,22 +9,16 @@ use crate::generate::generate_image::providers::midjourney::midjourney_8::reques
 /// The Midjourney model version flag appended to every prompt.
 const MIDJOURNEY_VERSION_FLAG: &str = "--v 8.2";
 
-pub fn build_midjourney_midjourney_8(
-  builder: GenerateImageRequestBuilder,
-) -> Result<ImageGenerationDraftOrRequest, ArtcraftRouterError> {
+pub fn build_midjourney_midjourney_8(builder: GenerateImageRequestBuilder) -> Result<ImageGenerationDraftOrRequest, ArtcraftRouterError> {
   // Image references are not yet supported on the first-party cookie path.
   if has_image_inputs(builder.image_inputs.as_ref()) {
-    return Err(ArtcraftRouterError::UnsupportedProviderAndModelForNewApi(
-      "First-party Midjourney does not yet support image references".to_string(),
-    ));
+    return Err(ArtcraftRouterError::UnsupportedProviderAndModelForNewApi("First-party Midjourney does not yet support image references".to_string()));
   }
 
   let base_prompt = builder.prompt.unwrap_or_default();
   let prompt = compose_prompt(&base_prompt, builder.aspect_ratio);
 
-  Ok(ImageGenerationDraftOrRequest::Request(
-    ImageGenerationRequest::MidjourneyMidjourney8(MidjourneyMidjourney8RequestState { prompt }),
-  ))
+  Ok(ImageGenerationDraftOrRequest::Request(ImageGenerationRequest::MidjourneyMidjourney8(MidjourneyMidjourney8RequestState { prompt })))
 }
 
 /// Compose the final Midjourney prompt string, appending the aspect-ratio flag
@@ -46,11 +40,7 @@ fn compose_prompt(base_prompt: &str, aspect_ratio: Option<RouterAspectRatio>) ->
 /// for `Auto`/unset (Midjourney defaults to 1:1).
 fn aspect_ratio_flag(aspect_ratio: Option<RouterAspectRatio>) -> Option<&'static str> {
   match aspect_ratio {
-    None
-    | Some(RouterAspectRatio::Auto)
-    | Some(RouterAspectRatio::Auto2k)
-    | Some(RouterAspectRatio::Auto3k)
-    | Some(RouterAspectRatio::Auto4k) => None,
+    None | Some(RouterAspectRatio::Auto) | Some(RouterAspectRatio::Auto2k) | Some(RouterAspectRatio::Auto3k) | Some(RouterAspectRatio::Auto4k) => None,
 
     Some(RouterAspectRatio::Square) | Some(RouterAspectRatio::SquareHd) => Some("1:1"),
     Some(RouterAspectRatio::WideThreeByTwo) => Some("3:2"),
@@ -112,19 +102,13 @@ mod tests {
 
   #[test]
   fn appends_aspect_ratio_flag() {
-    let builder = GenerateImageRequestBuilder {
-      aspect_ratio: Some(RouterAspectRatio::WideSixteenByNine),
-      ..base_builder()
-    };
+    let builder = GenerateImageRequestBuilder { aspect_ratio: Some(RouterAspectRatio::WideSixteenByNine), ..base_builder() };
     assert_eq!(built_prompt(builder), "pirate ship in the city --ar 16:9 --v 8.2");
   }
 
   #[test]
   fn image_inputs_are_rejected_for_now() {
-    let builder = GenerateImageRequestBuilder {
-      image_inputs: Some(ImageListRef::Urls(vec!["https://example.com/ref.png".to_string()])),
-      ..base_builder()
-    };
+    let builder = GenerateImageRequestBuilder { image_inputs: Some(ImageListRef::Urls(vec!["https://example.com/ref.png".to_string()])), ..base_builder() };
     assert!(build_midjourney_midjourney_8(builder).is_err());
   }
 }

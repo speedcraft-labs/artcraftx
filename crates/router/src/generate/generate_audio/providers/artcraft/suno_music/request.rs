@@ -38,7 +38,8 @@ mod tests {
       prompt: Some("A song about a corgi who learns to sail the open sea".to_string()),
       style_prompt: Some("Sea shanty, folk".to_string()),
       ..Default::default()
-    }).await;
+    })
+    .await;
     assert!(matches!(response, GenerateAudioResponse::Artcraft(_)));
     assert_eq!(1, 2, "Inspect output above");
   }
@@ -46,12 +47,9 @@ mod tests {
   // ── Helpers ──
 
   fn get_artcraft_client() -> RouterClient {
-    let cookies = std::fs::read_to_string("/Users/bt/Artcraft/credentials/artcraft_cookies.txt")
-      .expect("Failed to read artcraft cookies");
+    let cookies = std::fs::read_to_string("/Users/bt/Artcraft/credentials/artcraft_cookies.txt").expect("Failed to read artcraft cookies");
     let cookies = cookies.trim().to_string();
-    let credentials = StorytellerCredentialSet::parse_multi_cookie_header(&cookies)
-      .expect("Failed to parse cookies")
-      .expect("No credentials found");
+    let credentials = StorytellerCredentialSet::parse_multi_cookie_header(&cookies).expect("Failed to parse cookies").expect("No credentials found");
     RouterClient::Artcraft(RouterArtcraftClient::new(ApiHost::Storyteller, credentials))
   }
 
@@ -70,7 +68,7 @@ mod tests {
       GenerateAudioResponse::Artcraft(p) => {
         println!("inference_job_token={:?}", p.inference_job_token);
         println!("all_inference_job_tokens={:?}", p.all_inference_job_tokens);
-      }
+      },
       other => println!("response: {:?}", other),
     }
 

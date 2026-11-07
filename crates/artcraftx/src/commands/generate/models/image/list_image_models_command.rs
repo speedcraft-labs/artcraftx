@@ -26,8 +26,5 @@ impl SerializeMarker for ListImageModelsResponse {}
 #[tauri::command]
 pub async fn list_image_models_command() -> ResponseOrErrorMessage<ListImageModelsResponse> {
   info!("list_image_models_command called");
-  Ok(ListImageModelsResponse {
-    models: IMAGE_MODELS.clone(),
-    providers: IMAGE_PROVIDERS.clone(),
-  }.into())
+  Ok(ListImageModelsResponse { models: IMAGE_MODELS.clone(), providers: IMAGE_PROVIDERS.clone() }.into())
 }

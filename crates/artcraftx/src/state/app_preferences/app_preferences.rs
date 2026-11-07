@@ -55,13 +55,7 @@ pub struct AppPreferences {
 
 impl Default for AppPreferences {
   fn default() -> Self {
-    Self {
-      version: CURRENT_VERSION,
-      sounds: AppSoundPreferences::default(),
-      downloads: AppDownloadPreferences::default(),
-      prompt: AppPromptPreferences::default(),
-      backup: AppBackupPreferences::default(),
-    }
+    Self { version: CURRENT_VERSION, sounds: AppSoundPreferences::default(), downloads: AppDownloadPreferences::default(), prompt: AppPromptPreferences::default(), backup: AppBackupPreferences::default() }
   }
 }
 
@@ -79,7 +73,7 @@ impl AppPreferences {
         Err(err) => {
           warn!("Could not read app preferences from {:?}; using defaults: {}", toml_path, err);
           Self::default()
-        }
+        },
       };
     }
 
@@ -93,10 +87,10 @@ impl AppPreferences {
             warn!("Could not write migrated app preferences: {}", err);
           }
           return prefs;
-        }
+        },
         Err(err) => {
           warn!("Could not read legacy app preferences from {:?}; using defaults: {}", legacy_path, err);
-        }
+        },
       }
     }
 

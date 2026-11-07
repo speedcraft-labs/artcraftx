@@ -6,20 +6,8 @@ use reqwest::Url;
 /// Third-party SSO / identity provider hosts. When the webview is on one of
 /// these we know the user is mid auth-flow (and has therefore left the login
 /// page), so we never mistake it for the logged-in destination.
-const DEFAULT_AUTH_FLOW_HOSTNAMES: &[&str] = &[
-  "accounts.google.com",
-  "accounts.youtube.com",
-  "accounts.x.ai",
-  "auth.openai.com",
-  "appleid.apple.com",
-  "login.live.com",
-  "www.facebook.com",
-  "facebook.com",
-  "github.com",
-  "discord.com",
-  "x.com",
-  "twitter.com",
-];
+const DEFAULT_AUTH_FLOW_HOSTNAMES: &[&str] =
+  &["accounts.google.com", "accounts.youtube.com", "accounts.x.ai", "auth.openai.com", "appleid.apple.com", "login.live.com", "www.facebook.com", "facebook.com", "github.com", "discord.com", "x.com", "twitter.com"];
 
 /// A website whose login flow the app can drive in an embedded webview.
 ///

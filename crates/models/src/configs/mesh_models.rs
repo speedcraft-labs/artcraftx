@@ -11,17 +11,11 @@ pub static MESH_MODELS: Lazy<Vec<MeshModelConfig>> = Lazy::new(mesh_models);
 
 /// Look up one model's config.
 pub fn mesh_model_config(model: MeshModel) -> &'static MeshModelConfig {
-  MESH_MODELS.iter()
-      .find(|config| config.model == model)
-      .expect("every MeshModel variant has a config (see tests)")
+  MESH_MODELS.iter().find(|config| config.model == model).expect("every MeshModel variant has a config (see tests)")
 }
 
 const NORMAL_AND_GEOMETRY: &[CommonMeshOutputType] = &[CommonMeshOutputType::Normal, CommonMeshOutputType::Geometry];
-const NORMAL_LOW_POLY_AND_GEOMETRY: &[CommonMeshOutputType] = &[
-  CommonMeshOutputType::Normal,
-  CommonMeshOutputType::LowPoly,
-  CommonMeshOutputType::Geometry,
-];
+const NORMAL_LOW_POLY_AND_GEOMETRY: &[CommonMeshOutputType] = &[CommonMeshOutputType::Normal, CommonMeshOutputType::LowPoly, CommonMeshOutputType::Geometry];
 const TRIANGLE_AND_QUAD: &[CommonPolygonType] = &[CommonPolygonType::Triangle, CommonPolygonType::Quad];
 
 fn strings(items: &[&str]) -> Vec<String> {

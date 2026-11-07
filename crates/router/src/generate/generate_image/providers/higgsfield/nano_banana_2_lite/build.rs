@@ -10,9 +10,7 @@ use crate::api::router_quality::RouterQuality;
 use crate::errors::artcraft_router_error::ArtcraftRouterError;
 use crate::generate::generate_image::generate_image_request_builder::GenerateImageRequestBuilder;
 use crate::generate::generate_image::image_generation_draft_or_request::ImageGenerationDraftOrRequest;
-use crate::generate::generate_image::providers::higgsfield::common::{
-  check_reference_limit, finish, image_input_count, plan_batch_size, plan_nano_banana_aspect_ratio, require_prompt,
-};
+use crate::generate::generate_image::providers::higgsfield::common::{check_reference_limit, finish, image_input_count, plan_batch_size, plan_nano_banana_aspect_ratio, require_prompt};
 use crate::generate::generate_image::providers::higgsfield::image_request::HiggsfieldImageRequest;
 
 pub const MAX_REFERENCE_IMAGES: usize = 6;

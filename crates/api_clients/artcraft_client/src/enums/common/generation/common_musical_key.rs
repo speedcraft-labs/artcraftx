@@ -1,4 +1,3 @@
-
 /// Musical keys available for audio generation (eg. Suno Sounds).
 ///
 /// NB: There are intentionally no E keys, per product spec.
@@ -87,8 +86,7 @@ mod tests {
     ];
     for (json_str, expected) in cases {
       let json = format!("\"{}\"", json_str);
-      let deserialized: CommonMusicalKey = serde_json::from_str(&json)
-        .unwrap_or_else(|e| panic!("Failed to deserialize {:?}: {}", json_str, e));
+      let deserialized: CommonMusicalKey = serde_json::from_str(&json).unwrap_or_else(|e| panic!("Failed to deserialize {:?}: {}", json_str, e));
       assert_eq!(deserialized, expected, "Failed for {:?}", json_str);
     }
   }

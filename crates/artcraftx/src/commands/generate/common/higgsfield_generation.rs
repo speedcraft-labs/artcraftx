@@ -52,10 +52,7 @@ pub fn higgsfield_router_client(credential: &AuthCredential) -> Result<RouterCli
 
 /// The error for a credential whose session is dead.
 pub fn session_expired(credential: &AuthCredential) -> GenerateError {
-  GenerateError::CredentialProblem(CredentialProblemReason::SessionExpired {
-    credential_id: credential.id.to_string(),
-    service: credential.service,
-  })
+  GenerateError::CredentialProblem(CredentialProblemReason::SessionExpired { credential_id: credential.id.to_string(), service: credential.service })
 }
 
 /// Convert a router error from a Higgsfield call.
@@ -118,9 +115,8 @@ pub async fn send_higgsfield_image_request(
     GenerateError::from(err)
   })? {
     ImageGenerationDraftOrRequest::Request(request) => {
-      return request.send_request(client).await
-          .map_err(|err| higgsfield_error_to_generate_error(credential, err));
-    }
+      return request.send_request(client).await.map_err(|err| higgsfield_error_to_generate_error(credential, err));
+    },
     ImageGenerationDraftOrRequest::Draft(draft) => draft,
   };
 
@@ -135,9 +131,8 @@ pub async fn send_higgsfield_image_request(
       let forgotten = upload_cache.forget_reused().await;
       warn!("Higgsfield rejected reused reference media ({:?}); forgot {} ledger entries and uploading afresh", err, forgotten);
       let request = finalize_image_draft(credential, draft, client, media_url_map, upload_cache, &notices).await?;
-      request.send_request(client).await
-          .map_err(|err| higgsfield_error_to_generate_error(credential, err))
-    }
+      request.send_request(client).await.map_err(|err| higgsfield_error_to_generate_error(credential, err))
+    },
     Err(err) => Err(higgsfield_error_to_generate_error(credential, err)),
   }
 }
@@ -150,12 +145,7 @@ async fn finalize_image_draft(
   upload_cache: &AccountUploadCache,
   notices: &HiggsfieldUploadNotices,
 ) -> Result<ImageGenerationRequest, GenerateError> {
-  let context = ImageGenerationDraftContext {
-    client: Some(client),
-    media_file_to_artcraft_url_map: Some(media_url_map),
-    asset_upload_cache: Some(upload_cache),
-    asset_upload_observer: Some(notices),
-  };
+  let context = ImageGenerationDraftContext { client: Some(client), media_file_to_artcraft_url_map: Some(media_url_map), asset_upload_cache: Some(upload_cache), asset_upload_observer: Some(notices) };
   draft.finalize(context).await.map_err(|err| {
     warn!("Could not upload references to Higgsfield: {:?}", err);
     higgsfield_error_to_generate_error(credential, err)
@@ -178,9 +168,8 @@ pub async fn send_higgsfield_video_request(
     GenerateError::from(err)
   })? {
     VideoGenerationDraftOrRequest::Request(request) => {
-      return request.send_request(client).await
-          .map_err(|err| higgsfield_error_to_generate_error(credential, err));
-    }
+      return request.send_request(client).await.map_err(|err| higgsfield_error_to_generate_error(credential, err));
+    },
     VideoGenerationDraftOrRequest::Draft(draft) => draft,
   };
 
@@ -195,9 +184,8 @@ pub async fn send_higgsfield_video_request(
       let forgotten = upload_cache.forget_reused().await;
       warn!("Higgsfield rejected reused reference media ({:?}); forgot {} ledger entries and uploading afresh", err, forgotten);
       let request = finalize_video_draft(credential, draft, client, media_url_map, upload_cache, &notices).await?;
-      request.send_request(client).await
-          .map_err(|err| higgsfield_error_to_generate_error(credential, err))
-    }
+      request.send_request(client).await.map_err(|err| higgsfield_error_to_generate_error(credential, err))
+    },
     Err(err) => Err(higgsfield_error_to_generate_error(credential, err)),
   }
 }
@@ -210,13 +198,7 @@ async fn finalize_video_draft(
   upload_cache: &AccountUploadCache,
   notices: &HiggsfieldUploadNotices,
 ) -> Result<VideoGenerationRequest, GenerateError> {
-  let context = VideoGenerationDraftContext {
-    client: Some(client),
-    media_file_to_artcraft_url_map: Some(media_url_map),
-    character_token_to_kinovi_id_map: None,
-    asset_upload_cache: Some(upload_cache),
-    asset_upload_observer: Some(notices),
-  };
+  let context = VideoGenerationDraftContext { client: Some(client), media_file_to_artcraft_url_map: Some(media_url_map), character_token_to_kinovi_id_map: None, asset_upload_cache: Some(upload_cache), asset_upload_observer: Some(notices) };
   draft.finalize(context).await.map_err(|err| {
     warn!("Could not upload media to Higgsfield: {:?}", err);
     higgsfield_error_to_generate_error(credential, err)
@@ -241,12 +223,7 @@ pub fn join_higgsfield_job_ids(job_ids: &[String]) -> String {
 
 /// The job ids stored on a task by [`join_higgsfield_job_ids`].
 pub fn split_higgsfield_job_ids(provider_job_id: &str) -> Vec<String> {
-  provider_job_id
-      .split(HIGGSFIELD_JOB_ID_SEPARATOR)
-      .map(str::trim)
-      .filter(|id| !id.is_empty())
-      .map(str::to_string)
-      .collect()
+  provider_job_id.split(HIGGSFIELD_JOB_ID_SEPARATOR).map(str::trim).filter(|id| !id.is_empty()).map(str::to_string).collect()
 }
 
 #[cfg(test)]
@@ -264,9 +241,7 @@ mod tests {
 
   #[test]
   fn protected_content_becomes_a_provider_rejection_with_the_explanation() {
-    let err = ArtcraftRouterError::Provider(ProviderError::Higgsfield(
-      HiggsfieldError::Client(HiggsfieldClientError::MediaProtectedContent { media_id: MediaId::new("m1") }),
-    ));
+    let err = ArtcraftRouterError::Provider(ProviderError::Higgsfield(HiggsfieldError::Client(HiggsfieldClientError::MediaProtectedContent { media_id: MediaId::new("m1") })));
     match higgsfield_error_to_generate_error(&unsaved_credential(), err) {
       GenerateError::ProviderRejected(message) => assert!(message.contains("intellectual property"), "{message}"),
       other => panic!("expected ProviderRejected, got {other:?}"),
@@ -275,12 +250,7 @@ mod tests {
 
   #[test]
   fn other_higgsfield_errors_stay_provider_failures() {
-    let err = ArtcraftRouterError::Provider(ProviderError::Higgsfield(
-      HiggsfieldError::Client(HiggsfieldClientError::UploadSourceDomainBlocked {
-        source_url: "https://cdn.example.com/a.png".to_string(),
-        domain: "cdn.example.com",
-      }),
-    ));
+    let err = ArtcraftRouterError::Provider(ProviderError::Higgsfield(HiggsfieldError::Client(HiggsfieldClientError::UploadSourceDomainBlocked { source_url: "https://cdn.example.com/a.png".to_string(), domain: "cdn.example.com" })));
     assert!(matches!(higgsfield_error_to_generate_error(&unsaved_credential(), err), GenerateError::ProviderFailure(_)));
   }
 

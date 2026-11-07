@@ -18,7 +18,6 @@ pub const MAX_LENGTH: usize = 24;
 #[serde(rename_all = "snake_case")]
 pub enum DebugLogType {
   // ========== First party ==========
-
   /// A user request, typically the Json<T> actix_web handlers read.
   HttpRequest,
 
@@ -26,7 +25,6 @@ pub enum DebugLogType {
   BackendFailure,
 
   // ========== Third party ==========
-
   FalRequest,
   KinoviRequest,
   GrokApiRequest,
@@ -63,15 +61,7 @@ impl DebugLogType {
   }
 
   pub fn all_variants() -> BTreeSet<Self> {
-    BTreeSet::from([
-      Self::HttpRequest,
-      Self::BackendFailure,
-      Self::FalRequest,
-      Self::KinoviRequest,
-      Self::GrokApiRequest,
-      Self::FalWebhook,
-      Self::BeebleWebhook,
-    ])
+    BTreeSet::from([Self::HttpRequest, Self::BackendFailure, Self::FalRequest, Self::KinoviRequest, Self::GrokApiRequest, Self::FalWebhook, Self::BeebleWebhook])
   }
 }
 
@@ -181,8 +171,7 @@ mod tests {
 
       for variant in DebugLogType::all_variants() {
         let to_str_value = variant.to_str();
-        assert!(valid_pattern.is_match(to_str_value),
-          "to_str() for {:?} contains invalid characters: {:?} (only a-z, 0-9, _ allowed)", variant, to_str_value);
+        assert!(valid_pattern.is_match(to_str_value), "to_str() for {:?} contains invalid characters: {:?} (only a-z, 0-9, _ allowed)", variant, to_str_value);
       }
     }
   }

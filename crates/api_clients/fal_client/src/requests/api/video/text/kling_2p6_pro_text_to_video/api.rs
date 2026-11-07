@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::video::text::kling_2p6_pro_text_to_video::raw_request::{
-  Kling2p6ProTextToVideoInput, Kling2p6ProTextToVideoOutput,
-};
+use crate::requests::api::video::text::kling_2p6_pro_text_to_video::raw_request::{Kling2p6ProTextToVideoInput, Kling2p6ProTextToVideoOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 #[derive(Clone, Debug)]
@@ -65,20 +63,16 @@ impl FalEndpoint for Kling2p6ProTextToVideoRequest {
   fn to_raw_request(&self) -> Result<Self::RawRequest, FalErrorPlus> {
     let duration = self.duration.map(|d| d.to_str().to_string());
 
-    let aspect_ratio = self.aspect_ratio.map(|ar| match ar {
-      Kling2p6ProTextToVideoAspectRatio::Square => "1:1",
-      Kling2p6ProTextToVideoAspectRatio::SixteenByNine => "16:9",
-      Kling2p6ProTextToVideoAspectRatio::NineBySixteen => "9:16",
-    }.to_string());
+    let aspect_ratio = self.aspect_ratio.map(|ar| {
+      match ar {
+        Kling2p6ProTextToVideoAspectRatio::Square => "1:1",
+        Kling2p6ProTextToVideoAspectRatio::SixteenByNine => "16:9",
+        Kling2p6ProTextToVideoAspectRatio::NineBySixteen => "9:16",
+      }
+      .to_string()
+    });
 
-    Ok(Self::RawRequest {
-      prompt: self.prompt.clone(),
-      aspect_ratio,
-      generate_audio: self.generate_audio,
-      negative_prompt: self.negative_prompt.clone(),
-      duration,
-      cfg_scale: self.cfg_scale,
-    })
+    Ok(Self::RawRequest { prompt: self.prompt.clone(), aspect_ratio, generate_audio: self.generate_audio, negative_prompt: self.negative_prompt.clone(), duration, cfg_scale: self.cfg_scale })
   }
 }
 
@@ -138,11 +132,7 @@ mod tests {
     let secret = read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt")?;
     let api_key = FalApiKey::from_str(&secret);
 
-    let aspect_ratios = [
-      Kling2p6ProTextToVideoAspectRatio::Square,
-      Kling2p6ProTextToVideoAspectRatio::SixteenByNine,
-      Kling2p6ProTextToVideoAspectRatio::NineBySixteen,
-    ];
+    let aspect_ratios = [Kling2p6ProTextToVideoAspectRatio::Square, Kling2p6ProTextToVideoAspectRatio::SixteenByNine, Kling2p6ProTextToVideoAspectRatio::NineBySixteen];
 
     for ar in aspect_ratios {
       println!("--- aspect ratio: {:?} ---", ar);
@@ -167,10 +157,7 @@ mod tests {
     let secret = read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt")?;
     let api_key = FalApiKey::from_str(&secret);
 
-    let durations = [
-      Kling2p6ProTextToVideoDuration::FiveSeconds,
-      Kling2p6ProTextToVideoDuration::TenSeconds,
-    ];
+    let durations = [Kling2p6ProTextToVideoDuration::FiveSeconds, Kling2p6ProTextToVideoDuration::TenSeconds];
 
     for dur in durations {
       println!("--- duration: {:?} ---", dur);
@@ -208,14 +195,7 @@ mod tests {
 
   #[test]
   fn raw_request_omits_unset_optionals() {
-    let request = Kling2p6ProTextToVideoRequest {
-      prompt: "p".to_string(),
-      generate_audio: None,
-      negative_prompt: None,
-      duration: None,
-      aspect_ratio: None,
-      cfg_scale: None,
-    };
+    let request = Kling2p6ProTextToVideoRequest { prompt: "p".to_string(), generate_audio: None, negative_prompt: None, duration: None, aspect_ratio: None, cfg_scale: None };
     let raw = request.to_raw_request().unwrap();
     assert_eq!(raw.prompt, "p");
     assert!(raw.aspect_ratio.is_none());
@@ -227,10 +207,7 @@ mod tests {
 
   #[test]
   fn endpoint_path_is_canonical() {
-    assert_eq!(
-      Kling2p6ProTextToVideoRequest::ENDPOINT,
-      "fal-ai/kling-video/v2.6/pro/text-to-video",
-    );
+    assert_eq!(Kling2p6ProTextToVideoRequest::ENDPOINT, "fal-ai/kling-video/v2.6/pro/text-to-video",);
   }
 
   /// Wire-shape and endpoint parity vs the legacy
@@ -239,18 +216,13 @@ mod tests {
   /// these tests verify the *shape sent on the wire* hasn't drifted.
   mod legacy_parity {
     use super::*;
-    use crate::requests_old::http::video::text::http_kling_v2p6_pro_text_to_video::{
-      kling_v2p6_pro_text_to_video, KlingV2p6ProTextToVideoInput,
-    };
+    use crate::requests_old::http::video::text::http_kling_v2p6_pro_text_to_video::{kling_v2p6_pro_text_to_video, KlingV2p6ProTextToVideoInput};
 
     /// Same `fal-ai/kling-video/v2.6/pro/text-to-video` path.
     #[test]
     fn endpoint_path_matches_legacy() {
       let legacy = kling_v2p6_pro_text_to_video(KlingV2p6ProTextToVideoInput::default());
-      assert_eq!(
-        Kling2p6ProTextToVideoRequest::ENDPOINT,
-        legacy.endpoint,
-      );
+      assert_eq!(Kling2p6ProTextToVideoRequest::ENDPOINT, legacy.endpoint,);
     }
 
     /// At a representative populated case, the new module's serialized
@@ -268,14 +240,8 @@ mod tests {
       };
       let new_json = serde_json::to_value(new.to_raw_request().unwrap()).unwrap();
 
-      let legacy = KlingV2p6ProTextToVideoInput {
-        prompt: "a wave at dawn".to_string(),
-        aspect_ratio: Some("9:16".to_string()),
-        generate_audio: Some(true),
-        negative_prompt: Some("blurry".to_string()),
-        duration: Some("10".to_string()),
-        cfg_scale: Some(0.5),
-      };
+      let legacy =
+        KlingV2p6ProTextToVideoInput { prompt: "a wave at dawn".to_string(), aspect_ratio: Some("9:16".to_string()), generate_audio: Some(true), negative_prompt: Some("blurry".to_string()), duration: Some("10".to_string()), cfg_scale: Some(0.5) };
       let legacy_json = serde_json::to_value(&legacy).unwrap();
 
       assert_eq!(new_json, legacy_json);
@@ -285,20 +251,10 @@ mod tests {
     /// wire just like the legacy struct.
     #[test]
     fn wire_json_matches_legacy_minimal() {
-      let new = Kling2p6ProTextToVideoRequest {
-        prompt: "minimal".to_string(),
-        generate_audio: None,
-        negative_prompt: None,
-        duration: None,
-        aspect_ratio: None,
-        cfg_scale: None,
-      };
+      let new = Kling2p6ProTextToVideoRequest { prompt: "minimal".to_string(), generate_audio: None, negative_prompt: None, duration: None, aspect_ratio: None, cfg_scale: None };
       let new_json = serde_json::to_value(new.to_raw_request().unwrap()).unwrap();
 
-      let legacy = KlingV2p6ProTextToVideoInput {
-        prompt: "minimal".to_string(),
-        ..Default::default()
-      };
+      let legacy = KlingV2p6ProTextToVideoInput { prompt: "minimal".to_string(), ..Default::default() };
       let legacy_json = serde_json::to_value(&legacy).unwrap();
 
       assert_eq!(new_json, legacy_json);
@@ -310,44 +266,18 @@ mod tests {
     /// JSON must match the equivalent legacy `Input`.
     #[test]
     fn wire_json_matches_legacy_at_every_combo() {
-      let durations = [
-        (None,                                             None),
-        (Some(Kling2p6ProTextToVideoDuration::FiveSeconds), Some("5")),
-        (Some(Kling2p6ProTextToVideoDuration::TenSeconds),  Some("10")),
-      ];
-      let aspect_ratios = [
-        (None,                                                  None),
-        (Some(Kling2p6ProTextToVideoAspectRatio::Square),         Some("1:1")),
-        (Some(Kling2p6ProTextToVideoAspectRatio::SixteenByNine),  Some("16:9")),
-        (Some(Kling2p6ProTextToVideoAspectRatio::NineBySixteen),  Some("9:16")),
-      ];
+      let durations = [(None, None), (Some(Kling2p6ProTextToVideoDuration::FiveSeconds), Some("5")), (Some(Kling2p6ProTextToVideoDuration::TenSeconds), Some("10"))];
+      let aspect_ratios = [(None, None), (Some(Kling2p6ProTextToVideoAspectRatio::Square), Some("1:1")), (Some(Kling2p6ProTextToVideoAspectRatio::SixteenByNine), Some("16:9")), (Some(Kling2p6ProTextToVideoAspectRatio::NineBySixteen), Some("9:16"))];
       let audio_options = [None, Some(false), Some(true)];
 
       for (d_new, d_legacy) in durations {
         for (ar_new, ar_legacy) in aspect_ratios {
           for audio in audio_options {
-            let new = Kling2p6ProTextToVideoRequest {
-              prompt: "p".to_string(),
-              generate_audio: audio,
-              negative_prompt: None,
-              duration: d_new,
-              aspect_ratio: ar_new,
-              cfg_scale: None,
-            };
-            let legacy = KlingV2p6ProTextToVideoInput {
-              prompt: "p".to_string(),
-              aspect_ratio: ar_legacy.map(String::from),
-              generate_audio: audio,
-              negative_prompt: None,
-              duration: d_legacy.map(String::from),
-              cfg_scale: None,
-            };
+            let new = Kling2p6ProTextToVideoRequest { prompt: "p".to_string(), generate_audio: audio, negative_prompt: None, duration: d_new, aspect_ratio: ar_new, cfg_scale: None };
+            let legacy = KlingV2p6ProTextToVideoInput { prompt: "p".to_string(), aspect_ratio: ar_legacy.map(String::from), generate_audio: audio, negative_prompt: None, duration: d_legacy.map(String::from), cfg_scale: None };
             let new_json = serde_json::to_value(new.to_raw_request().unwrap()).unwrap();
             let legacy_json = serde_json::to_value(&legacy).unwrap();
-            assert_eq!(
-              new_json, legacy_json,
-              "duration={d_new:?} aspect_ratio={ar_new:?} audio={audio:?}",
-            );
+            assert_eq!(new_json, legacy_json, "duration={d_new:?} aspect_ratio={ar_new:?} audio={audio:?}",);
           }
         }
       }

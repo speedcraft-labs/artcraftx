@@ -64,55 +64,40 @@ impl FalRequestCostCalculator for EnqueueBytedanceSeedreamV4p5EditImageRequest {
   }
 }
 
-pub async fn enqueue_bytedance_seedream_v4p5_edit_image_webhook<R: IntoUrl>(
-  args: EnqueueBytedanceSeedreamV4p5EditImageArgs<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
+pub async fn enqueue_bytedance_seedream_v4p5_edit_image_webhook<R: IntoUrl>(args: EnqueueBytedanceSeedreamV4p5EditImageArgs<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
 
-  let num_images = req.num_images
-      .map(|n| match n {
-        EnqueueBytedanceSeedreamV4p5EditImageNumImages::One => 1,
-        EnqueueBytedanceSeedreamV4p5EditImageNumImages::Two => 2,
-        EnqueueBytedanceSeedreamV4p5EditImageNumImages::Three => 3,
-        EnqueueBytedanceSeedreamV4p5EditImageNumImages::Four => 4,
-      });
+  let num_images = req.num_images.map(|n| match n {
+    EnqueueBytedanceSeedreamV4p5EditImageNumImages::One => 1,
+    EnqueueBytedanceSeedreamV4p5EditImageNumImages::Two => 2,
+    EnqueueBytedanceSeedreamV4p5EditImageNumImages::Three => 3,
+    EnqueueBytedanceSeedreamV4p5EditImageNumImages::Four => 4,
+  });
 
-  let max_images = req.max_images
-      .map(|n| match n {
-        EnqueueBytedanceSeedreamV4p5EditImageMaxImages::One => 1,
-        EnqueueBytedanceSeedreamV4p5EditImageMaxImages::Two => 2,
-        EnqueueBytedanceSeedreamV4p5EditImageMaxImages::Three => 3,
-        EnqueueBytedanceSeedreamV4p5EditImageMaxImages::Four => 4,
-      });
+  let max_images = req.max_images.map(|n| match n {
+    EnqueueBytedanceSeedreamV4p5EditImageMaxImages::One => 1,
+    EnqueueBytedanceSeedreamV4p5EditImageMaxImages::Two => 2,
+    EnqueueBytedanceSeedreamV4p5EditImageMaxImages::Three => 3,
+    EnqueueBytedanceSeedreamV4p5EditImageMaxImages::Four => 4,
+  });
 
-  let image_size = req.image_size
-      .map(|s| match s {
-        EnqueueBytedanceSeedreamV4p5EditImageSize::Square => "square",
-        EnqueueBytedanceSeedreamV4p5EditImageSize::SquareHd => "square_hd",
-        EnqueueBytedanceSeedreamV4p5EditImageSize::PortraitFourThree => "portrait_4_3",
-        EnqueueBytedanceSeedreamV4p5EditImageSize::PortraitSixteenNine => "portrait_16_9",
-        EnqueueBytedanceSeedreamV4p5EditImageSize::LandscapeFourThree => "landscape_4_3",
-        EnqueueBytedanceSeedreamV4p5EditImageSize::LandscapeSixteenNine => "landscape_16_9",
-        EnqueueBytedanceSeedreamV4p5EditImageSize::Auto2k => "auto_2K",
-        EnqueueBytedanceSeedreamV4p5EditImageSize::Auto4k => "auto_4K",
-      })
-      .map(|s| s.to_string());
+  let image_size = req
+    .image_size
+    .map(|s| match s {
+      EnqueueBytedanceSeedreamV4p5EditImageSize::Square => "square",
+      EnqueueBytedanceSeedreamV4p5EditImageSize::SquareHd => "square_hd",
+      EnqueueBytedanceSeedreamV4p5EditImageSize::PortraitFourThree => "portrait_4_3",
+      EnqueueBytedanceSeedreamV4p5EditImageSize::PortraitSixteenNine => "portrait_16_9",
+      EnqueueBytedanceSeedreamV4p5EditImageSize::LandscapeFourThree => "landscape_4_3",
+      EnqueueBytedanceSeedreamV4p5EditImageSize::LandscapeSixteenNine => "landscape_16_9",
+      EnqueueBytedanceSeedreamV4p5EditImageSize::Auto2k => "auto_2K",
+      EnqueueBytedanceSeedreamV4p5EditImageSize::Auto4k => "auto_4K",
+    })
+    .map(|s| s.to_string());
 
-  let input = SeedreamV4p5EditImageInput {
-    prompt: req.prompt,
-    image_urls: req.image_urls,
-    num_images,
-    max_images,
-    image_size,
-    enable_safety_checker: Some(false),
-    seed: None,
-  };
+  let input = SeedreamV4p5EditImageInput { prompt: req.prompt, image_urls: req.image_urls, num_images, max_images, image_size, enable_safety_checker: Some(false), seed: None };
 
-  seedream_4p5_edit_image(input)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await
-      .map_err(|err| classify_fal_error(err))
+  seedream_4p5_edit_image(input).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await.map_err(|err| classify_fal_error(err))
 }
 
 #[cfg(test)]

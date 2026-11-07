@@ -29,12 +29,7 @@ impl ApiKeyCredential {
   pub fn new(api_key: impl Into<String>) -> Self {
     let api_key = api_key.into();
     let printable_partial_prefix = printable_prefix(&api_key);
-    Self {
-      api_key,
-      printable_partial_prefix,
-      failed_at: None,
-      succeeded_at: None,
-    }
+    Self { api_key, printable_partial_prefix, failed_at: None, succeeded_at: None }
   }
 
   /// Recompute the printable prefix from the full key.

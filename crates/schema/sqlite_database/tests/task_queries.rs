@@ -4,16 +4,10 @@
 
 use sqlite_database::connection::TaskDbConnection;
 use sqlite_database::queries::create::create_task::{create_task, CreateTaskArgs};
-use sqlite_database::queries::read::get_task_by_provider_and_provider_job_id::{
-  get_task_by_provider_and_provider_job_id, GetTaskByProviderAndProviderJobIdArgs,
-};
+use sqlite_database::queries::read::get_task_by_provider_and_provider_job_id::{get_task_by_provider_and_provider_job_id, GetTaskByProviderAndProviderJobIdArgs};
 use sqlite_database::queries::read::list_tasks_for_frontend::list_tasks_for_frontend;
-use sqlite_database::queries::update::update_successful_task_status_with_metadata::{
-  update_successful_task_status_with_metadata, UpdateSuccessfulTaskArgs,
-};
-use sqlite_database::queries::update::update_task_download_locations::{
-  update_task_download_locations, UpdateTaskDownloadLocationsArgs,
-};
+use sqlite_database::queries::update::update_successful_task_status_with_metadata::{update_successful_task_status_with_metadata, UpdateSuccessfulTaskArgs};
+use sqlite_database::queries::update::update_task_download_locations::{update_task_download_locations, UpdateTaskDownloadLocationsArgs};
 use core_types::enums::generation_source::GenerationSource;
 use sqlite_identifiers::enums::task_media_file_class::TaskMediaFileClass;
 use sqlite_identifiers::enums::task_status::TaskStatus;
@@ -41,13 +35,11 @@ async fn batch_flag_is_written_on_insert_and_read_back() {
     frontend_caller: None,
     frontend_subscriber_id: None,
     frontend_subscriber_payload: None,
-  }).await.unwrap();
+  })
+  .await
+  .unwrap();
 
-  let task = get_task_by_provider_and_provider_job_id(GetTaskByProviderAndProviderJobIdArgs {
-    db: &db,
-    provider: GenerationSource::Artcraft,
-    provider_job_id: PROVIDER_JOB_ID,
-  }).await.unwrap().expect("task exists");
+  let task = get_task_by_provider_and_provider_job_id(GetTaskByProviderAndProviderJobIdArgs { db: &db, provider: GenerationSource::Artcraft, provider_job_id: PROVIDER_JOB_ID }).await.unwrap().expect("task exists");
   assert_eq!(task.id, task_id);
   assert!(task.is_batch_generation);
 
@@ -76,7 +68,9 @@ async fn download_locations_are_recorded_on_completion() {
     frontend_caller: None,
     frontend_subscriber_id: None,
     frontend_subscriber_payload: None,
-  }).await.unwrap();
+  })
+  .await
+  .unwrap();
 
   let media_token = MediaFileToken::new_from_str("m_test");
   let completed = update_successful_task_status_with_metadata(UpdateSuccessfulTaskArgs {
@@ -87,7 +81,9 @@ async fn download_locations_are_recorded_on_completion() {
     maybe_primary_media_file_class: Some(TaskMediaFileClass::Video),
     maybe_primary_media_file_cdn_url: Some("https://cdn.example/out.mp4"),
     maybe_primary_media_file_thumbnail_url_template: None,
-  }).await.unwrap();
+  })
+  .await
+  .unwrap();
   assert!(completed);
 
   let recorded = update_task_download_locations(UpdateTaskDownloadLocationsArgs {
@@ -95,7 +91,9 @@ async fn download_locations_are_recorded_on_completion() {
     task_id: &task_id,
     directory_location: Path::new("/Users/someone/Downloads/Artcraft"),
     first_file_location: Path::new("/Users/someone/Downloads/Artcraft/veo_3_2026-08-30.mp4"),
-  }).await.unwrap();
+  })
+  .await
+  .unwrap();
   assert!(recorded);
 
   let listed = list_tasks_for_frontend(&db).await.unwrap();
@@ -103,21 +101,14 @@ async fn download_locations_are_recorded_on_completion() {
   assert_eq!(task.status, TaskStatus::CompleteSuccess);
   assert!(!task.is_batch_generation);
   assert_eq!(task.on_complete_directory_location.as_deref(), Some("/Users/someone/Downloads/Artcraft"));
-  assert_eq!(
-    task.on_complete_first_file_location.as_deref(),
-    Some("/Users/someone/Downloads/Artcraft/veo_3_2026-08-30.mp4"),
-  );
+  assert_eq!(task.on_complete_first_file_location.as_deref(), Some("/Users/someone/Downloads/Artcraft/veo_3_2026-08-30.mp4"),);
 }
 
 #[tokio::test]
 async fn recording_locations_for_an_unknown_task_updates_nothing() {
   let (_dir, db) = fresh_database().await;
-  let recorded = update_task_download_locations(UpdateTaskDownloadLocationsArgs {
-    db: &db,
-    task_id: &sqlite_identifiers::ids::task_id::TaskId::generate(),
-    directory_location: Path::new("/tmp"),
-    first_file_location: Path::new("/tmp/x.png"),
-  }).await.unwrap();
+  let recorded =
+    update_task_download_locations(UpdateTaskDownloadLocationsArgs { db: &db, task_id: &sqlite_identifiers::ids::task_id::TaskId::generate(), directory_location: Path::new("/tmp"), first_file_location: Path::new("/tmp/x.png") }).await.unwrap();
   assert!(!recorded);
 }
 

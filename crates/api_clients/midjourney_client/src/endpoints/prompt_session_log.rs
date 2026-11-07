@@ -45,9 +45,7 @@ pub struct PromptSessionLogResponse {
   pub status: Option<String>,
 }
 
-pub async fn prompt_session_log(
-  args: PromptSessionLogArgs<'_>,
-) -> Result<PromptSessionLogResponse, MidjourneyError> {
+pub async fn prompt_session_log(args: PromptSessionLogArgs<'_>) -> Result<PromptSessionLogResponse, MidjourneyError> {
   let cookie_header = args.cookie_header.trim();
   if cookie_header.len() < 20 {
     error!("Cookie header is too short (len: {}): {}", cookie_header.len(), cookie_header);
@@ -57,9 +55,7 @@ pub async fn prompt_session_log(
   let default_hostname = MidjourneyHostname::Standard;
   let hostname = args.hostname.unwrap_or(&default_hostname);
 
-  let client = args.browser.clone().unwrap_or_default()
-      .build_client()
-      .map_err(MidjourneyClientError::WreqError)?;
+  let client = args.browser.clone().unwrap_or_default().build_client().map_err(MidjourneyClientError::WreqError)?;
 
   let referer = format!("https://{}/imagine", hostname.as_str());
   let url = format!("https://{}/api/prompt-session-log", hostname.as_str());
@@ -103,38 +99,33 @@ pub async fn prompt_session_log(
     openai_item_id: None,
   };
 
-  let http_request = client.post(url)
-      .header("cookie", cookie_header)
-      .header("Referer", &referer)
-      .header("Referrer-Policy", "origin-when-cross-origin")
-      .header("accept", "*/*")
-      .header("accept-language", "en-US,en;q=0.8")
-      .header("content-type", "application/json")
-      .header("priority", "u=1, i")
-      .header("sec-fetch-dest", "empty")
-      .header("sec-fetch-mode", "cors")
-      .header("sec-fetch-site", "same-origin")
-      .header("x-csrf-protection", "1")
-      .json(&body)
-      .build()
-      .map_err(MidjourneyClientError::WreqError)?;
+  let http_request = client
+    .post(url)
+    .header("cookie", cookie_header)
+    .header("Referer", &referer)
+    .header("Referrer-Policy", "origin-when-cross-origin")
+    .header("accept", "*/*")
+    .header("accept-language", "en-US,en;q=0.8")
+    .header("content-type", "application/json")
+    .header("priority", "u=1, i")
+    .header("sec-fetch-dest", "empty")
+    .header("sec-fetch-mode", "cors")
+    .header("sec-fetch-site", "same-origin")
+    .header("x-csrf-protection", "1")
+    .json(&body)
+    .build()
+    .map_err(MidjourneyClientError::WreqError)?;
 
-  let response = client.execute(http_request)
-      .await
-      .map_err(|e| MidjourneyApiError::NetworkError(e.to_string()))?;
+  let response = client.execute(http_request).await.map_err(|e| MidjourneyApiError::NetworkError(e.to_string()))?;
 
   let status = response.status();
-  let response_body = response.text().await
-      .map_err(|e| MidjourneyApiError::NetworkError(e.to_string()))?;
+  let response_body = response.text().await.map_err(|e| MidjourneyApiError::NetworkError(e.to_string()))?;
 
   if !status.is_success() {
     if let Err(err) = filter_cloudflare_errors(status.as_u16(), &response_body) {
       return Err(MidjourneyApiError::CloudflareError(err).into());
     }
-    return Err(MidjourneyApiError::UnknownHttpFailure {
-      status_code: status.as_u16(),
-      body: response_body,
-    }.into());
+    return Err(MidjourneyApiError::UnknownHttpFailure { status_code: status.as_u16(), body: response_body }.into());
   }
 
   // {"status":"success"}
@@ -143,10 +134,7 @@ pub async fn prompt_session_log(
     status: Option<String>,
   }
 
-  let response = serde_json::from_str::<RawResponse>(&response_body)
-      .map_err(|err| MidjourneyApiError::deserialization(err, response_body.as_str()))?;
+  let response = serde_json::from_str::<RawResponse>(&response_body).map_err(|err| MidjourneyApiError::deserialization(err, response_body.as_str()))?;
 
-  Ok(PromptSessionLogResponse {
-    status: response.status,
-  })
+  Ok(PromptSessionLogResponse { status: response.status })
 }

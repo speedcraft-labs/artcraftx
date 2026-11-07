@@ -48,13 +48,7 @@ impl TaskType {
   pub fn all_variants() -> BTreeSet<Self> {
     // NB: BTreeSet is sorted
     // NB: BTreeSet::from() isn't const, but not worth using LazyStatic, etc.
-    BTreeSet::from([
-      Self::ImageGeneration,
-      Self::VideoGeneration,
-      Self::AudioGeneration,
-      Self::MeshGeneration,
-      Self::SplatGeneration,
-    ])
+    BTreeSet::from([Self::ImageGeneration, Self::VideoGeneration, Self::AudioGeneration, Self::MeshGeneration, Self::SplatGeneration])
   }
 }
 
@@ -93,7 +87,7 @@ mod tests {
       assert_eq!(TaskType::from_str("mesh_generation").unwrap(), TaskType::MeshGeneration);
       assert_eq!(TaskType::from_str("splat_generation").unwrap(), TaskType::SplatGeneration);
     }
-    
+
     #[test]
     fn from_str_err() {
       let result = TaskType::from_str("asdf");

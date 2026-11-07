@@ -27,146 +27,174 @@ use crate::types::ids::JobId;
 impl HiggsfieldSession {
   /// Enqueue a Nano Banana Pro image job.
   pub async fn nano_banana_pro(&self, request: NanoBananaProRequest) -> Result<EnqueueJobsResponse, HiggsfieldError> {
-    self.with_auth(|auth| {
-      let request = request.clone();
-      async move { nano_banana_pro(NanoBananaProArgs { request, auth: &auth, host: self.api_host() }).await }
-    }).await
+    self
+      .with_auth(|auth| {
+        let request = request.clone();
+        async move { nano_banana_pro(NanoBananaProArgs { request, auth: &auth, host: self.api_host() }).await }
+      })
+      .await
   }
 
   /// Enqueue a Nano Banana 2 image job.
   pub async fn nano_banana_2(&self, request: NanoBanana2Request) -> Result<EnqueueJobsResponse, HiggsfieldError> {
-    self.with_auth(|auth| {
-      let request = request.clone();
-      async move { nano_banana_2(NanoBanana2Args { request, auth: &auth, host: self.api_host() }).await }
-    }).await
+    self
+      .with_auth(|auth| {
+        let request = request.clone();
+        async move { nano_banana_2(NanoBanana2Args { request, auth: &auth, host: self.api_host() }).await }
+      })
+      .await
   }
 
   /// Enqueue a Nano Banana 2 Lite image job.
   pub async fn nano_banana_2_lite(&self, request: NanoBanana2LiteRequest) -> Result<EnqueueJobsResponse, HiggsfieldError> {
-    self.with_auth(|auth| {
-      let request = request.clone();
-      async move { nano_banana_2_lite(NanoBanana2LiteArgs { request, auth: &auth, host: self.api_host() }).await }
-    }).await
+    self
+      .with_auth(|auth| {
+        let request = request.clone();
+        async move { nano_banana_2_lite(NanoBanana2LiteArgs { request, auth: &auth, host: self.api_host() }).await }
+      })
+      .await
   }
 
   /// Enqueue a Seedream 5.0 Pro image job.
   pub async fn seedream_5p0_pro(&self, request: Seedream5p0ProRequest) -> Result<EnqueueJobsResponse, HiggsfieldError> {
-    self.with_auth(|auth| {
-      let request = request.clone();
-      async move { seedream_5p0_pro(Seedream5p0ProArgs { request, auth: &auth, host: self.api_host() }).await }
-    }).await
+    self
+      .with_auth(|auth| {
+        let request = request.clone();
+        async move { seedream_5p0_pro(Seedream5p0ProArgs { request, auth: &auth, host: self.api_host() }).await }
+      })
+      .await
   }
 
   /// Enqueue a Seedream 5.0 lite image job.
   pub async fn seedream_5p0_lite(&self, request: Seedream5p0LiteRequest) -> Result<EnqueueJobsResponse, HiggsfieldError> {
-    self.with_auth(|auth| {
-      let request = request.clone();
-      async move { seedream_5p0_lite(Seedream5p0LiteArgs { request, auth: &auth, host: self.api_host() }).await }
-    }).await
+    self
+      .with_auth(|auth| {
+        let request = request.clone();
+        async move { seedream_5p0_lite(Seedream5p0LiteArgs { request, auth: &auth, host: self.api_host() }).await }
+      })
+      .await
   }
 
   /// Enqueue a Seedream 4.5 image job.
   pub async fn seedream_4p5(&self, request: Seedream4p5Request) -> Result<EnqueueJobsResponse, HiggsfieldError> {
-    self.with_auth(|auth| {
-      let request = request.clone();
-      async move { seedream_4p5(Seedream4p5Args { request, auth: &auth, host: self.api_host() }).await }
-    }).await
+    self
+      .with_auth(|auth| {
+        let request = request.clone();
+        async move { seedream_4p5(Seedream4p5Args { request, auth: &auth, host: self.api_host() }).await }
+      })
+      .await
   }
 
   /// Enqueue a GPT Image job.
   pub async fn gpt_image_2(&self, request: GptImage2Request) -> Result<EnqueueJobsResponse, HiggsfieldError> {
-    self.with_auth(|auth| {
-      let request = request.clone();
-      async move { gpt_image_2(GptImage2Args { request, auth: &auth, host: self.api_host() }).await }
-    }).await
+    self
+      .with_auth(|auth| {
+        let request = request.clone();
+        async move { gpt_image_2(GptImage2Args { request, auth: &auth, host: self.api_host() }).await }
+      })
+      .await
   }
 
   // ── Video ──
 
   /// Enqueue a Seedance 2.5 video job.
   pub async fn seedance_2p5(&self, request: Seedance2p5Request) -> Result<EnqueueJobsResponse, HiggsfieldError> {
-    self.with_auth(|auth| {
-      let request = request.clone();
-      async move { seedance_2p5(Seedance2p5Args { request, auth: &auth, host: self.api_host() }).await }
-    }).await
+    self
+      .with_auth(|auth| {
+        let request = request.clone();
+        async move { seedance_2p5(Seedance2p5Args { request, auth: &auth, host: self.api_host() }).await }
+      })
+      .await
   }
 
   /// Enqueue a Seedance 2.5 Edit (video-to-video) job.
   pub async fn seedance_2p5_edit(&self, request: Seedance2p5EditRequest) -> Result<EnqueueJobsResponse, HiggsfieldError> {
-    self.with_auth(|auth| {
-      let request = request.clone();
-      async move { seedance_2p5_edit(Seedance2p5EditArgs { request, auth: &auth, host: self.api_host() }).await }
-    }).await
+    self
+      .with_auth(|auth| {
+        let request = request.clone();
+        async move { seedance_2p5_edit(Seedance2p5EditArgs { request, auth: &auth, host: self.api_host() }).await }
+      })
+      .await
   }
 
   /// Enqueue a Seedance 2.0 video job.
   pub async fn seedance_2p0(&self, request: Seedance2p0Request) -> Result<EnqueueJobsResponse, HiggsfieldError> {
-    self.with_auth(|auth| {
-      let request = request.clone();
-      async move { seedance_2p0(Seedance2p0Args { request, auth: &auth, host: self.api_host() }).await }
-    }).await
+    self
+      .with_auth(|auth| {
+        let request = request.clone();
+        async move { seedance_2p0(Seedance2p0Args { request, auth: &auth, host: self.api_host() }).await }
+      })
+      .await
   }
 
   /// Enqueue a Seedance 2.0 Mini video job.
   pub async fn seedance_2p0_mini(&self, request: Seedance2p0MiniRequest) -> Result<EnqueueJobsResponse, HiggsfieldError> {
-    self.with_auth(|auth| {
-      let request = request.clone();
-      async move { seedance_2p0_mini(Seedance2p0MiniArgs { request, auth: &auth, host: self.api_host() }).await }
-    }).await
+    self
+      .with_auth(|auth| {
+        let request = request.clone();
+        async move { seedance_2p0_mini(Seedance2p0MiniArgs { request, auth: &auth, host: self.api_host() }).await }
+      })
+      .await
   }
 
   /// Enqueue a MiniMax H3 video job.
   pub async fn minimax_h3(&self, request: MinimaxH3Request) -> Result<EnqueueJobsResponse, HiggsfieldError> {
-    self.with_auth(|auth| {
-      let request = request.clone();
-      async move { minimax_h3(MinimaxH3Args { request, auth: &auth, host: self.api_host() }).await }
-    }).await
+    self
+      .with_auth(|auth| {
+        let request = request.clone();
+        async move { minimax_h3(MinimaxH3Args { request, auth: &auth, host: self.api_host() }).await }
+      })
+      .await
   }
 
   /// Enqueue a Kling 3.0 video job.
   pub async fn kling_3p0(&self, request: Kling3p0Request) -> Result<EnqueueJobsResponse, HiggsfieldError> {
-    self.with_auth(|auth| {
-      let request = request.clone();
-      async move { kling_3p0(Kling3p0Args { request, auth: &auth, host: self.api_host() }).await }
-    }).await
+    self
+      .with_auth(|auth| {
+        let request = request.clone();
+        async move { kling_3p0(Kling3p0Args { request, auth: &auth, host: self.api_host() }).await }
+      })
+      .await
   }
 
   /// Enqueue a Grok Imagine 1.5 video job.
   pub async fn grok_imagine_1p5(&self, request: GrokImagine1p5Request) -> Result<EnqueueJobsResponse, HiggsfieldError> {
-    self.with_auth(|auth| {
-      let request = request.clone();
-      async move { grok_imagine_1p5(GrokImagine1p5Args { request, auth: &auth, host: self.api_host() }).await }
-    }).await
+    self
+      .with_auth(|auth| {
+        let request = request.clone();
+        async move { grok_imagine_1p5(GrokImagine1p5Args { request, auth: &auth, host: self.api_host() }).await }
+      })
+      .await
   }
 
   /// Full state of one job, including result URLs once complete.
   pub async fn job_status(&self, job_id: &JobId) -> Result<JobStatusResponse, HiggsfieldError> {
-    self.with_auth(|auth| {
-      let request = JobStatusRequest { job_id: job_id.clone() };
-      async move { job_status(JobStatusArgs { request, auth: &auth, host: self.api_host() }).await }
-    }).await
+    self
+      .with_auth(|auth| {
+        let request = JobStatusRequest { job_id: job_id.clone() };
+        async move { job_status(JobStatusArgs { request, auth: &auth, host: self.api_host() }).await }
+      })
+      .await
   }
 
   /// Lightweight status for many jobs.
   pub async fn job_status_batch(&self, job_ids: &[JobId]) -> Result<JobStatusBatchResponse, HiggsfieldError> {
-    self.with_auth(|auth| {
-      let request = JobStatusBatchRequest { ids: job_ids.to_vec() };
-      async move { job_status_batch(JobStatusBatchArgs { request, auth: &auth, host: self.api_host() }).await }
-    }).await
+    self
+      .with_auth(|auth| {
+        let request = JobStatusBatchRequest { ids: job_ids.to_vec() };
+        async move { job_status_batch(JobStatusBatchArgs { request, auth: &auth, host: self.api_host() }).await }
+      })
+      .await
   }
 
   /// The account: plan, credits, workspace. Also the cheapest session check.
   pub async fn user_data(&self) -> Result<UserDataResponse, HiggsfieldError> {
-    self.with_auth(|auth| async move {
-      user_data(UserDataArgs { request: UserDataRequest, auth: &auth, host: self.api_host() }).await
-    }).await
+    self.with_auth(|auth| async move { user_data(UserDataArgs { request: UserDataRequest, auth: &auth, host: self.api_host() }).await }).await
   }
 
   /// The public profile.
   pub async fn user_profile(&self) -> Result<UserProfileResponse, HiggsfieldError> {
-    self.with_auth(|auth| async move {
-      user_profile(UserProfileArgs { request: UserProfileRequest, auth: &auth, host: self.api_host() }).await
-    }).await
+    self.with_auth(|auth| async move { user_profile(UserProfileArgs { request: UserProfileRequest, auth: &auth, host: self.api_host() }).await }).await
   }
 }
 
@@ -184,9 +212,7 @@ mod tests {
   fn offline_session() -> HiggsfieldSession {
     use crate::credentials::clerk_session_token::tests::fake_clerk_token;
     let token = fake_clerk_token((chrono::Utc::now() + chrono::Duration::hours(1)).timestamp());
-    HiggsfieldSession::from_cookie_header("__client=x")
-        .with_hosts(HiggsfieldHost::Custom("http://127.0.0.1:9".into()), ClerkHost::Custom("http://127.0.0.1:9".into()))
-        .with_initial_token(token)
+    HiggsfieldSession::from_cookie_header("__client=x").with_hosts(HiggsfieldHost::Custom("http://127.0.0.1:9".into()), ClerkHost::Custom("http://127.0.0.1:9".into())).with_initial_token(token)
   }
 
   #[tokio::test]
@@ -268,9 +294,7 @@ mod tests {
     setup_test_logging();
 
     let session = load_higgsfield_test_session()?;
-    let enqueued = session.nano_banana_pro(
-      NanoBananaProRequest::text_to_image("a dinosaur on a skateboard", NanoBananaProAspectRatio::Portrait3x4, NanoBananaProResolution::OneK),
-    ).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let enqueued = session.nano_banana_pro(NanoBananaProRequest::text_to_image("a dinosaur on a skateboard", NanoBananaProAspectRatio::Portrait3x4, NanoBananaProResolution::OneK)).await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
     let job_id = enqueued.job_ids().into_iter().next().unwrap();
     let job = session.wait_for_job(&job_id, WaitForJobOptions::default()).await.map_err(|err| anyhow::anyhow!("{err}"))?;

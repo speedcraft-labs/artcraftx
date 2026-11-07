@@ -48,30 +48,21 @@ pub fn source_to_image_ref(maybe_source: Option<TauriMediaSource>) -> Option<Ima
 }
 
 pub fn sources_to_image_list(maybe_sources: Option<Vec<TauriMediaSource>>) -> Option<ImageListRef> {
-  maybe_sources.map(|sources| {
-    ImageListRef::Sources(sources.into_iter().map(TauriMediaSource::into_image_ref).collect())
-  })
+  maybe_sources.map(|sources| ImageListRef::Sources(sources.into_iter().map(TauriMediaSource::into_image_ref).collect()))
 }
 
 pub fn sources_to_video_list(maybe_sources: Option<Vec<TauriMediaSource>>) -> Option<VideoListRef> {
-  maybe_sources.map(|sources| {
-    VideoListRef::Sources(sources.into_iter().map(TauriMediaSource::into_video_ref).collect())
-  })
+  maybe_sources.map(|sources| VideoListRef::Sources(sources.into_iter().map(TauriMediaSource::into_video_ref).collect()))
 }
 
 pub fn sources_to_audio_list(maybe_sources: Option<Vec<TauriMediaSource>>) -> Option<AudioListRef> {
-  maybe_sources.map(|sources| {
-    AudioListRef::Sources(sources.into_iter().map(TauriMediaSource::into_audio_ref).collect())
-  })
+  maybe_sources.map(|sources| AudioListRef::Sources(sources.into_iter().map(TauriMediaSource::into_audio_ref).collect()))
 }
 
 /// The ArtCraft media tokens among `sources`, deduplicated, in order — the
 /// only sources that need the token→CDN-URL map.
 pub fn collect_source_tokens<'a>(sources: impl IntoIterator<Item = &'a TauriMediaSource>) -> Vec<MediaFileToken> {
-  let mut tokens: Vec<MediaFileToken> = sources.into_iter()
-      .filter_map(TauriMediaSource::maybe_media_file_token)
-      .cloned()
-      .collect();
+  let mut tokens: Vec<MediaFileToken> = sources.into_iter().filter_map(TauriMediaSource::maybe_media_file_token).cloned().collect();
   tokens.dedup();
   tokens
 }
@@ -82,13 +73,7 @@ pub fn collect_source_tokens<'a>(sources: impl IntoIterator<Item = &'a TauriMedi
 /// local files and bytes upload to ArtCraft at generate time — unless the
 /// ledger says this account already uploaded the same content and ArtCraft
 /// confirms it still has it.
-pub async fn source_to_artcraft_token(
-  source: TauriMediaSource,
-  kind: ArtcraftMediaKind,
-  maybe_creds: Option<&StorytellerCredentialSet>,
-  api_host: &ApiHost,
-  ledger: &AssetUploadLedger,
-) -> Result<MediaFileToken, GenerateError> {
+pub async fn source_to_artcraft_token(source: TauriMediaSource, kind: ArtcraftMediaKind, maybe_creds: Option<&StorytellerCredentialSet>, api_host: &ApiHost, ledger: &AssetUploadLedger) -> Result<MediaFileToken, GenerateError> {
   let maybe_cache = ledger.for_artcraft_session(maybe_creds);
   match source {
     TauriMediaSource::MediaFileToken { token } => Ok(token),
@@ -102,7 +87,7 @@ pub async fn source_to_artcraft_token(
         Some(cache) => cache.artcraft_token_for_bytes(api_host, &bytes, upload).await,
         None => upload().await,
       }
-    }
+    },
   }
 }
 
@@ -127,13 +112,7 @@ pub async fn sources_to_artcraft_tokens(
 }
 
 /// Single-optional twin of [`source_to_artcraft_token`].
-pub async fn maybe_source_to_artcraft_token(
-  maybe_source: Option<TauriMediaSource>,
-  kind: ArtcraftMediaKind,
-  maybe_creds: Option<&StorytellerCredentialSet>,
-  api_host: &ApiHost,
-  ledger: &AssetUploadLedger,
-) -> Result<Option<MediaFileToken>, GenerateError> {
+pub async fn maybe_source_to_artcraft_token(maybe_source: Option<TauriMediaSource>, kind: ArtcraftMediaKind, maybe_creds: Option<&StorytellerCredentialSet>, api_host: &ApiHost, ledger: &AssetUploadLedger) -> Result<Option<MediaFileToken>, GenerateError> {
   match maybe_source {
     None => Ok(None),
     Some(source) => Ok(Some(source_to_artcraft_token(source, kind, maybe_creds, api_host, ledger).await?)),
@@ -144,12 +123,7 @@ pub async fn maybe_source_to_artcraft_token(
 
 /// Resolve image sources to publicly-reachable CDN URLs for FAL: tokens
 /// resolve to their CDN URL; local files / bytes upload to ArtCraft first.
-pub async fn image_sources_to_fal_urls(
-  maybe_sources: Option<Vec<TauriMediaSource>>,
-  maybe_creds: Option<&StorytellerCredentialSet>,
-  api_host: &ApiHost,
-  ledger: &AssetUploadLedger,
-) -> Result<Option<Vec<String>>, GenerateError> {
+pub async fn image_sources_to_fal_urls(maybe_sources: Option<Vec<TauriMediaSource>>, maybe_creds: Option<&StorytellerCredentialSet>, api_host: &ApiHost, ledger: &AssetUploadLedger) -> Result<Option<Vec<String>>, GenerateError> {
   let sources = match maybe_sources {
     None => return Ok(None),
     Some(sources) if sources.is_empty() => return Ok(None),
@@ -168,56 +142,21 @@ pub async fn image_sources_to_fal_urls(
 
 /// The upload endpoints are multipart-from-file; stage the bytes, upload,
 /// clean up.
-async fn upload_bytes_to_artcraft(
-  bytes: &[u8],
-  maybe_file_name: Option<&str>,
-  kind: ArtcraftMediaKind,
-  maybe_creds: Option<&StorytellerCredentialSet>,
-  api_host: &ApiHost,
-) -> Result<MediaFileToken, GenerateError> {
+async fn upload_bytes_to_artcraft(bytes: &[u8], maybe_file_name: Option<&str>, kind: ArtcraftMediaKind, maybe_creds: Option<&StorytellerCredentialSet>, api_host: &ApiHost) -> Result<MediaFileToken, GenerateError> {
   let staged = stage_bytes_to_temp_file(bytes, maybe_file_name)?;
   let result = upload_path_to_artcraft(&staged, kind, maybe_creds, api_host).await;
   std::fs::remove_file(&staged).ok();
   result
 }
 
-async fn upload_path_to_artcraft(
-  path: &Path,
-  kind: ArtcraftMediaKind,
-  maybe_creds: Option<&StorytellerCredentialSet>,
-  api_host: &ApiHost,
-) -> Result<MediaFileToken, GenerateError> {
+async fn upload_path_to_artcraft(path: &Path, kind: ArtcraftMediaKind, maybe_creds: Option<&StorytellerCredentialSet>, api_host: &ApiHost) -> Result<MediaFileToken, GenerateError> {
   info!("Uploading local {:?} file to ArtCraft at generate time: {}", kind, path.display());
   let token = match kind {
     ArtcraftMediaKind::Image => {
-      upload_image_media_file_from_file(UploadImageFromFileArgs {
-        api_host,
-        maybe_creds,
-        path,
-        is_intermediate_system_file: false,
-        maybe_prompt_token: None,
-        maybe_generation_provider: None,
-        maybe_batch_token: None,
-      }).await?.media_file_token
-    }
-    ArtcraftMediaKind::Video => {
-      upload_video_media_file_from_file(UploadVideoFromFileArgs {
-        api_host,
-        maybe_creds,
-        path,
-        maybe_prompt_token: None,
-        maybe_generation_provider: None,
-      }).await.map_err(StorytellerError::from)?.media_file_token
-    }
-    ArtcraftMediaKind::Audio => {
-      upload_audio_media_file_from_file(UploadAudioFromFileArgs {
-        api_host,
-        maybe_creds,
-        path,
-        maybe_prompt_token: None,
-        maybe_generation_provider: None,
-      }).await.map_err(StorytellerError::from)?.media_file_token
-    }
+      upload_image_media_file_from_file(UploadImageFromFileArgs { api_host, maybe_creds, path, is_intermediate_system_file: false, maybe_prompt_token: None, maybe_generation_provider: None, maybe_batch_token: None }).await?.media_file_token
+    },
+    ArtcraftMediaKind::Video => upload_video_media_file_from_file(UploadVideoFromFileArgs { api_host, maybe_creds, path, maybe_prompt_token: None, maybe_generation_provider: None }).await.map_err(StorytellerError::from)?.media_file_token,
+    ArtcraftMediaKind::Audio => upload_audio_media_file_from_file(UploadAudioFromFileArgs { api_host, maybe_creds, path, maybe_prompt_token: None, maybe_generation_provider: None }).await.map_err(StorytellerError::from)?.media_file_token,
   };
   info!("Uploaded local {:?} file as {}", kind, token.as_str());
   Ok(token)
@@ -227,10 +166,7 @@ async fn upload_path_to_artcraft(
 /// endpoints. The file name's extension survives so the server can tell the
 /// type; unknown types get one sniffed from the bytes.
 fn stage_bytes_to_temp_file(bytes: &[u8], maybe_file_name: Option<&str>) -> Result<PathBuf, GenerateError> {
-  let extension = maybe_file_name
-      .and_then(|name| Path::new(name).extension()?.to_str().map(str::to_string))
-      .or_else(|| sniff_mime_type(bytes).map(|mime| mime.file_extension().to_string()))
-      .unwrap_or_else(|| "bin".to_string());
+  let extension = maybe_file_name.and_then(|name| Path::new(name).extension()?.to_str().map(str::to_string)).or_else(|| sniff_mime_type(bytes).map(|mime| mime.file_extension().to_string())).unwrap_or_else(|| "bin".to_string());
   let path = std::env::temp_dir().join(format!("artcraftx_media_{}.{}", generate_random_uuid(), extension));
   std::fs::write(&path, bytes).map_err(GenerateError::IoError)?;
   Ok(path)
@@ -242,10 +178,7 @@ mod tests {
 
   #[test]
   fn sources_map_to_router_lists() {
-    let list = sources_to_image_list(Some(vec![
-      TauriMediaSource::MediaFileToken { token: MediaFileToken::new_from_str("m_a") },
-      TauriMediaSource::LocalPath { path: PathBuf::from("/tmp/a.png") },
-    ])).unwrap();
+    let list = sources_to_image_list(Some(vec![TauriMediaSource::MediaFileToken { token: MediaFileToken::new_from_str("m_a") }, TauriMediaSource::LocalPath { path: PathBuf::from("/tmp/a.png") }])).unwrap();
     assert_eq!(list.len(), 2);
     assert!(matches!(&list, ImageListRef::Sources(refs) if matches!(refs[1], ImageRef::LocalPath(_))));
     assert!(sources_to_image_list(None).is_none());

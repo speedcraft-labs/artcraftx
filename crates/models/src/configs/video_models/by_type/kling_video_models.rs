@@ -4,11 +4,7 @@ use crate::enums::common_aspect_ratio::CommonAspectRatio;
 use crate::enums::model_creator::ModelCreator;
 use crate::enums::video_model::VideoModel;
 
-const KLING_ASPECT_RATIOS: &[CommonAspectRatio] = &[
-  CommonAspectRatio::WideSixteenByNine,
-  CommonAspectRatio::Square,
-  CommonAspectRatio::TallNineBySixteen,
-];
+const KLING_ASPECT_RATIOS: &[CommonAspectRatio] = &[CommonAspectRatio::WideSixteenByNine, CommonAspectRatio::Square, CommonAspectRatio::TallNineBySixteen];
 
 /// Kling video models.
 pub fn kling_video_models() -> Vec<VideoModelConfig> {

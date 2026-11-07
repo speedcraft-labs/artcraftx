@@ -30,17 +30,15 @@ pub struct HiggsfieldUploadNotices {
 
 impl HiggsfieldUploadNotices {
   pub fn new(maybe_app: Option<&AppHandle>) -> Self {
-    Self {
-      maybe_app: maybe_app.cloned(),
-      progress: Mutex::new(None),
-      reuse_announced: AtomicBool::new(false),
-    }
+    Self { maybe_app: maybe_app.cloned(), progress: Mutex::new(None), reuse_announced: AtomicBool::new(false) }
   }
 }
 
 impl AssetUploadObserver for HiggsfieldUploadNotices {
   fn on_reused(&self, _kind: &str, _description: &str) {
-    let Some(app) = &self.maybe_app else { return };
+    let Some(app) = &self.maybe_app else {
+      return;
+    };
     if self.reuse_announced.swap(true, Ordering::SeqCst) {
       return;
     }
@@ -48,8 +46,12 @@ impl AssetUploadObserver for HiggsfieldUploadNotices {
   }
 
   fn on_uploading(&self, _kind: &str, _byte_count: u64, ip_check: bool) {
-    let Some(app) = &self.maybe_app else { return };
-    let Ok(mut progress) = self.progress.lock() else { return };
+    let Some(app) = &self.maybe_app else {
+      return;
+    };
+    let Ok(mut progress) = self.progress.lock() else {
+      return;
+    };
     if progress.is_some() {
       return; // One toast covers every upload of the request.
     }

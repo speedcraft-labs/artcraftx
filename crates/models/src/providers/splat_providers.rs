@@ -19,15 +19,7 @@ pub fn provider_offers_splat_model(provider: GenerationProvider, model: SplatMod
 }
 
 fn splat_providers() -> Vec<SplatProviderOffering> {
-  vec![
-    SplatProviderOffering::of(GenerationProvider::Artcraft, &[
-      SplatModel::Marble1p1,
-      SplatModel::Marble1p1Plus,
-      SplatModel::Marble1p0,
-      SplatModel::Marble1p0Draft,
-      SplatModel::TripoSplat,
-    ]),
-  ]
+  vec![SplatProviderOffering::of(GenerationProvider::Artcraft, &[SplatModel::Marble1p1, SplatModel::Marble1p1Plus, SplatModel::Marble1p0, SplatModel::Marble1p0Draft, SplatModel::TripoSplat])]
 }
 
 #[cfg(test)]

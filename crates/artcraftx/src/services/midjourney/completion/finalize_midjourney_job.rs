@@ -42,17 +42,7 @@ pub struct FinalizeMidjourneyJobArgs<'a> {
 /// Returns `Ok(true)` if this call finalized the task, `Ok(false)` if it was
 /// already finalized by someone else.
 pub async fn finalize_midjourney_job(args: FinalizeMidjourneyJobArgs<'_>) -> AnyhowResult<bool> {
-  let FinalizeMidjourneyJobArgs {
-    app_handle,
-    app_data_root,
-    app_preferences,
-    task_database,
-    image_downloader,
-    midjourney_job_id,
-    local_task,
-    model_type,
-    maybe_full_command,
-  } = args;
+  let FinalizeMidjourneyJobArgs { app_handle, app_data_root, app_preferences, task_database, image_downloader, midjourney_job_id, local_task, model_type, maybe_full_command } = args;
 
   let mut local_files = Vec::with_capacity(MIDJOURNEY_GRID_SIZE as usize);
   for index in 0..MIDJOURNEY_GRID_SIZE {
@@ -67,11 +57,9 @@ pub async fn finalize_midjourney_job(args: FinalizeMidjourneyJobArgs<'_>) -> Any
     task: local_task,
     generation_provider: GenerationSource::Midjourney,
     media_class: TaskMediaFileClass::Image,
-    prompt: CompletionPrompt::Create {
-      model_type,
-      maybe_prompt: maybe_full_command,
-    },
+    prompt: CompletionPrompt::Create { model_type, maybe_prompt: maybe_full_command },
     fallback_model_slug: MIDJOURNEY_FALLBACK_MODEL_SLUG,
     local_files: &local_files,
-  }).await
+  })
+  .await
 }

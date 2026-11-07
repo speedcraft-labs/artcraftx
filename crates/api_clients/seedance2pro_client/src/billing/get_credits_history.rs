@@ -104,9 +104,7 @@ impl CreditHistoryEntryType {
 
 // --- Implementation ---
 
-pub async fn get_credits_history(
-  args: GetCreditsHistoryArgs<'_>,
-) -> Result<CreditsHistoryPage, Seedance2ProError> {
+pub async fn get_credits_history(args: GetCreditsHistoryArgs<'_>) -> Result<CreditsHistoryPage, Seedance2ProError> {
   let host = resolve_host(args.host_override.as_ref());
   let base_url = host.api_base_url();
   let url = format!("{}/api/trpc/credits.getCreditHistory", base_url);
@@ -115,15 +113,13 @@ pub async fn get_credits_history(
 
   let input_json = build_input_json(args.limit, args.offset);
 
-  let client = Client::builder()
-    .emulation(Emulation::Firefox143)
-    .build()
-    .map_err(|err| Seedance2ProClientError::WreqClientError(err))?;
+  let client = Client::builder().emulation(Emulation::Firefox143).build().map_err(|err| Seedance2ProClientError::WreqClientError(err))?;
 
   let cookie = args.session.cookies.as_str();
   let referer = format!("{}/app/dashboard/billing", base_url);
 
-  let request = client.get(&url)
+  let request = client
+    .get(&url)
     .query(&[("batch", "1"), ("input", input_json.as_str())])
     .header("User-Agent", FIREFOX_USER_AGENT)
     .header("Accept", "*/*")
@@ -142,64 +138,35 @@ pub async fn get_credits_history(
     .build()
     .map_err(|err| Seedance2ProClientError::WreqClientError(err))?;
 
-  let response = client.execute(request)
-    .await
-    .map_err(|err| Seedance2ProGenericApiError::WreqError(err))?;
+  let response = client.execute(request).await.map_err(|err| Seedance2ProGenericApiError::WreqError(err))?;
 
   let status = response.status();
-  let response_body = response.text()
-    .await
-    .map_err(|err| Seedance2ProGenericApiError::WreqError(err))?;
+  let response_body = response.text().await.map_err(|err| Seedance2ProGenericApiError::WreqError(err))?;
 
   info!("Credits history response status: {}", status);
 
   if !status.is_success() {
-    return Err(Seedance2ProGenericApiError::UncategorizedBadResponseWithStatusAndBody {
-      status_code: status,
-      body: response_body,
-    }.into());
+    return Err(Seedance2ProGenericApiError::UncategorizedBadResponseWithStatusAndBody { status_code: status, body: response_body }.into());
   }
 
   parse_response_body(&response_body)
 }
 
 fn parse_response_body(response_body: &str) -> Result<CreditsHistoryPage, Seedance2ProError> {
-  let batch_response: Vec<BatchResponseItem> = serde_json::from_str(response_body)
-    .map_err(|err| Seedance2ProGenericApiError::SerdeResponseParseErrorWithBody(err, response_body.to_string()))?;
+  let batch_response: Vec<BatchResponseItem> = serde_json::from_str(response_body).map_err(|err| Seedance2ProGenericApiError::SerdeResponseParseErrorWithBody(err, response_body.to_string()))?;
 
-  let json = batch_response
-    .into_iter()
-    .next()
-    .ok_or_else(|| Seedance2ProGenericApiError::UnexpectedResponseShape {
-      explanation: "Empty batch response array".to_string(),
-      raw_body: response_body.to_string(),
-    })?
-    .result
-    .data
-    .json;
+  let json = batch_response.into_iter().next().ok_or_else(|| Seedance2ProGenericApiError::UnexpectedResponseShape { explanation: "Empty batch response array".to_string(), raw_body: response_body.to_string() })?.result.data.json;
 
-  let entries = json.credits
+  let entries = json
+    .credits
     .into_iter()
     .map(|entry| {
-      let created_at_utc = DateTime::parse_from_rfc3339(&entry.created_at)
-        .map(|dt| dt.with_timezone(&Utc))
-        .ok();
-      CreditHistoryEntry {
-        id: entry.id,
-        entry_type: CreditHistoryEntryType::from_str(&entry.entry_type),
-        credit_delta: entry.credit,
-        maybe_order_id: entry.order_id,
-        product_name: entry.product_name,
-        created_at: entry.created_at,
-        created_at_utc,
-      }
+      let created_at_utc = DateTime::parse_from_rfc3339(&entry.created_at).map(|dt| dt.with_timezone(&Utc)).ok();
+      CreditHistoryEntry { id: entry.id, entry_type: CreditHistoryEntryType::from_str(&entry.entry_type), credit_delta: entry.credit, maybe_order_id: entry.order_id, product_name: entry.product_name, created_at: entry.created_at, created_at_utc }
     })
     .collect();
 
-  Ok(CreditsHistoryPage {
-    entries,
-    total: json.total,
-  })
+  Ok(CreditsHistoryPage { entries, total: json.total })
 }
 
 /// Builds the tRPC `input` JSON for the credits.getCreditHistory endpoint.
@@ -297,10 +264,7 @@ mod tests {
         {"id":1,"type":"CONSUMPTION_REFUND","credit":454,"orderId":"ord_x","createdAt":"2026-07-14T00:31:12.820Z","productName":"Seedance 2.0 Video"}
       ],"total":1}}}}]"#;
       let page = parse_response_body(body).expect("parse");
-      assert_eq!(
-        page.entries[0].entry_type,
-        CreditHistoryEntryType::Unknown("CONSUMPTION_REFUND".to_string()),
-      );
+      assert_eq!(page.entries[0].entry_type, CreditHistoryEntryType::Unknown("CONSUMPTION_REFUND".to_string()),);
       assert_eq!(page.entries[0].credit_delta, 454);
     }
 
@@ -323,18 +287,11 @@ mod tests {
       setup_test_logging(LevelFilter::Info);
       let session = test_session()?;
 
-      let page = get_credits_history(GetCreditsHistoryArgs {
-        session: &session,
-        limit: DEFAULT_CREDITS_PAGE_LIMIT,
-        offset: 0,
-        host_override: None,
-      }).await?;
+      let page = get_credits_history(GetCreditsHistoryArgs { session: &session, limit: DEFAULT_CREDITS_PAGE_LIMIT, offset: 0, host_override: None }).await?;
 
       println!("entries: {}, total: {}", page.entries.len(), page.total);
       for entry in &page.entries {
-        println!("  {} | {} | {:?} | {} | {:?}",
-          entry.id, entry.created_at, entry.entry_type, entry.credit_delta,
-          entry.maybe_order_id);
+        println!("  {} | {} | {:?} | {} | {:?}", entry.id, entry.created_at, entry.entry_type, entry.credit_delta, entry.maybe_order_id);
       }
       assert!(!page.entries.is_empty());
       Ok(())
@@ -362,12 +319,7 @@ mod tests {
       let mut last_reported_total = 0u64;
 
       for _ in 0..MAX_PAGES {
-        let page = get_credits_history(GetCreditsHistoryArgs {
-          session: &session,
-          limit: PAGE_LIMIT,
-          offset,
-          host_override: None,
-        }).await?;
+        let page = get_credits_history(GetCreditsHistoryArgs { session: &session, limit: PAGE_LIMIT, offset, host_override: None }).await?;
 
         pages += 1;
         last_reported_total = page.total;
@@ -385,8 +337,7 @@ mod tests {
         }
 
         if pages % 25 == 0 {
-          println!("page {} (offset {}): {} unique entries so far (server total {})",
-            pages, offset, seen_ids.len(), page.total);
+          println!("page {} (offset {}): {} unique entries so far (server total {})", pages, offset, seen_ids.len(), page.total);
         }
 
         // Advance by what was actually returned so a server-side limit cap

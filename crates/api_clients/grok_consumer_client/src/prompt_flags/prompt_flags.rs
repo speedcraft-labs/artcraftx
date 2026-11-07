@@ -87,14 +87,8 @@ mod tests {
 
   #[test]
   fn mode_is_appended_as_long_arg() {
-    assert_eq!(
-      PromptFlags::with_mode(GenerationMode::Spicy).apply_to("woman on beach"),
-      "woman on beach --mode=extremely-spicy-or-crazy",
-    );
-    assert_eq!(
-      PromptFlags::with_mode(GenerationMode::Custom).apply_to("An asteroid hits the city."),
-      "An asteroid hits the city. --mode=custom",
-    );
+    assert_eq!(PromptFlags::with_mode(GenerationMode::Spicy).apply_to("woman on beach"), "woman on beach --mode=extremely-spicy-or-crazy",);
+    assert_eq!(PromptFlags::with_mode(GenerationMode::Custom).apply_to("An asteroid hits the city."), "An asteroid hits the city. --mode=custom",);
   }
 
   #[test]

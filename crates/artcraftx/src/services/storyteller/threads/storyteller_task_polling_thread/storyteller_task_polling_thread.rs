@@ -20,21 +20,9 @@ use sqlite_identifiers::enums::task_status::TaskStatus;
 use std::collections::{HashMap, HashSet};
 use tauri::AppHandle;
 
-pub async fn storyteller_task_polling_thread(
-  app_handle: AppHandle,
-  app_data_root: AppDataRoot,
-  app_preferences: AppPreferencesManager,
-  task_database: TaskDatabase,
-  storyteller_creds_manager: StorytellerCredentialManager,
-) -> ! {
+pub async fn storyteller_task_polling_thread(app_handle: AppHandle, app_data_root: AppDataRoot, app_preferences: AppPreferencesManager, task_database: TaskDatabase, storyteller_creds_manager: StorytellerCredentialManager) -> ! {
   loop {
-    let res = polling_loop(
-      &app_handle,
-      &app_data_root,
-      &app_preferences,
-      &task_database,
-      &storyteller_creds_manager,
-    ).await;
+    let res = polling_loop(&app_handle, &app_data_root, &app_preferences, &task_database, &storyteller_creds_manager).await;
     if let Err(err) = res {
       error!("An error occurred: {:?}", err);
     }
@@ -43,13 +31,7 @@ pub async fn storyteller_task_polling_thread(
   }
 }
 
-async fn polling_loop(
-  app_handle: &AppHandle,
-  app_data_root: &AppDataRoot,
-  app_preferences: &AppPreferencesManager,
-  task_database: &TaskDatabase,
-  storyteller_creds_manager: &StorytellerCredentialManager,
-) -> AnyhowResult<()> {
+async fn polling_loop(app_handle: &AppHandle, app_data_root: &AppDataRoot, app_preferences: &AppPreferencesManager, task_database: &TaskDatabase, storyteller_creds_manager: &StorytellerCredentialManager) -> AnyhowResult<()> {
   loop {
     // Wait before next request for jobs.
     tokio::time::sleep(std::time::Duration::from_millis(5_000)).await;
@@ -57,35 +39,19 @@ async fn polling_loop(
     // Only poll for tasks that are still in flight.
     let unfinished_statuses = HashSet::from([TaskStatus::Pending, TaskStatus::Started]);
 
-    let tasks = list_tasks_by_provider_and_status(ListTasksByProviderAndStatusArgs {
-      db: task_database.get_connection(),
-      provider: GenerationSource::Artcraft,
-      task_statuses: &unfinished_statuses,
-    }).await?;
+    let tasks = list_tasks_by_provider_and_status(ListTasksByProviderAndStatusArgs { db: task_database.get_connection(), provider: GenerationSource::Artcraft, task_statuses: &unfinished_statuses }).await?;
 
-    let tasks_by_provider_job_id = tasks.tasks.iter()
-        .filter_map(|task| {
-          task.provider_job_id
-              .as_ref()
-              .map(|provider_job_id| (provider_job_id.clone(), task.clone()))
-        })
-        .collect::<HashMap<String, Task>>();
+    let tasks_by_provider_job_id = tasks.tasks.iter().filter_map(|task| task.provider_job_id.as_ref().map(|provider_job_id| (provider_job_id.clone(), task.clone()))).collect::<HashMap<String, Task>>();
 
     if tasks_by_provider_job_id.is_empty() {
       continue; // Nothing in flight.
     }
 
-    let job_tokens = tasks_by_provider_job_id.keys()
-        .map(|job_id| InferenceJobToken::new_from_str(job_id))
-        .collect::<Vec<_>>();
+    let job_tokens = tasks_by_provider_job_id.keys().map(|job_id| InferenceJobToken::new_from_str(job_id)).collect::<Vec<_>>();
 
     let creds = storyteller_creds_manager.get_credentials()?;
 
-    let result = batch_get_job_status(
-      &ApiHost::Storyteller,
-      creds.as_ref(),
-      &job_tokens,
-    ).await;
+    let result = batch_get_job_status(&ApiHost::Storyteller, creds.as_ref(), &job_tokens).await;
 
     let job_states = match result {
       Ok(result) => result.job_states,
@@ -94,11 +60,11 @@ async fn polling_loop(
           StorytellerError::Api(ApiError::TooManyRequests(message)) => {
             error!("Too many requests (sleeping): {:?}", message);
             tokio::time::sleep(std::time::Duration::from_millis(60_000)).await;
-          }
-          _ => {}
+          },
+          _ => {},
         }
         return Err(anyhow!(err));
-      }
+      },
     };
 
     for job in job_states.iter() {
@@ -110,13 +76,12 @@ async fn polling_loop(
       match job.status.status {
         JobStatusPlus::CompleteSuccess => {
           handle_successful_job(app_handle, app_data_root, app_preferences, creds.as_ref(), job, task, task_database).await?;
-        }
+        },
         JobStatusPlus::CompleteFailure | JobStatusPlus::Dead => {
           handle_failed_job(app_handle, job, task, task_database).await?;
-        }
+        },
         _ => continue,
       }
     }
-
   }
 }

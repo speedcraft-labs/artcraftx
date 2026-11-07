@@ -19,9 +19,7 @@ impl SharedCookieStore {
   }
 
   pub fn new(store: CookieStore) -> Self {
-    Self {
-      inner: Arc::new(RwLock::new(store)),
-    }
+    Self { inner: Arc::new(RwLock::new(store)) }
   }
 
   /// A point-in-time copy of the underlying store.

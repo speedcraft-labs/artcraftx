@@ -40,7 +40,6 @@ pub struct LogAppActiveUserRequest {
   pub maybe_session_duration_seconds: Option<u64>,
 
   // ========== GENERATION COUNTS ==========
-
   /// Number of items generated across all types.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub total_generation_count: Option<u16>,
@@ -109,7 +108,7 @@ pub struct LogAppActiveUserRequest {
 #[derive(Serialize, Deserialize)]
 pub struct LogAppActiveUserResponse {
   pub success: bool,
-  
+
   /// How long to wait until the next analytics event, in milliseconds.
   /// The client should honor this and is free to add jitter.
   pub wait_for_retry_millis: u64,

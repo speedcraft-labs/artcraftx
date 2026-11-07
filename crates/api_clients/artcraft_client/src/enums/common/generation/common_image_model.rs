@@ -1,4 +1,3 @@
-
 #[cfg(test)]
 use strum::EnumCount;
 #[cfg(test)]
@@ -158,11 +157,7 @@ mod tests {
       use strum::IntoEnumIterator;
       for variant in CommonImageModel::iter() {
         let model_type = variant.to_common_model_type();
-        assert_eq!(
-          model_type.get_model_class(), CommonModelClass::Image,
-          "{:?} mapped to {:?} which has class {:?}, expected Image",
-          variant, model_type, model_type.get_model_class(),
-        );
+        assert_eq!(model_type.get_model_class(), CommonModelClass::Image, "{:?} mapped to {:?} which has class {:?}, expected Image", variant, model_type, model_type.get_model_class(),);
       }
     }
   }
@@ -192,11 +187,7 @@ mod tests {
       let valid = regex::Regex::new(r"^[a-z0-9_]+$").unwrap();
       for variant in CommonImageModel::iter() {
         let json = serde_json::to_string(&variant).unwrap().replace('"', "");
-        assert!(
-          valid.is_match(&json),
-          "{:?} serializes to {:?} which contains invalid characters",
-          variant, json,
-        );
+        assert!(valid.is_match(&json), "{:?} serializes to {:?} which contains invalid characters", variant, json,);
       }
     }
 

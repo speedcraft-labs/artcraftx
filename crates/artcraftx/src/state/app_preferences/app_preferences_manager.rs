@@ -15,10 +15,7 @@ impl AppPreferencesManager {
   /// Load from disk (migrating the legacy JSON file if present), or start
   /// from the defaults.
   pub fn load_or_default(data_root: &AppDataRoot) -> Self {
-    Self {
-      preferences: CloneCell::with_owned(AppPreferences::load_or_default(data_root)),
-      data_root: data_root.clone(),
-    }
+    Self { preferences: CloneCell::with_owned(AppPreferences::load_or_default(data_root)), data_root: data_root.clone() }
   }
 
   /// A snapshot of the current preferences.

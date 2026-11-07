@@ -2,15 +2,9 @@ use artcraft_client::api_defs::prompts::create_prompt::CreatePromptRequest;
 use artcraft_client::api_defs::utils::media_links_to_thumbnail_template::media_links_to_thumbnail_template;
 use artcraft_client::credentials::storyteller_credential_set::StorytellerCredentialSet;
 use artcraft_client::endpoints::media_files::get_media_file::get_media_file;
-use artcraft_client::endpoints::media_files::legacy_upload_media_file_from_file::{
-  legacy_upload_media_file_from_file, LegacyUploadMediaFileFromFileArgs,
-};
-use artcraft_client::endpoints::media_files::upload_image_media_file_from_file::{
-  upload_image_media_file_from_file, UploadImageFromFileArgs,
-};
-use artcraft_client::endpoints::media_files::upload_video_media_file_from_file::{
-  upload_video_media_file_from_file, UploadVideoFromFileArgs,
-};
+use artcraft_client::endpoints::media_files::legacy_upload_media_file_from_file::{legacy_upload_media_file_from_file, LegacyUploadMediaFileFromFileArgs};
+use artcraft_client::endpoints::media_files::upload_image_media_file_from_file::{upload_image_media_file_from_file, UploadImageFromFileArgs};
+use artcraft_client::endpoints::media_files::upload_video_media_file_from_file::{upload_video_media_file_from_file, UploadVideoFromFileArgs};
 use artcraft_client::endpoints::prompts::create_prompt::create_prompt;
 use artcraft_client::enums::common::generation::common_model_type::CommonModelType;
 use artcraft_client::error::api_error::ApiError;
@@ -41,10 +35,7 @@ pub enum CompletionPrompt {
   Existing(PromptToken),
 
   /// Create the prompt now from what the provider reported.
-  Create {
-    model_type: CommonModelType,
-    maybe_prompt: Option<String>,
-  },
+  Create { model_type: CommonModelType, maybe_prompt: Option<String> },
 
   /// Don't associate a prompt.
   None,
@@ -90,15 +81,7 @@ pub async fn upload_results_to_artcraft(
   for (index, local_file) in local_files.iter().enumerate() {
     info!("[TaskCompletion] Uploading result {} of {} for task {} ...", index + 1, local_files.len(), task_id);
 
-    let upload = || upload_with_retry(
-      api_host,
-      creds,
-      local_file,
-      generation_provider,
-      media_class,
-      maybe_prompt_token.as_ref(),
-      maybe_batch_token.as_ref(),
-    );
+    let upload = || upload_with_retry(api_host, creds, local_file, generation_provider, media_class, maybe_prompt_token.as_ref(), maybe_batch_token.as_ref());
     let media_token = match &maybe_upload_cache {
       Some(cache) => cache.artcraft_token_for_file(api_host, local_file, upload).await?,
       None => upload().await?,
@@ -121,44 +104,32 @@ pub async fn upload_results_to_artcraft(
   match get_media_file(api_host, &primary_media_file_token).await {
     Ok(response) => {
       maybe_cdn_url = Some(response.media_file.media_links.cdn_url.clone());
-      maybe_thumbnail_url_template = media_links_to_thumbnail_template(&response.media_file.media_links)
-          .map(|s| s.to_string());
-    }
+      maybe_thumbnail_url_template = media_links_to_thumbnail_template(&response.media_file.media_links).map(|s| s.to_string());
+    },
     Err(err) => {
       error!("[TaskCompletion] Failed to look up media file after upload: {:?} (failing open)", err);
-    }
+    },
   }
 
-  Ok(UploadedResults {
-    primary_media_file_token,
-    maybe_batch_token,
-    maybe_cdn_url,
-    maybe_thumbnail_url_template,
-  })
+  Ok(UploadedResults { primary_media_file_token, maybe_batch_token, maybe_cdn_url, maybe_thumbnail_url_template })
 }
 
 // ── Helpers ──
 
 /// Turn the caller's prompt instruction into a token. Creating a prompt fails
 /// open: the uploads are still worth keeping without one.
-async fn resolve_prompt_token(
-  api_host: &ApiHost,
-  creds: &StorytellerCredentialSet,
-  task: &Task,
-  generation_provider: GenerationSource,
-  prompt: CompletionPrompt,
-) -> Option<PromptToken> {
+async fn resolve_prompt_token(api_host: &ApiHost, creds: &StorytellerCredentialSet, task: &Task, generation_provider: GenerationSource, prompt: CompletionPrompt) -> Option<PromptToken> {
   let task_id = task.id.as_str();
 
   match prompt {
     CompletionPrompt::Existing(token) => {
       info!("[TaskCompletion] Using prompt {:?} from task {}", token, task_id);
       Some(token)
-    }
+    },
     CompletionPrompt::None => {
       warn!("[TaskCompletion] Task {} has no prompt; uploading without prompt association", task_id);
       None
-    }
+    },
     CompletionPrompt::Create { model_type, maybe_prompt } => {
       // Only providers the API's enum knows; others (Higgsfield) go unspecified
       // rather than failing the request with `unknown variant`.
@@ -180,13 +151,13 @@ async fn resolve_prompt_token(
         Ok(response) => {
           info!("[TaskCompletion] Created prompt {:?} for task {}", response.prompt_token, task_id);
           Some(response.prompt_token)
-        }
+        },
         Err(err) => {
           error!("[TaskCompletion] Failed to create prompt for task {}: {:?} (uploading without one)", task_id, err);
           None
-        }
+        },
       }
-    }
+    },
   }
 }
 
@@ -207,13 +178,10 @@ async fn upload_with_retry(
     match result {
       Ok(token) => return Ok(token),
       Err(StorytellerError::Api(ApiError::TooManyRequests(_))) if attempt < MAX_UPLOAD_RETRIES => {
-        warn!(
-          "[TaskCompletion] Upload rate-limited (429), retrying in {}s (attempt {}/{})",
-          retry_delay_secs, attempt, MAX_UPLOAD_RETRIES,
-        );
+        warn!("[TaskCompletion] Upload rate-limited (429), retrying in {}s (attempt {}/{})", retry_delay_secs, attempt, MAX_UPLOAD_RETRIES,);
         tokio::time::sleep(Duration::from_secs(retry_delay_secs)).await;
         retry_delay_secs = (retry_delay_secs * 2).min(MAX_RETRY_DELAY_SECS);
-      }
+      },
       Err(err) => return Err(err.into()),
     }
   }
@@ -234,36 +202,17 @@ async fn try_upload(
   let maybe_generation_provider = artcraft_api_generation_provider(generation_provider);
   let media_token = match media_class {
     TaskMediaFileClass::Video => {
-      let result = upload_video_media_file_from_file(UploadVideoFromFileArgs {
-        api_host,
-        maybe_creds: Some(creds),
-        path,
-        maybe_prompt_token,
-        maybe_generation_provider,
-      }).await?;
+      let result = upload_video_media_file_from_file(UploadVideoFromFileArgs { api_host, maybe_creds: Some(creds), path, maybe_prompt_token, maybe_generation_provider }).await?;
       result.media_file_token
-    }
+    },
     TaskMediaFileClass::Splat | TaskMediaFileClass::Mesh => {
-      let result = legacy_upload_media_file_from_file(LegacyUploadMediaFileFromFileArgs {
-        api_host,
-        maybe_creds: Some(creds),
-        path,
-        maybe_generation_provider,
-      }).await?;
+      let result = legacy_upload_media_file_from_file(LegacyUploadMediaFileFromFileArgs { api_host, maybe_creds: Some(creds), path, maybe_generation_provider }).await?;
       result.media_file_token
-    }
+    },
     _ => {
-      let result = upload_image_media_file_from_file(UploadImageFromFileArgs {
-        api_host,
-        maybe_creds: Some(creds),
-        path,
-        is_intermediate_system_file: false,
-        maybe_prompt_token,
-        maybe_batch_token,
-        maybe_generation_provider,
-      }).await?;
+      let result = upload_image_media_file_from_file(UploadImageFromFileArgs { api_host, maybe_creds: Some(creds), path, is_intermediate_system_file: false, maybe_prompt_token, maybe_batch_token, maybe_generation_provider }).await?;
       result.media_file_token
-    }
+    },
   };
 
   Ok(media_token)

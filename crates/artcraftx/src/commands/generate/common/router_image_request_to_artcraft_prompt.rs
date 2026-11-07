@@ -11,9 +11,7 @@ use artcraft_client::enums::common::generation::common_resolution::CommonResolut
 use core_types::enums::generation_source::GenerationSource;
 use uuid_utils::uuid::generate_random_uuid;
 
-pub fn router_image_request_to_artcraft_prompt(
-  request: &GenerateImageRequestBuilder,
-) -> CreatePromptRequest {
+pub fn router_image_request_to_artcraft_prompt(request: &GenerateImageRequestBuilder) -> CreatePromptRequest {
   CreatePromptRequest {
     uuid_idempotency_token: generate_random_uuid(),
     positive_prompt: request.prompt.clone(),
@@ -76,7 +74,7 @@ fn provider_to_generation_provider(provider: RouterProvider) -> GenerationSource
     RouterProvider::Higgsfield => GenerationSource::Higgsfield,
     RouterProvider::Midjourney => GenerationSource::Midjourney,
     // Unused providers -> ArtCraft
-    RouterProvider::Seedance2Pro => GenerationSource::Artcraft ,
+    RouterProvider::Seedance2Pro => GenerationSource::Artcraft,
     RouterProvider::GmiCloud => GenerationSource::Artcraft,
     RouterProvider::GrokApi => GenerationSource::Artcraft,
   }
@@ -167,22 +165,14 @@ mod tests {
   #[test]
   fn edit_mode_when_images_present() {
     use router::api::image_list_ref::ImageListRef;
-    let builder = GenerateImageRequestBuilder {
-      image_inputs: Some(ImageListRef::Urls(vec!["https://example.com/img.jpg".to_string()])),
-      ..base_builder()
-    };
+    let builder = GenerateImageRequestBuilder { image_inputs: Some(ImageListRef::Urls(vec!["https://example.com/img.jpg".to_string()])), ..base_builder() };
     let prompt = router_image_request_to_artcraft_prompt(&builder);
     assert_eq!(prompt.maybe_generation_mode, Some(CommonGenerationMode::Edit));
   }
 
   #[test]
   fn with_aspect_ratio_and_resolution() {
-    let builder = GenerateImageRequestBuilder {
-      aspect_ratio: Some(RouterAspectRatio::WideSixteenByNine),
-      resolution: Some(RouterResolution::TwoK),
-      image_batch_count: Some(3),
-      ..base_builder()
-    };
+    let builder = GenerateImageRequestBuilder { aspect_ratio: Some(RouterAspectRatio::WideSixteenByNine), resolution: Some(RouterResolution::TwoK), image_batch_count: Some(3), ..base_builder() };
     let prompt = router_image_request_to_artcraft_prompt(&builder);
     assert_eq!(prompt.maybe_aspect_ratio, Some(EnumsAspectRatio::WideSixteenByNine));
     assert_eq!(prompt.maybe_resolution, Some(EnumsResolution::TwoK));
@@ -191,10 +181,7 @@ mod tests {
 
   #[test]
   fn no_prompt() {
-    let builder = GenerateImageRequestBuilder {
-      prompt: None,
-      ..base_builder()
-    };
+    let builder = GenerateImageRequestBuilder { prompt: None, ..base_builder() };
     let prompt = router_image_request_to_artcraft_prompt(&builder);
     assert!(prompt.positive_prompt.is_none());
   }

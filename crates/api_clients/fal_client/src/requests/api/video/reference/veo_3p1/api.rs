@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::video::reference::veo_3p1::raw_request::{
-  Veo3p1ReferenceToVideoInput, Veo3p1ReferenceToVideoOutput,
-};
+use crate::requests::api::video::reference::veo_3p1::raw_request::{Veo3p1ReferenceToVideoInput, Veo3p1ReferenceToVideoOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 #[derive(Clone, Debug)]
@@ -160,10 +158,7 @@ mod tests {
 
     let request = Veo3p1ReferenceToVideoRequest {
       prompt: "the two dogs run side by side across a sunlit meadow".to_string(),
-      image_urls: vec![
-        TALL_MOCHI_WITH_GLASSES_IMAGE_URL.to_string(),
-        JUNO_AT_LAKE_IMAGE_URL.to_string(),
-      ],
+      image_urls: vec![TALL_MOCHI_WITH_GLASSES_IMAGE_URL.to_string(), JUNO_AT_LAKE_IMAGE_URL.to_string()],
       aspect_ratio: Some(Veo3p1ReferenceToVideoAspectRatio::SixteenByNine),
       duration: Some(Veo3p1ReferenceToVideoDuration::FourSeconds),
       resolution: Some(Veo3p1ReferenceToVideoResolution::SevenTwentyP),
@@ -227,21 +222,9 @@ mod tests {
 
   #[test]
   fn raw_request_omits_unset_optionals() {
-    let request = Veo3p1ReferenceToVideoRequest {
-      prompt: "p".to_string(),
-      image_urls: vec!["https://example.com/a.png".to_string()],
-      aspect_ratio: None,
-      duration: None,
-      resolution: None,
-      generate_audio: None,
-      auto_fix: None,
-      safety_tolerance: None,
-    };
+    let request = Veo3p1ReferenceToVideoRequest { prompt: "p".to_string(), image_urls: vec!["https://example.com/a.png".to_string()], aspect_ratio: None, duration: None, resolution: None, generate_audio: None, auto_fix: None, safety_tolerance: None };
     let json = serde_json::to_value(request.to_raw_request().unwrap()).unwrap();
-    assert_eq!(
-      json,
-      serde_json::json!({ "prompt": "p", "image_urls": ["https://example.com/a.png"] }),
-    );
+    assert_eq!(json, serde_json::json!({ "prompt": "p", "image_urls": ["https://example.com/a.png"] }),);
   }
 
   /// This endpoint's schema has no `negative_prompt`/`seed` fields, so they
@@ -265,10 +248,7 @@ mod tests {
 
   #[test]
   fn endpoint_path_is_canonical() {
-    assert_eq!(
-      Veo3p1ReferenceToVideoRequest::ENDPOINT,
-      "fal-ai/veo3.1/reference-to-video",
-    );
+    assert_eq!(Veo3p1ReferenceToVideoRequest::ENDPOINT, "fal-ai/veo3.1/reference-to-video",);
   }
 
   // NB: Pricing tests are in cost.rs

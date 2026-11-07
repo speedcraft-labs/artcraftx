@@ -55,14 +55,7 @@ impl Display for ArtcraftXCredentialError {
         write!(f, "AmbiguousSecret (both cookie and api_key present): {:?}", path)
       },
       Self::SecretKindMismatch { path, service, found } => {
-        write!(
-          f,
-          "SecretKindMismatch (service {:?} expects {:?}, found {:?}): {:?}",
-          service,
-          service.kind(),
-          found,
-          path,
-        )
+        write!(f, "SecretKindMismatch (service {:?} expects {:?}, found {:?}): {:?}", service, service.kind(), found, path,)
       },
     }
   }

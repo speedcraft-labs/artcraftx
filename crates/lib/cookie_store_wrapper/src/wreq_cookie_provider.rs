@@ -28,10 +28,10 @@ impl WreqCookieStore for SharedCookieStore {
         match header.to_str() {
           Ok(value) => {
             store.apply_set_cookie_header(value, &request_url);
-          }
+          },
           Err(err) => {
             warn!("Set-Cookie header from {} is not valid UTF-8: {:?}", request_url, err);
-          }
+          },
         }
       }
     });
@@ -48,7 +48,7 @@ impl WreqCookieStore for SharedCookieStore {
         Err(err) => {
           warn!("Stored cookies for {} do not form a valid header: {:?}", request_url, err);
           Cookies::Empty
-        }
+        },
       },
       None => Cookies::Empty,
     }

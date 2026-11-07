@@ -26,8 +26,5 @@ impl SerializeMarker for ListSplatModelsResponse {}
 #[tauri::command]
 pub async fn list_splat_models_command() -> ResponseOrErrorMessage<ListSplatModelsResponse> {
   info!("list_splat_models_command called");
-  Ok(ListSplatModelsResponse {
-    models: SPLAT_MODELS.clone(),
-    providers: SPLAT_PROVIDERS.clone(),
-  }.into())
+  Ok(ListSplatModelsResponse { models: SPLAT_MODELS.clone(), providers: SPLAT_PROVIDERS.clone() }.into())
 }

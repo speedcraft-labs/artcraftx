@@ -19,15 +19,7 @@ pub fn provider_offers_audio_model(provider: GenerationProvider, model: AudioMod
 }
 
 fn audio_providers() -> Vec<AudioProviderOffering> {
-  vec![
-    AudioProviderOffering::of(GenerationProvider::Artcraft, &[
-      AudioModel::SunoMusic,
-      AudioModel::SunoRemix,
-      AudioModel::SunoSounds,
-      AudioModel::SunoSample,
-      AudioModel::SeedAudio1p0,
-    ]),
-  ]
+  vec![AudioProviderOffering::of(GenerationProvider::Artcraft, &[AudioModel::SunoMusic, AudioModel::SunoRemix, AudioModel::SunoSounds, AudioModel::SunoSample, AudioModel::SeedAudio1p0])]
 }
 
 #[cfg(test)]

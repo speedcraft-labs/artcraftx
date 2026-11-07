@@ -78,9 +78,7 @@ impl CreateMediaBatchRequest {
       return Err(HiggsfieldClientError::InvalidRequest("mime_types is empty".to_string()));
     }
     if let Some(non_image) = self.mime_types.iter().find(|mime| !mime.is_image()) {
-      return Err(HiggsfieldClientError::InvalidRequest(format!(
-        "/fnf/media/batch only presigns images; {non_image} must go through /fnf/reference-media",
-      )));
+      return Err(HiggsfieldClientError::InvalidRequest(format!("/fnf/media/batch only presigns images; {non_image} must go through /fnf/reference-media",)));
     }
     Ok(())
   }
@@ -135,11 +133,7 @@ mod tests {
     let session = load_higgsfield_test_session()?;
     let auth = session.auth().await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
-    let slots = create_media_batch(CreateMediaBatchArgs {
-      request: CreateMediaBatchRequest::new(vec![MediaMimeType::ImagePng, MediaMimeType::ImageJpeg]),
-      auth: &auth,
-      host: &HiggsfieldHost::Higgsfield,
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let slots = create_media_batch(CreateMediaBatchArgs { request: CreateMediaBatchRequest::new(vec![MediaMimeType::ImagePng, MediaMimeType::ImageJpeg]), auth: &auth, host: &HiggsfieldHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
     for slot in &slots {
       println!("Allocated media slot {} at {} (content_type {})", slot.id, slot.url, slot.content_type);

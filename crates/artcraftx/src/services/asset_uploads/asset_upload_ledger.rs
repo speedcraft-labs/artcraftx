@@ -70,12 +70,7 @@ impl AssetUploadLedger {
 
   /// This account's uploads on `service`.
   pub fn for_account(&self, service: GenerationSource, account_id: impl Into<String>) -> AccountUploadCache {
-    AccountUploadCache {
-      ledger: self.clone(),
-      service,
-      account_id: account_id.into(),
-      reused_this_request: Arc::new(Mutex::new(Vec::new())),
-    }
+    AccountUploadCache { ledger: self.clone(), service, account_id: account_id.into(), reused_this_request: Arc::new(Mutex::new(Vec::new())) }
   }
 
   /// A stored Higgsfield credential's uploads.
@@ -98,18 +93,13 @@ impl AssetUploadLedger {
   // ── Raw row access ──
 
   pub async fn find(&self, service: GenerationSource, account_id: &str, file_hash: &str) -> Option<AssetUploadRecord> {
-    let result = get_asset_upload(GetAssetUploadArgs {
-      db: self.database.get_connection(),
-      service: service.to_str(),
-      account_id,
-      file_hash_blake3: file_hash,
-    }).await;
+    let result = get_asset_upload(GetAssetUploadArgs { db: self.database.get_connection(), service: service.to_str(), account_id, file_hash_blake3: file_hash }).await;
     match result {
       Ok(record) => record,
       Err(err) => {
         warn!("asset_uploads lookup failed ({service}, {account_id}, {file_hash}): {err}");
         None
-      }
+      },
     }
   }
 
@@ -123,7 +113,8 @@ impl AssetUploadLedger {
       origin: upload.origin.as_str(),
       maybe_service_url: upload.maybe_service_url.as_deref(),
       maybe_file_size_bytes: file_size_bytes.map(|size| size as i64),
-    }).await;
+    })
+    .await;
     match result {
       Ok(()) => info!("Recorded {service} upload {} for {account_id} (hash {file_hash})", upload.service_id),
       Err(err) => warn!("Could not record {service} upload {}: {err}", upload.service_id),
@@ -190,7 +181,7 @@ impl AccountUploadCache {
       Err(message) => {
         warn!("Could not hash {} for the upload ledger ({message}); uploading without it", path.display());
         None
-      }
+      },
     };
 
     if let Some(hash) = maybe_hash.as_deref() {
@@ -238,7 +229,7 @@ impl AccountUploadCache {
         warn!("Cached ArtCraft media file {} could not be confirmed ({:?}); uploading again", token.as_str(), err);
         self.forget_upload(file_hash).await;
         None
-      }
+      },
     }
   }
 }
@@ -246,12 +237,7 @@ impl AccountUploadCache {
 #[async_trait]
 impl AssetUploadCache for AccountUploadCache {
   async fn find_upload(&self, file_hash_blake3: &str) -> Option<CachedAssetUpload> {
-    self.ledger.find(self.service, &self.account_id, file_hash_blake3).await
-        .map(|record| CachedAssetUpload {
-          service_id: record.service_id,
-          maybe_service_url: record.service_url,
-          origin: AssetUploadOrigin::parse(&record.origin),
-        })
+    self.ledger.find(self.service, &self.account_id, file_hash_blake3).await.map(|record| CachedAssetUpload { service_id: record.service_id, maybe_service_url: record.service_url, origin: AssetUploadOrigin::parse(&record.origin) })
   }
 
   async fn record_upload(&self, file_hash_blake3: &str, file_size_bytes: u64, upload: &CachedAssetUpload) {
@@ -365,9 +351,7 @@ mod tests {
     let file = dir.path().join("ref.png");
     std::fs::write(&file, b"\x89PNG\r\n\x1a\nfake").unwrap();
 
-    let token = cache.artcraft_token_for_file::<_, _, ()>(&ApiHost::Storyteller, &file, || async {
-      Ok(MediaFileToken::new_from_str("m_fresh"))
-    }).await.unwrap();
+    let token = cache.artcraft_token_for_file::<_, _, ()>(&ApiHost::Storyteller, &file, || async { Ok(MediaFileToken::new_from_str("m_fresh")) }).await.unwrap();
     assert_eq!(token.as_str(), "m_fresh");
 
     let hash = cache.hash_file(&file).await.unwrap();

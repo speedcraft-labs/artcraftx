@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::video::image::kling_3p0_standard_image_to_video::raw_request::{
-  Kling3p0StandardImageToVideoInput, Kling3p0StandardImageToVideoOutput,
-};
+use crate::requests::api::video::image::kling_3p0_standard_image_to_video::raw_request::{Kling3p0StandardImageToVideoInput, Kling3p0StandardImageToVideoOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 #[derive(Clone, Debug)]
@@ -108,16 +106,22 @@ impl FalEndpoint for Kling3p0StandardImageToVideoRequest {
   fn to_raw_request(&self) -> Result<Self::RawRequest, FalErrorPlus> {
     let duration = self.duration.map(|d| d.to_str().to_string());
 
-    let aspect_ratio = self.aspect_ratio.map(|ar| match ar {
-      Kling3p0StandardImageToVideoAspectRatio::Square => "1:1",
-      Kling3p0StandardImageToVideoAspectRatio::SixteenByNine => "16:9",
-      Kling3p0StandardImageToVideoAspectRatio::NineBySixteen => "9:16",
-    }.to_string());
+    let aspect_ratio = self.aspect_ratio.map(|ar| {
+      match ar {
+        Kling3p0StandardImageToVideoAspectRatio::Square => "1:1",
+        Kling3p0StandardImageToVideoAspectRatio::SixteenByNine => "16:9",
+        Kling3p0StandardImageToVideoAspectRatio::NineBySixteen => "9:16",
+      }
+      .to_string()
+    });
 
-    let shot_type = self.shot_type.map(|st| match st {
-      Kling3p0StandardImageToVideoShotType::Customize => "customize",
-      Kling3p0StandardImageToVideoShotType::Intelligent => "intelligent",
-    }.to_string());
+    let shot_type = self.shot_type.map(|st| {
+      match st {
+        Kling3p0StandardImageToVideoShotType::Customize => "customize",
+        Kling3p0StandardImageToVideoShotType::Intelligent => "intelligent",
+      }
+      .to_string()
+    });
 
     Ok(Self::RawRequest {
       prompt: self.prompt.clone(),
@@ -194,11 +198,7 @@ mod tests {
     let secret = read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt")?;
     let api_key = FalApiKey::from_str(&secret);
 
-    let aspect_ratios = [
-      Kling3p0StandardImageToVideoAspectRatio::Square,
-      Kling3p0StandardImageToVideoAspectRatio::SixteenByNine,
-      Kling3p0StandardImageToVideoAspectRatio::NineBySixteen,
-    ];
+    let aspect_ratios = [Kling3p0StandardImageToVideoAspectRatio::Square, Kling3p0StandardImageToVideoAspectRatio::SixteenByNine, Kling3p0StandardImageToVideoAspectRatio::NineBySixteen];
 
     for ar in aspect_ratios {
       println!("--- aspect ratio: {:?} ---", ar);
@@ -266,10 +266,7 @@ mod tests {
     let secret = read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt")?;
     let api_key = FalApiKey::from_str(&secret);
 
-    let shot_types = [
-      Kling3p0StandardImageToVideoShotType::Customize,
-      Kling3p0StandardImageToVideoShotType::Intelligent,
-    ];
+    let shot_types = [Kling3p0StandardImageToVideoShotType::Customize, Kling3p0StandardImageToVideoShotType::Intelligent];
 
     for st in shot_types {
       println!("--- shot type: {:?} ---", st);

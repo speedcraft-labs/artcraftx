@@ -92,7 +92,7 @@ mod tests {
       (ApiClientMeshModel::Hunyuan3d3p1SmartTopology, "hunyuan_3d_3p1_topology"),
       (ApiClientMeshModel::Tripo3dH3p1, "tripo3d_h3p1"),
       (ApiClientMeshModel::MeshyV6, "meshy_v6"),
-      (ApiClientMeshModel::Rodin2p5Fast, "rodin_2p5_fast")
+      (ApiClientMeshModel::Rodin2p5Fast, "rodin_2p5_fast"),
     ];
     for (variant, wire) in all {
       let json = format!("\"{}\"", wire);

@@ -1,7 +1,4 @@
-use seedance2pro_client::generate::image::generate_midjourney_v7::{
-  GenerateMidjourneyV7AspectRatio, GenerateMidjourneyV7Quality,
-  GenerateMidjourneyV7Request, KinoviMidjourneyBatchCount,
-};
+use seedance2pro_client::generate::image::generate_midjourney_v7::{GenerateMidjourneyV7AspectRatio, GenerateMidjourneyV7Quality, GenerateMidjourneyV7Request, KinoviMidjourneyBatchCount};
 
 use crate::api::image_list_ref::ImageListRef;
 use crate::errors::artcraft_router_error::ArtcraftRouterError;
@@ -28,19 +25,14 @@ pub struct KinoviMidjourney7RemainingItems {
 }
 
 impl KinoviMidjourney7DraftState {
-  pub async fn to_request(
-    &mut self,
-    draft_context: &ImageGenerationDraftContext<'_>,
-  ) -> Result<KinoviMidjourney7RequestState, ArtcraftRouterError> {
+  pub async fn to_request(&mut self, draft_context: &ImageGenerationDraftContext<'_>) -> Result<KinoviMidjourney7RequestState, ArtcraftRouterError> {
     let client = draft_context.get_seedance2pro_client_ref()?;
     let session = &client.session;
 
     let mut reference_image_urls = None;
     if let Some(remaining) = self.unhandled_request_state.take() {
       let map = draft_context.media_file_to_artcraft_url_map;
-      reference_image_urls = resolve_and_upload_image_list(
-        session, remaining.reference_images, map,
-      ).await?;
+      reference_image_urls = resolve_and_upload_image_list(session, remaining.reference_images, map).await?;
     }
 
     let request = GenerateMidjourneyV7Request {
@@ -81,9 +73,7 @@ mod tests {
       aspect_ratio: GenerateMidjourneyV7AspectRatio::Square1x1,
       quality: None,
       batch_count: KinoviMidjourneyBatchCount::One,
-      unhandled_request_state: Some(KinoviMidjourney7RemainingItems {
-        reference_images: Some(ImageListRef::Urls(vec![])),
-      }),
+      unhandled_request_state: Some(KinoviMidjourney7RemainingItems { reference_images: Some(ImageListRef::Urls(vec![])) }),
     };
     // We can't actually call `to_request()` without a client, but the
     // resolve path returns `None` for empty inputs. Smoke-test the resolve

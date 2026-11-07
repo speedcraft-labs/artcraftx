@@ -89,11 +89,7 @@ mod tests {
     setup_test_logging();
 
     let auth = load_higgsfield_test_auth().await?;
-    let slot = create_video_upload(CreateVideoUploadArgs {
-      request: CreateVideoUploadRequest::default(),
-      auth: &auth,
-      host: &HiggsfieldHost::Higgsfield,
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let slot = create_video_upload(CreateVideoUploadArgs { request: CreateVideoUploadRequest::default(), auth: &auth, host: &HiggsfieldHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
     println!("Allocated video slot {} at {} (thumbnail {:?})", slot.id, slot.url, slot.thumbnail_url);
     assert_eq!(slot.content_type, MediaMimeType::VideoMp4);
     Ok(())

@@ -38,21 +38,14 @@ pub struct GetLocalThumbnailsResponse {
 impl SerializeMarker for GetLocalThumbnailsResponse {}
 
 #[tauri::command]
-pub async fn get_local_thumbnails_command(
-  app: AppHandle,
-  request: GetLocalThumbnailsRequest,
-  local_files_database: State<'_, LocalFilesDatabase>,
-) -> Result<InfallibleResponse<GetLocalThumbnailsResponse>, ()> {
+pub async fn get_local_thumbnails_command(app: AppHandle, request: GetLocalThumbnailsRequest, local_files_database: State<'_, LocalFilesDatabase>) -> Result<InfallibleResponse<GetLocalThumbnailsResponse>, ()> {
   info!("get_local_thumbnails_command called for {} path(s)", request.file_paths.len());
 
   let file_paths: Vec<PathBuf> = request.file_paths.iter().map(PathBuf::from).collect();
   let lookups = file_paths.iter().map(|file_path| lookup_thumbnail(&local_files_database, file_path));
   let thumbnails = futures::future::join_all(lookups).await;
 
-  let pending: Vec<&str> = thumbnails.iter()
-      .filter(|thumbnail| thumbnail.status == LocalThumbnailStatus::Pending)
-      .map(|thumbnail| thumbnail.file_path.as_str())
-      .collect();
+  let pending: Vec<&str> = thumbnails.iter().filter(|thumbnail| thumbnail.status == LocalThumbnailStatus::Pending).map(|thumbnail| thumbnail.file_path.as_str()).collect();
   ThumbnailWorkQueue::enqueue_for_app(&app, &pending);
 
   Ok(GetLocalThumbnailsResponse { thumbnails }.into())

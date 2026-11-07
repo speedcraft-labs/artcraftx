@@ -21,13 +21,7 @@ pub struct CloudflareResponseSignals<'a> {
 
 impl<'a> CloudflareResponseSignals<'a> {
   pub fn new(status_code: u16, body: &'a str) -> Self {
-    Self {
-      status_code,
-      body,
-      maybe_server_header: None,
-      maybe_cf_ray: None,
-      maybe_cf_mitigated: None,
-    }
+    Self { status_code, body, maybe_server_header: None, maybe_cf_ray: None, maybe_cf_mitigated: None }
   }
 
   pub fn with_server_header(mut self, server: Option<&'a str>) -> Self {

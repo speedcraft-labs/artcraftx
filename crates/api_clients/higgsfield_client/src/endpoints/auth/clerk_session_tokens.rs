@@ -42,14 +42,7 @@ pub async fn clerk_session_tokens(args: ClerkSessionTokensArgs<'_>) -> Result<Cl
   // clerk-js sends this form-encoded; an empty form when there's no org.
   let form = TokensForm { organization_id: args.request.maybe_organization_id };
 
-  let raw: TokenEnvelope = send_clerk_request(
-    HttpMethod::Post,
-    &path,
-    args.cookies,
-    args.maybe_user_agent,
-    args.host,
-    RequestBody::Form(&form),
-  ).await?;
+  let raw: TokenEnvelope = send_clerk_request(HttpMethod::Post, &path, args.cookies, args.maybe_user_agent, args.host, RequestBody::Form(&form)).await?;
 
   let Some(jwt) = raw.jwt() else {
     return Err(HiggsfieldApiError::NoActiveSession { raw_http_body: "token response had no jwt".to_string() }.into());
@@ -117,12 +110,7 @@ mod tests {
   async fn bad_session_id_fails_before_any_http() {
     let cookies = HiggsfieldCookies::from_cookie_header("__client=x");
     let host = ClerkHost::Custom("http://127.0.0.1:9".to_string());
-    let err = clerk_session_tokens(ClerkSessionTokensArgs {
-      request: ClerkSessionTokensRequest { session_id: "../evil".into(), maybe_organization_id: None },
-      cookies: &cookies,
-      maybe_user_agent: None,
-      host: &host,
-    }).await.unwrap_err();
+    let err = clerk_session_tokens(ClerkSessionTokensArgs { request: ClerkSessionTokensRequest { session_id: "../evil".into(), maybe_organization_id: None }, cookies: &cookies, maybe_user_agent: None, host: &host }).await.unwrap_err();
     assert!(matches!(err, HiggsfieldError::Client(HiggsfieldClientError::InvalidRequest(_))));
   }
 
@@ -137,16 +125,12 @@ mod tests {
     setup_test_logging();
 
     let cookies = load_higgsfield_test_cookies()?;
-    let client = clerk_client(ClerkClientArgs { request: ClerkClientRequest, cookies: &cookies, maybe_user_agent: None, host: &ClerkHost::Higgsfield })
-        .await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let client = clerk_client(ClerkClientArgs { request: ClerkClientRequest, cookies: &cookies, maybe_user_agent: None, host: &ClerkHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
     let session_id = client.active_session().unwrap().id.clone();
 
-    let token = clerk_session_tokens(ClerkSessionTokensArgs {
-      request: ClerkSessionTokensRequest { session_id, maybe_organization_id: None },
-      cookies: &cookies,
-      maybe_user_agent: None,
-      host: &ClerkHost::Higgsfield,
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let token = clerk_session_tokens(ClerkSessionTokensArgs { request: ClerkSessionTokensRequest { session_id, maybe_organization_id: None }, cookies: &cookies, maybe_user_agent: None, host: &ClerkHost::Higgsfield })
+      .await
+      .map_err(|err| anyhow::anyhow!("{err}"))?;
 
     println!("Minted token for {} expiring {}", token.session_id(), token.expires_at());
     assert!(token.is_fresh(chrono::Utc::now(), chrono::Duration::seconds(10)));

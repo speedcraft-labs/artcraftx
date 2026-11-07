@@ -32,75 +32,25 @@ pub async fn handle_tauri_startup(
   grok_creds_manager: GrokCredentialManager,
   grok_websockets: GrokWebsockets,
 ) -> AnyhowResult<()> {
+  set_app_log_level(&app, &root)?;
 
-  set_app_log_level(
-    &app,
-    &root,
-  )?;
+  let task_database = bootstrap_task_database(&app, &root).await?;
 
-  let task_database =
-      bootstrap_task_database(&app, &root).await?;
+  let local_files_database = bootstrap_local_files_database(&app, &root).await?;
 
-  let local_files_database =
-      bootstrap_local_files_database(&app, &root).await?;
+  spawn_thumbnail_worker_thread(&app, &root, &task_database, &local_files_database)?;
 
-  spawn_thumbnail_worker_thread(
-    &app,
-    &root,
-    &task_database,
-    &local_files_database,
-  )?;
+  spawn_main_window_thread(&app, &root)?;
 
-  spawn_main_window_thread(
-    &app,
-    &root,
-  )?;
+  spawn_storyteller_threads(&app, &root, &app_preferences, &artcraft_usage_tracker, &artcraft_platform_info, &task_database, &storyteller_creds_manager)?;
 
-  spawn_storyteller_threads(
-    &app,
-    &root,
-    &app_preferences,
-    &artcraft_usage_tracker,
-    &artcraft_platform_info,
-    &task_database,
-    &storyteller_creds_manager,
-  )?;
+  tauri::async_runtime::spawn(grok_video_task_polling_thread(app.clone(), root.clone(), app_preferences.clone(), task_database.clone(), grok_creds_manager.clone(), storyteller_creds_manager.clone()));
 
-  tauri::async_runtime::spawn(grok_video_task_polling_thread(
-    app.clone(),
-    root.clone(),
-    app_preferences.clone(),
-    task_database.clone(),
-    grok_creds_manager.clone(),
-    storyteller_creds_manager.clone(),
-  ));
+  tauri::async_runtime::spawn(midjourney_websocket_thread(app.clone(), root.clone(), app_preferences.clone(), task_database.clone(), midjourney_live_session.clone(), storyteller_creds_manager.clone()));
 
-  tauri::async_runtime::spawn(midjourney_websocket_thread(
-    app.clone(),
-    root.clone(),
-    app_preferences.clone(),
-    task_database.clone(),
-    midjourney_live_session.clone(),
-    storyteller_creds_manager.clone(),
-  ));
+  tauri::async_runtime::spawn(midjourney_long_polling_thread(app.clone(), root.clone(), app_preferences.clone(), task_database.clone(), midjourney_live_session.clone(), storyteller_creds_manager.clone()));
 
-  tauri::async_runtime::spawn(midjourney_long_polling_thread(
-    app.clone(),
-    root.clone(),
-    app_preferences.clone(),
-    task_database.clone(),
-    midjourney_live_session.clone(),
-    storyteller_creds_manager.clone(),
-  ));
-
-  tauri::async_runtime::spawn(third_party_task_polling_thread(
-    app.clone(),
-    root.clone(),
-    app_preferences.clone(),
-    task_database.clone(),
-    storyteller_creds_manager.clone(),
-    grok_websockets.clone(),
-  ));
+  tauri::async_runtime::spawn(third_party_task_polling_thread(app.clone(), root.clone(), app_preferences.clone(), task_database.clone(), storyteller_creds_manager.clone(), grok_websockets.clone()));
 
   spawn_discord_presence_thread()?;
 

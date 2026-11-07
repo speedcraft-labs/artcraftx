@@ -89,15 +89,16 @@ impl ListImagineAssetsArgs<'_> {
     let domain = self.domain_override.unwrap_or(&GrokDomain::DefaultDomain);
     let client = create_firefox_client()?;
 
-    let mut request_builder = client.get(request_url(domain, &self.request))
-        .header(USER_AGENT, FIREFOX_143_MAC_USER_AGENT)
-        .header(ACCEPT, "*/*")
-        .header(ACCEPT_LANGUAGE, "en-US,en;q=0.5")
-        .header(REFERER, "https://grok.com/imagine/saved")
-        .header(COOKIE, self.credentials.to_string())
-        .header("sec-fetch-dest", "empty")
-        .header("sec-fetch-mode", "cors")
-        .header("sec-fetch-site", "same-origin");
+    let mut request_builder = client
+      .get(request_url(domain, &self.request))
+      .header(USER_AGENT, FIREFOX_143_MAC_USER_AGENT)
+      .header(ACCEPT, "*/*")
+      .header(ACCEPT_LANGUAGE, "en-US,en;q=0.5")
+      .header(REFERER, "https://grok.com/imagine/saved")
+      .header(COOKIE, self.credentials.to_string())
+      .header("sec-fetch-dest", "empty")
+      .header("sec-fetch-mode", "cors")
+      .header("sec-fetch-site", "same-origin");
 
     if let Some(headers) = self.request_headers {
       request_builder = headers.apply(request_builder);
@@ -107,29 +108,23 @@ impl ListImagineAssetsArgs<'_> {
       request_builder = request_builder.timeout(timeout);
     }
 
-    let http_request = request_builder
-        .build()
-        .map_err(|err| {
-          error!("Error building list_imagine_assets request: {:?}", err);
-          GrokGenericApiError::WreqError(err)
-        })?;
+    let http_request = request_builder.build().map_err(|err| {
+      error!("Error building list_imagine_assets request: {:?}", err);
+      GrokGenericApiError::WreqError(err)
+    })?;
 
-    let response = client.execute(http_request)
-        .await
-        .map_err(|err| {
-          error!("Error sending list_imagine_assets request: {:?}", err);
-          GrokGenericApiError::WreqError(err)
-        })?;
+    let response = client.execute(http_request).await.map_err(|err| {
+      error!("Error sending list_imagine_assets request: {:?}", err);
+      GrokGenericApiError::WreqError(err)
+    })?;
 
     let status = response.status();
     let headers = response.headers().clone();
 
-    let body = response.text()
-        .await
-        .map_err(|err| {
-          error!("Error reading list_imagine_assets response body: {:?}", err);
-          GrokGenericApiError::WreqError(err)
-        })?;
+    let body = response.text().await.map_err(|err| {
+      error!("Error reading list_imagine_assets response body: {:?}", err);
+      GrokGenericApiError::WreqError(err)
+    })?;
 
     Ok(RawListImagineAssetsResponse { status, headers, body })
   }
@@ -137,17 +132,11 @@ impl ListImagineAssetsArgs<'_> {
 
 fn request_url(domain: &GrokDomain, request: &ListImagineAssetsRequest) -> String {
   let page_size = request.page_size.unwrap_or(DEFAULT_PAGE_SIZE);
-  format!(
-    "{}{}?pageSize={}&kind={}",
-    domain.get_domain(), LIST_IMAGINE_ASSETS_PATH, page_size, CONVERSATION_KIND,
-  )
+  format!("{}{}?pageSize={}&kind={}", domain.get_domain(), LIST_IMAGINE_ASSETS_PATH, page_size, CONVERSATION_KIND,)
 }
 
 fn parse_response(body: &str) -> Result<ListImagineAssetsResponse, GrokError> {
-  serde_json::from_str(body)
-      .map_err(|err| {
-        GrokGenericApiError::SerdeResponseParseErrorWithBody(err, body.to_string()).into()
-      })
+  serde_json::from_str(body).map_err(|err| GrokGenericApiError::SerdeResponseParseErrorWithBody(err, body.to_string()).into())
 }
 
 #[cfg(test)]
@@ -165,20 +154,14 @@ mod tests {
     #[test]
     fn url_defaults_to_page_size_40() {
       let request = ListImagineAssetsRequest { page_size: None };
-      assert_eq!(
-        request_url(&GrokDomain::DefaultDomain, &request),
-        "https://grok.com/rest/app-chat/conversations?pageSize=40&kind=CONVERSATION_KIND_IMAGINE",
-      );
+      assert_eq!(request_url(&GrokDomain::DefaultDomain, &request), "https://grok.com/rest/app-chat/conversations?pageSize=40&kind=CONVERSATION_KIND_IMAGINE",);
     }
 
     #[test]
     fn url_respects_page_size_and_domain_overrides() {
       let request = ListImagineAssetsRequest { page_size: Some(12) };
       let domain = GrokDomain::Custom("http://localhost:8080".to_string());
-      assert_eq!(
-        request_url(&domain, &request),
-        "http://localhost:8080/rest/app-chat/conversations?pageSize=12&kind=CONVERSATION_KIND_IMAGINE",
-      );
+      assert_eq!(request_url(&domain, &request), "http://localhost:8080/rest/app-chat/conversations?pageSize=12&kind=CONVERSATION_KIND_IMAGINE",);
     }
   }
 
@@ -191,19 +174,10 @@ mod tests {
       assert_eq!(response.conversations.len(), 2);
 
       let video_conversation = &response.conversations[0];
-      assert_eq!(
-        video_conversation.conversation_id,
-        "9db05fac-a4df-4a42-aa81-4dee6d37f4a8",
-      );
-      assert_eq!(
-        video_conversation.title.as_deref(),
-        Some("Video Generation with AI"),
-      );
+      assert_eq!(video_conversation.conversation_id, "9db05fac-a4df-4a42-aa81-4dee6d37f4a8",);
+      assert_eq!(video_conversation.title.as_deref(), Some("Video Generation with AI"),);
       assert_eq!(video_conversation.starred, Some(false));
-      assert_eq!(
-        video_conversation.kind.as_deref(),
-        Some("CONVERSATION_KIND_IMAGINE"),
-      );
+      assert_eq!(video_conversation.kind.as_deref(), Some("CONVERSATION_KIND_IMAGINE"),);
 
       let video_asset = video_conversation.latest_asset_metadata.as_ref().unwrap();
       assert_eq!(video_asset.asset_id, "98db6014-be3a-4c92-9aec-91c80123ccac");
@@ -214,20 +188,14 @@ mod tests {
       let image_asset = image_conversation.latest_asset_metadata.as_ref().unwrap();
       assert_eq!(image_asset.asset_id, "8d0b3727-f040-4b33-abf0-16e7d4364e6c");
       let image_input = image_asset.media_gen_input.as_ref().unwrap();
-      assert_eq!(
-        image_input["textToImage"]["prompt"],
-        "A pirate ship in the middle of the forest",
-      );
+      assert_eq!(image_input["textToImage"]["prompt"], "A pirate ship in the middle of the forest",);
     }
 
     #[test]
     fn missing_required_conversations_is_an_error() {
       // `conversations` is required, so an object without it fails to parse.
       let result = parse_response("{}");
-      assert!(matches!(
-        result,
-        Err(GrokError::ApiGeneric(GrokGenericApiError::SerdeResponseParseErrorWithBody(_, _))),
-      ));
+      assert!(matches!(result, Err(GrokError::ApiGeneric(GrokGenericApiError::SerdeResponseParseErrorWithBody(_, _))),));
     }
   }
 
@@ -245,13 +213,7 @@ mod tests {
       let secrets = load_grok_test_secrets()?;
 
       let page_size: u32 = 5;
-      let args = ListImagineAssetsArgs {
-        request: ListImagineAssetsRequest { page_size: Some(page_size) },
-        credentials: &secrets.cookies,
-        domain_override: None,
-        request_headers: Some(&secrets.headers),
-        request_timeout: None,
-      };
+      let args = ListImagineAssetsArgs { request: ListImagineAssetsRequest { page_size: Some(page_size) }, credentials: &secrets.cookies, domain_override: None, request_headers: Some(&secrets.headers), request_timeout: None };
 
       // Fetch raw so we can print the whole body and spot fields the typed
       // response might be dropping.
@@ -304,7 +266,7 @@ mod tests {
         Err(err) => {
           dump();
           panic!("list_imagine_assets (cookies only) failed to parse body: {err}");
-        }
+        },
       };
       print_conversations(&response);
 
@@ -317,41 +279,26 @@ mod tests {
 
     /// Pretty-print a JSON body for inspection, falling back to the raw string.
     fn pretty_json(body: &str) -> String {
-      serde_json::from_str::<serde_json::Value>(body)
-          .and_then(|value| serde_json::to_string_pretty(&value))
-          .unwrap_or_else(|_| body.to_string())
+      serde_json::from_str::<serde_json::Value>(body).and_then(|value| serde_json::to_string_pretty(&value)).unwrap_or_else(|_| body.to_string())
     }
 
     fn print_conversations(response: &ListImagineAssetsResponse) {
       for conversation in &response.conversations {
-        println!(
-          "[test] conversation: {} (latest asset: {:?})",
-          conversation.conversation_id,
-          conversation.latest_asset_metadata.as_ref().map(|a| &a.asset_id),
-        );
+        println!("[test] conversation: {} (latest asset: {:?})", conversation.conversation_id, conversation.latest_asset_metadata.as_ref().map(|a| &a.asset_id),);
       }
     }
 
     // The account under test has imagine conversations; expect a non-empty
     // page of the imagine kind. (No PII asserted.)
-    fn list_imagine_assets_assertions_pass(
-      response: &ListImagineAssetsResponse,
-      page_size: u32,
-    ) -> bool {
+    fn list_imagine_assets_assertions_pass(response: &ListImagineAssetsResponse, page_size: u32) -> bool {
       !response.conversations.is_empty()
-          && response.conversations.len() <= page_size as usize
-          && response.conversations.iter().all(|conversation| {
-            !conversation.conversation_id.is_empty()
-                && conversation.kind.as_deref().is_none_or(|kind| kind == "CONVERSATION_KIND_IMAGINE")
-          })
+        && response.conversations.len() <= page_size as usize
+        && response.conversations.iter().all(|conversation| !conversation.conversation_id.is_empty() && conversation.kind.as_deref().is_none_or(|kind| kind == "CONVERSATION_KIND_IMAGINE"))
     }
 
     fn assert_list_imagine_assets(response: &ListImagineAssetsResponse, page_size: u32) {
       assert!(!response.conversations.is_empty(), "expected a conversation");
-      assert!(
-        list_imagine_assets_assertions_pass(response, page_size),
-        "conversation assertions failed",
-      );
+      assert!(list_imagine_assets_assertions_pass(response, page_size), "conversation assertions failed",);
     }
   }
 }

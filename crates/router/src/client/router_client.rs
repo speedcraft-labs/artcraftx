@@ -85,5 +85,4 @@ impl RouterClient {
       _ => Err(ClientError::ClientNotConfigured(ClientType::Seedance2Pro)),
     }
   }
-
 }

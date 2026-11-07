@@ -29,13 +29,8 @@ impl ApiOrWebCreds {
   /// `(name, value)` pair. `None` for a web credential with no cookies set.
   pub fn maybe_as_header(&self) -> Option<(&'static str, String)> {
     match self {
-      Self::Web(web_creds) => {
-        web_creds.maybe_as_cookie_header()
-            .map(|value| ("Cookie", value))
-      }
-      Self::Api(api_key) => {
-        Some(("Authorization", api_key.as_authorization_header_value()))
-      }
+      Self::Web(web_creds) => web_creds.maybe_as_cookie_header().map(|value| ("Cookie", value)),
+      Self::Api(api_key) => Some(("Authorization", api_key.as_authorization_header_value())),
     }
   }
 }
@@ -68,10 +63,7 @@ impl WebCreds {
 
 impl From<&StorytellerCredentialSet> for WebCreds {
   fn from(creds: &StorytellerCredentialSet) -> Self {
-    Self {
-      maybe_avt: creds.avt.clone(),
-      maybe_session: creds.session.clone(),
-    }
+    Self { maybe_avt: creds.avt.clone(), maybe_session: creds.session.clone() }
   }
 }
 
@@ -97,28 +89,18 @@ mod tests {
     #[test]
     fn api_key_bearer_header() {
       let creds = ApiOrWebCreds::Api(ApiKey::new(SAMPLE_KEY.to_string()));
-      assert_eq!(
-        creds.maybe_as_header(),
-        Some(("Authorization", format!("Bearer {SAMPLE_KEY}"))));
+      assert_eq!(creds.maybe_as_header(), Some(("Authorization", format!("Bearer {SAMPLE_KEY}"))));
     }
 
     #[test]
     fn web_creds_cookie_header() {
-      let creds = ApiOrWebCreds::Web(WebCreds {
-        maybe_avt: Some(StorytellerAvtCookie::new("bob".to_string())),
-        maybe_session: Some(StorytellerSessionCookie::new("alice".to_string())),
-      });
-      assert_eq!(
-        creds.maybe_as_header(),
-        Some(("Cookie", "visitor=bob; session=alice".to_string())));
+      let creds = ApiOrWebCreds::Web(WebCreds { maybe_avt: Some(StorytellerAvtCookie::new("bob".to_string())), maybe_session: Some(StorytellerSessionCookie::new("alice".to_string())) });
+      assert_eq!(creds.maybe_as_header(), Some(("Cookie", "visitor=bob; session=alice".to_string())));
     }
 
     #[test]
     fn empty_web_creds_no_header() {
-      let creds = ApiOrWebCreds::Web(WebCreds {
-        maybe_avt: None,
-        maybe_session: None,
-      });
+      let creds = ApiOrWebCreds::Web(WebCreds { maybe_avt: None, maybe_session: None });
       assert_eq!(creds.maybe_as_header(), None);
     }
   }

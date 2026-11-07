@@ -91,14 +91,7 @@ impl GrokImagine1p5Request {
 
   /// A text-to-video request with the web app's defaults (credits).
   pub fn text_to_video(prompt: impl Into<String>, resolution: GrokImagine1p5Resolution, duration: VideoDurationSeconds) -> Self {
-    Self {
-      prompt: prompt.into(),
-      resolution,
-      duration,
-      medias: Vec::new(),
-      use_unlim: false,
-      maybe_dimensions: None,
-    }
+    Self { prompt: prompt.into(), resolution, duration, medias: Vec::new(), use_unlim: false, maybe_dimensions: None }
   }
 
   fn validate(&self) -> Result<(), HiggsfieldClientError> {
@@ -117,19 +110,9 @@ impl GrokImagine1p5Request {
   }
 
   fn to_body(&self) -> GrokImagine1p5RequestBody {
-    let dimensions = self.maybe_dimensions
-        .or_else(|| VideoDimensions::for_aspect_ratio(&ImageAspectRatio::Auto, &self.resolution.to_video_resolution()))
-        .expect("auto dimensions are derivable for every known resolution");
+    let dimensions = self.maybe_dimensions.or_else(|| VideoDimensions::for_aspect_ratio(&ImageAspectRatio::Auto, &self.resolution.to_video_resolution())).expect("auto dimensions are derivable for every known resolution");
     GrokImagine1p5RequestBody {
-      params: GrokImagine1p5Params {
-        prompt: self.prompt.clone(),
-        resolution: self.resolution,
-        aspect_ratio: ImageAspectRatio::Auto,
-        width: dimensions.width,
-        height: dimensions.height,
-        duration: self.duration,
-        medias: self.medias.clone(),
-      },
+      params: GrokImagine1p5Params { prompt: self.prompt.clone(), resolution: self.resolution, aspect_ratio: ImageAspectRatio::Auto, width: dimensions.width, height: dimensions.height, duration: self.duration, medias: self.medias.clone() },
       use_unlim: self.use_unlim,
     }
   }
@@ -193,7 +176,7 @@ mod tests {
     // sends `ipCheckFinished` / `ipStatus` inside `data`; the server drops
     // them, so they're not part of the expected body.
     let request = GrokImagine1p5Request::text_to_video("a shiba inu skateboarding down a hill", GrokImagine1p5Resolution::P480, VideoDurationSeconds::new(1))
-        .with_media(MediaReference::start_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b1", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png")));
+      .with_media(MediaReference::start_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b1", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png")));
     let actual: Value = serde_json::to_value(request.to_body()).unwrap();
     let expected: Value = serde_json::from_str(r#"{"params":{"prompt":"a shiba inu skateboarding down a hill","resolution":"480p","aspect_ratio":"auto","width":854,"height":480,"duration":1,"medias":[{"role":"start_image","data":{"id":"00000000-0000-4000-8000-0000000000b1","type":"media_input","url":"https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png"}}]},"use_unlim":false}"#).unwrap();
     assert_eq!(actual, expected);
@@ -202,7 +185,7 @@ mod tests {
   #[test]
   fn wire_body_with_reference_image_matches_captured_request() {
     let request = GrokImagine1p5Request::text_to_video("a shiba inu skateboarding down a hill", GrokImagine1p5Resolution::P480, VideoDurationSeconds::new(1))
-        .with_media(MediaReference::image(MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png")));
+      .with_media(MediaReference::image(MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png")));
     let actual: Value = serde_json::to_value(request.to_body()).unwrap();
     let expected: Value = serde_json::from_str(r#"{"params":{"prompt":"a shiba inu skateboarding down a hill","resolution":"480p","aspect_ratio":"auto","width":854,"height":480,"duration":1,"medias":[{"role":"image","data":{"id":"00000000-0000-4000-8000-0000000000aa","type":"media_input","url":"https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png"}}]},"use_unlim":false}"#).unwrap();
     assert_eq!(actual, expected);
@@ -212,10 +195,18 @@ mod tests {
   fn media_roles() {
     assert_eq!(GrokImagine1p5Request::MEDIA_ROLES, &[MediaRole::StartImage, MediaRole::Image]);
     let base = || GrokImagine1p5Request::text_to_video("p", GrokImagine1p5Resolution::P480, VideoDurationSeconds::new(1));
-    assert!(base().with_media(MediaReference::start_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b1", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png"))).with_media(MediaReference::image(MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png"))).validate().is_ok());
+    assert!(
+      base()
+        .with_media(MediaReference::start_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b1", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png")))
+        .with_media(MediaReference::image(MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png")))
+        .validate()
+        .is_ok()
+    );
     let end = base().with_media(MediaReference::end_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b2", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png")));
     assert!(matches!(end.validate(), Err(HiggsfieldClientError::InvalidRequest(_))));
-    let two_starts = base().with_media(MediaReference::start_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b1", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png"))).with_media(MediaReference::start_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b2", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png")));
+    let two_starts = base()
+      .with_media(MediaReference::start_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b1", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b1.png")))
+      .with_media(MediaReference::start_frame(MediaInput::uploaded("00000000-0000-4000-8000-0000000000b2", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000b2.png")));
     assert!(matches!(two_starts.validate(), Err(HiggsfieldClientError::InvalidRequest(_))));
   }
 

@@ -3,9 +3,7 @@ use reqwest::Url;
 
 /// Default pre-navigation referrer. Visiting Google first gives the login
 /// page a plausible referrer (some providers gate on this).
-static DEFAULT_PRE_NAVIGATION_URL: Lazy<Url> = Lazy::new(|| {
-  Url::parse("https://google.com").expect("URL should parse")
-});
+static DEFAULT_PRE_NAVIGATION_URL: Lazy<Url> = Lazy::new(|| Url::parse("https://google.com").expect("URL should parse"));
 
 /// How long the injected link-discovery script keeps polling the page for the
 /// login link before giving up (milliseconds, page-side).
@@ -74,19 +72,12 @@ impl LoginJourney {
   /// An empty journey. Most sites should start from
   /// [`LoginJourney::with_default_pre_navigation`] instead.
   pub fn new() -> Self {
-    Self {
-      pre_navigation: None,
-      website_entry: None,
-      login_page: None,
-    }
+    Self { pre_navigation: None, website_entry: None, login_page: None }
   }
 
   /// A journey that starts at the default referrer (Google).
   pub fn with_default_pre_navigation() -> Self {
-    Self {
-      pre_navigation: Some(DEFAULT_PRE_NAVIGATION_URL.clone()),
-      ..Self::new()
-    }
+    Self { pre_navigation: Some(DEFAULT_PRE_NAVIGATION_URL.clone()), ..Self::new() }
   }
 
   /// Set stage 2: the site's public entry page.
@@ -104,9 +95,7 @@ impl LoginJourney {
   /// Set stage 3 to follow the login link discovered on the previous stage's
   /// page (for sites whose login URL is subject to change).
   pub fn login_page_via_link(mut self, css_selector: &str) -> Self {
-    self.login_page = Some(LoginPageTarget::FollowLink {
-      css_selector: css_selector.to_string(),
-    });
+    self.login_page = Some(LoginPageTarget::FollowLink { css_selector: css_selector.to_string() });
     self
   }
 
@@ -122,11 +111,11 @@ impl LoginJourney {
     match &self.login_page {
       Some(LoginPageTarget::Url(url)) => {
         actions.push(NavigationAction::Navigate(url.clone()));
-      }
+      },
       Some(LoginPageTarget::FollowLink { css_selector }) => {
         actions.push(NavigationAction::RunScript(follow_link_script(css_selector)));
-      }
-      None => {}
+      },
+      None => {},
     }
     actions
   }
@@ -158,8 +147,7 @@ impl Default for LoginJourney {
 /// idempotent: safe to inject more than once (a document swap between
 /// injection and load wipes scripts, so the driver re-injects).
 fn follow_link_script(css_selector: &str) -> String {
-  let selector_literal =
-      serde_json::to_string(css_selector).expect("string serializes to JSON");
+  let selector_literal = serde_json::to_string(css_selector).expect("string serializes to JSON");
   format!(
     r#"(() => {{
   const SELECTOR = {selector_literal};
@@ -205,24 +193,16 @@ mod tests {
 
     #[test]
     fn full_journey_flattens_in_stage_order() {
-      let journey = LoginJourney::with_default_pre_navigation()
-          .website_entry(url(ENTRY_URL))
-          .login_page(url(LOGIN_URL));
+      let journey = LoginJourney::with_default_pre_navigation().website_entry(url(ENTRY_URL)).login_page(url(LOGIN_URL));
 
-      assert_eq!(journey.plan(), vec![
-        NavigationAction::Navigate(url("https://google.com")),
-        NavigationAction::Navigate(url(ENTRY_URL)),
-        NavigationAction::Navigate(url(LOGIN_URL)),
-      ]);
+      assert_eq!(journey.plan(), vec![NavigationAction::Navigate(url("https://google.com")), NavigationAction::Navigate(url(ENTRY_URL)), NavigationAction::Navigate(url(LOGIN_URL)),]);
     }
 
     #[test]
     fn stages_are_optional() {
       let journey = LoginJourney::new().website_entry(url(ENTRY_URL));
 
-      assert_eq!(journey.plan(), vec![
-        NavigationAction::Navigate(url(ENTRY_URL)),
-      ]);
+      assert_eq!(journey.plan(), vec![NavigationAction::Navigate(url(ENTRY_URL)),]);
     }
 
     #[test]
@@ -232,9 +212,7 @@ mod tests {
 
     #[test]
     fn follow_link_login_page_becomes_a_script_action() {
-      let journey = LoginJourney::new()
-          .website_entry(url(ENTRY_URL))
-          .login_page_via_link("a[href*=\"app.example.com/login\"]");
+      let journey = LoginJourney::new().website_entry(url(ENTRY_URL)).login_page_via_link("a[href*=\"app.example.com/login\"]");
 
       let plan = journey.plan();
       assert_eq!(plan.len(), 2);
@@ -243,7 +221,7 @@ mod tests {
         NavigationAction::RunScript(script) => {
           assert!(script.contains(r#""a[href*=\"app.example.com/login\"]""#));
           assert!(script.contains("document.querySelector"));
-        }
+        },
         other => panic!("expected RunScript, got {:?}", other),
       }
     }
@@ -254,14 +232,10 @@ mod tests {
 
     #[test]
     fn excludes_referrer_and_discovered_login_pages() {
-      let fixed = LoginJourney::with_default_pre_navigation()
-          .website_entry(url(ENTRY_URL))
-          .login_page(url(LOGIN_URL));
+      let fixed = LoginJourney::with_default_pre_navigation().website_entry(url(ENTRY_URL)).login_page(url(LOGIN_URL));
       assert_eq!(fixed.site_urls(), vec![url(ENTRY_URL), url(LOGIN_URL)]);
 
-      let discovered = LoginJourney::with_default_pre_navigation()
-          .website_entry(url(ENTRY_URL))
-          .login_page_via_link("a.login");
+      let discovered = LoginJourney::with_default_pre_navigation().website_entry(url(ENTRY_URL)).login_page_via_link("a.login");
       assert_eq!(discovered.site_urls(), vec![url(ENTRY_URL)]);
     }
   }

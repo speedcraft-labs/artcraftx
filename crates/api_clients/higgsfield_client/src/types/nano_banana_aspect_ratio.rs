@@ -21,10 +21,7 @@ pub enum NanoBananaAspectRatio {
 
 impl NanoBananaAspectRatio {
   pub fn all() -> [Self; 11] {
-    [
-      Self::Auto, Self::Square1x1, Self::Portrait3x4, Self::Landscape4x3, Self::Portrait2x3, Self::Landscape3x2,
-      Self::Portrait9x16, Self::Landscape16x9, Self::Landscape5x4, Self::Portrait4x5, Self::Landscape21x9,
-    ]
+    [Self::Auto, Self::Square1x1, Self::Portrait3x4, Self::Landscape4x3, Self::Portrait2x3, Self::Landscape3x2, Self::Portrait9x16, Self::Landscape16x9, Self::Landscape5x4, Self::Portrait4x5, Self::Landscape21x9]
   }
 
   /// The wire vocabulary value.

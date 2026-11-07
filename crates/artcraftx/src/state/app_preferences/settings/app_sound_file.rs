@@ -71,9 +71,7 @@ impl AppSoundFile {
     if !path.is_absolute() {
       return Err(format!("Sound file path must be absolute: {}", path.display()));
     }
-    let is_wav = path.extension()
-        .map(|ext| ext.eq_ignore_ascii_case("wav"))
-        .unwrap_or(false);
+    let is_wav = path.extension().map(|ext| ext.eq_ignore_ascii_case("wav")).unwrap_or(false);
     if !is_wav {
       return Err(format!("Sound file must be a .wav file: {}", path.display()));
     }

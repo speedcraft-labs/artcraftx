@@ -31,12 +31,7 @@ pub(crate) use crate::generate::generate_image::providers::higgsfield::common::{
 
 /// Clip length: in range passes through; out of range clamps (or errors out
 /// under `ErrorOut`). `None` means `default`.
-pub(crate) fn plan_duration(
-  requested: Option<u16>,
-  range: VideoDurationRange,
-  default: u32,
-  strategy: RequestMismatchMitigationStrategy,
-) -> Result<VideoDurationSeconds, ArtcraftRouterError> {
+pub(crate) fn plan_duration(requested: Option<u16>, range: VideoDurationRange, default: u32, strategy: RequestMismatchMitigationStrategy) -> Result<VideoDurationSeconds, ArtcraftRouterError> {
   let Some(requested) = requested else {
     return Ok(VideoDurationSeconds::new(default));
   };
@@ -45,10 +40,7 @@ pub(crate) fn plan_duration(
     return Ok(duration);
   }
   if let RequestMismatchMitigationStrategy::ErrorOut = strategy {
-    return Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption {
-      field: "duration_seconds",
-      value: format!("{requested} (Higgsfield offers {}–{}s for this model)", range.min_seconds, range.max_seconds),
-    }));
+    return Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "duration_seconds", value: format!("{requested} (Higgsfield offers {}–{}s for this model)", range.min_seconds, range.max_seconds) }));
   }
   let clamped = (requested as u32).clamp(range.min_seconds, range.max_seconds);
   warn!("Higgsfield offers {}–{}s for this model; clamping {}s to {}s", range.min_seconds, range.max_seconds, requested, clamped);
@@ -57,10 +49,7 @@ pub(crate) fn plan_duration(
 
 /// The Seedance models render 1–4 clips per request; larger batches clamp
 /// to 4 (or error out under `ErrorOut`).
-pub(crate) fn plan_batch_size(
-  video_batch_count: Option<u16>,
-  strategy: RequestMismatchMitigationStrategy,
-) -> Result<ImageBatchSize, ArtcraftRouterError> {
+pub(crate) fn plan_batch_size(video_batch_count: Option<u16>, strategy: RequestMismatchMitigationStrategy) -> Result<ImageBatchSize, ArtcraftRouterError> {
   let count = video_batch_count.unwrap_or(1);
   if count == 0 {
     return Err(ArtcraftRouterError::Client(ClientError::UserRequestedZeroGenerations));
@@ -69,36 +58,26 @@ pub(crate) fn plan_batch_size(
     return Ok(batch_size);
   }
   match strategy {
-    RequestMismatchMitigationStrategy::ErrorOut => Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption {
-      field: "video_batch_count",
-      value: format!("{count} (Higgsfield renders at most {} per request)", ImageBatchSize::MAX),
-    })),
+    RequestMismatchMitigationStrategy::ErrorOut => Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "video_batch_count", value: format!("{count} (Higgsfield renders at most {} per request)", ImageBatchSize::MAX) })),
     _ => {
       warn!("Higgsfield renders at most {} videos per request; clamping {}", ImageBatchSize::MAX, count);
       Ok(ImageBatchSize::Four)
-    }
+    },
   }
 }
 
 /// Models with no batch control render one clip; a bigger request is an
 /// error under `ErrorOut` and otherwise renders one.
-pub(crate) fn plan_single_video(
-  video_batch_count: Option<u16>,
-  strategy: RequestMismatchMitigationStrategy,
-  model: &str,
-) -> Result<(), ArtcraftRouterError> {
+pub(crate) fn plan_single_video(video_batch_count: Option<u16>, strategy: RequestMismatchMitigationStrategy, model: &str) -> Result<(), ArtcraftRouterError> {
   match video_batch_count.unwrap_or(1) {
     0 => Err(ArtcraftRouterError::Client(ClientError::UserRequestedZeroGenerations)),
     1 => Ok(()),
     count => match strategy {
-      RequestMismatchMitigationStrategy::ErrorOut => Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption {
-        field: "video_batch_count",
-        value: format!("{count} ({model} on Higgsfield renders one video per request)"),
-      })),
+      RequestMismatchMitigationStrategy::ErrorOut => Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "video_batch_count", value: format!("{count} ({model} on Higgsfield renders one video per request)") })),
       _ => {
         warn!("{model} on Higgsfield renders one video per request; ignoring batch of {count}");
         Ok(())
-      }
+      },
     },
   }
 }
@@ -108,14 +87,7 @@ pub(crate) fn plan_single_video(
 /// else 16:9; everything else snaps to the nearest ratio.
 pub(crate) fn plan_seedance_aspect_ratio(requested: Option<RouterAspectRatio>, allow_auto: bool) -> SeedanceVideoAspectRatio {
   use SeedanceVideoAspectRatio as Ar;
-  const CANDIDATES: &[(f64, Ar)] = &[
-    (21.0 / 9.0, Ar::Landscape21x9),
-    (16.0 / 9.0, Ar::Landscape16x9),
-    (4.0 / 3.0, Ar::Landscape4x3),
-    (1.0, Ar::Square1x1),
-    (3.0 / 4.0, Ar::Portrait3x4),
-    (9.0 / 16.0, Ar::Portrait9x16),
-  ];
+  const CANDIDATES: &[(f64, Ar)] = &[(21.0 / 9.0, Ar::Landscape21x9), (16.0 / 9.0, Ar::Landscape16x9), (4.0 / 3.0, Ar::Landscape4x3), (1.0, Ar::Square1x1), (3.0 / 4.0, Ar::Portrait3x4), (9.0 / 16.0, Ar::Portrait9x16)];
   match requested.and_then(aspect_ratio_value) {
     None if allow_auto => Ar::Auto,
     None => Ar::Landscape16x9,
@@ -126,11 +98,7 @@ pub(crate) fn plan_seedance_aspect_ratio(requested: Option<RouterAspectRatio>, a
 /// Kling's menu: 16:9, 9:16, 1:1. Unset / auto ratios are 16:9.
 pub(crate) fn plan_kling_aspect_ratio(requested: Option<RouterAspectRatio>) -> KlingAspectRatio {
   use KlingAspectRatio as Ar;
-  const CANDIDATES: &[(f64, Ar)] = &[
-    (16.0 / 9.0, Ar::Landscape16x9),
-    (9.0 / 16.0, Ar::Portrait9x16),
-    (1.0, Ar::Square1x1),
-  ];
+  const CANDIDATES: &[(f64, Ar)] = &[(16.0 / 9.0, Ar::Landscape16x9), (9.0 / 16.0, Ar::Portrait9x16), (1.0, Ar::Square1x1)];
   match requested.and_then(aspect_ratio_value) {
     None => Ar::Landscape16x9,
     Some(value) => nearest_aspect_ratio(value, CANDIDATES),
@@ -209,11 +177,7 @@ impl HiggsfieldVideoReferences {
   }
 
   pub fn is_empty(&self) -> bool {
-    self.start_frame.is_none()
-        && self.end_frame.is_none()
-        && self.reference_images.is_none()
-        && self.reference_videos.is_none()
-        && self.reference_audio.is_none()
+    self.start_frame.is_none() && self.end_frame.is_none() && self.reference_images.is_none() && self.reference_videos.is_none() && self.reference_audio.is_none()
   }
 
   pub fn reference_image_count(&self) -> usize {
@@ -235,10 +199,7 @@ impl HiggsfieldVideoReferences {
 
 fn check_limit(count: usize, max: usize, field: &'static str, what: &str, model: &str) -> Result<(), ArtcraftRouterError> {
   if count > max {
-    return Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption {
-      field,
-      value: format!("{count} {what} ({model} on Higgsfield takes at most {max})"),
-    }));
+    return Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field, value: format!("{count} {what} ({model} on Higgsfield takes at most {max})") }));
   }
   Ok(())
 }
@@ -261,16 +222,10 @@ fn audio_list_len(list: &AudioListRef) -> usize {
 pub(crate) fn finish(plan: HiggsfieldVideoPlan, references: HiggsfieldVideoReferences, ip_check: bool) -> VideoGenerationDraftOrRequest {
   if references.is_empty() {
     if let HiggsfieldVideoPlan::Request(request) = plan {
-      return VideoGenerationDraftOrRequest::Request(
-        VideoGenerationRequest::HiggsfieldVideo(HiggsfieldVideoRequestState { request }),
-      );
+      return VideoGenerationDraftOrRequest::Request(VideoGenerationRequest::HiggsfieldVideo(HiggsfieldVideoRequestState { request }));
     }
   }
-  VideoGenerationDraftOrRequest::Draft(VideoGenerationDraftRequest::HiggsfieldVideo(HiggsfieldVideoDraftState {
-    plan,
-    unhandled_request_state: Some(references),
-    ip_check,
-  }))
+  VideoGenerationDraftOrRequest::Draft(VideoGenerationDraftRequest::HiggsfieldVideo(HiggsfieldVideoDraftState { plan, unhandled_request_state: Some(references), ip_check }))
 }
 
 #[cfg(test)]
@@ -292,10 +247,7 @@ mod tests {
     fn out_of_range_clamps_or_errors() {
       assert_eq!(plan_duration(Some(30), RANGE, 5, RequestMismatchMitigationStrategy::PayMoreUpgrade).unwrap().seconds(), 15);
       assert_eq!(plan_duration(Some(1), RANGE, 5, RequestMismatchMitigationStrategy::PayLessDowngrade).unwrap().seconds(), 4);
-      assert!(matches!(
-        plan_duration(Some(30), RANGE, 5, RequestMismatchMitigationStrategy::ErrorOut),
-        Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "duration_seconds", .. })),
-      ));
+      assert!(matches!(plan_duration(Some(30), RANGE, 5, RequestMismatchMitigationStrategy::ErrorOut), Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "duration_seconds", .. })),));
     }
 
     #[test]
@@ -397,14 +349,8 @@ mod tests {
     fn limits() {
       let references = HiggsfieldVideoReferences::take_from(&mut full_builder(), "x");
       assert!(references.check_limits(2, 1, 1, "x").is_ok());
-      assert!(matches!(
-        references.check_limits(1, 1, 1, "x"),
-        Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "reference_images", .. })),
-      ));
-      assert!(matches!(
-        references.check_limits(2, 0, 1, "x"),
-        Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "reference_videos", .. })),
-      ));
+      assert!(matches!(references.check_limits(1, 1, 1, "x"), Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "reference_images", .. })),));
+      assert!(matches!(references.check_limits(2, 0, 1, "x"), Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "reference_videos", .. })),));
     }
   }
 }

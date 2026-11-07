@@ -48,12 +48,7 @@ impl JobStepImage {
 
     let format = MidjourneyImageFormat::infer(extension, &bytes);
 
-    Some(Self {
-      image_index,
-      step,
-      format,
-      bytes,
-    })
+    Some(Self { image_index, step, format, bytes })
   }
 }
 
@@ -89,12 +84,7 @@ impl MidjourneyImageFormat {
 
 impl std::fmt::Debug for JobStepImage {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.debug_struct("JobStepImage")
-        .field("image_index", &self.image_index)
-        .field("step", &self.step)
-        .field("format", &self.format)
-        .field("bytes", &format!("<{} bytes>", self.bytes.len()))
-        .finish()
+    f.debug_struct("JobStepImage").field("image_index", &self.image_index).field("step", &self.step).field("format", &self.format).field("bytes", &format!("<{} bytes>", self.bytes.len())).finish()
   }
 }
 

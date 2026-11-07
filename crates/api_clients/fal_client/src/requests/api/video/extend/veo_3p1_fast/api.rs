@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::video::extend::veo_3p1_fast::raw_request::{
-  Veo3p1FastExtendVideoInput, Veo3p1FastExtendVideoOutput,
-};
+use crate::requests::api::video::extend::veo_3p1_fast::raw_request::{Veo3p1FastExtendVideoInput, Veo3p1FastExtendVideoOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 #[derive(Clone, Debug)]
@@ -257,20 +255,12 @@ mod tests {
       safety_tolerance: None,
     };
     let json = serde_json::to_value(request.to_raw_request().unwrap()).unwrap();
-    assert_eq!(
-      json,
-      serde_json::json!({ "prompt": "p", "video_url": "https://example.com/in.mp4" }),
-    );
+    assert_eq!(json, serde_json::json!({ "prompt": "p", "video_url": "https://example.com/in.mp4" }),);
   }
 
   #[test]
   fn every_duration_maps_to_wire_string_and_seconds() {
-    for (variant, s, secs) in [
-      (Veo3p1FastExtendVideoDuration::FourSeconds, "4s", 4),
-      (Veo3p1FastExtendVideoDuration::SixSeconds, "6s", 6),
-      (Veo3p1FastExtendVideoDuration::SevenSeconds, "7s", 7),
-      (Veo3p1FastExtendVideoDuration::EightSeconds, "8s", 8),
-    ] {
+    for (variant, s, secs) in [(Veo3p1FastExtendVideoDuration::FourSeconds, "4s", 4), (Veo3p1FastExtendVideoDuration::SixSeconds, "6s", 6), (Veo3p1FastExtendVideoDuration::SevenSeconds, "7s", 7), (Veo3p1FastExtendVideoDuration::EightSeconds, "8s", 8)] {
       assert_eq!(variant.to_str(), s);
       assert_eq!(variant.to_seconds(), secs);
     }
@@ -278,10 +268,7 @@ mod tests {
 
   #[test]
   fn endpoint_path_is_canonical() {
-    assert_eq!(
-      Veo3p1FastExtendVideoRequest::ENDPOINT,
-      "fal-ai/veo3.1/fast/extend-video",
-    );
+    assert_eq!(Veo3p1FastExtendVideoRequest::ENDPOINT, "fal-ai/veo3.1/fast/extend-video",);
   }
 
   // NB: Pricing tests are in cost.rs

@@ -33,12 +33,7 @@ struct PendingPaths {
 
 impl ThumbnailWorkQueue {
   pub fn new() -> Self {
-    Self {
-      inner: Arc::new(Inner {
-        pending: Mutex::new(PendingPaths::default()),
-        notify: Notify::new(),
-      }),
-    }
+    Self { inner: Arc::new(Inner { pending: Mutex::new(PendingPaths::default()), notify: Notify::new() }) }
   }
 
   /// Queue freshly downloaded files and wake the worker. Fails open when the

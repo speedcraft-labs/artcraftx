@@ -6,9 +6,7 @@ use crate::state::database::task_database::TaskDatabase;
 use crate::state::thumbnails::thumbnail_work_queue::ThumbnailWorkQueue;
 use crate::threads::task_completion::save_results_to_download_dir::save_results_to_download_dir;
 use crate::threads::task_completion::upload_results_to_artcraft::{upload_results_to_artcraft, CompletionPrompt};
-use crate::threads::third_party_task_polling_thread::events::notify_frontend_of_completion::{
-  notify_frontend_of_completion, notify_generation_complete, CompletionData,
-};
+use crate::threads::third_party_task_polling_thread::events::notify_frontend_of_completion::{notify_frontend_of_completion, notify_generation_complete, CompletionData};
 use crate::utils::download::record_task_download_locations::record_task_download_locations;
 use anyhow::bail;
 use crate::services::backup::backup_target::resolve_backup_target;
@@ -16,9 +14,7 @@ use core_types::enums::generation_source::GenerationSource;
 use errors::AnyhowResult;
 use log::info;
 use sqlite_database::queries::task::Task;
-use sqlite_database::queries::update::update_successful_task_status_with_metadata::{
-  update_successful_task_status_with_metadata, UpdateSuccessfulTaskArgs,
-};
+use sqlite_database::queries::update::update_successful_task_status_with_metadata::{update_successful_task_status_with_metadata, UpdateSuccessfulTaskArgs};
 use sqlite_identifiers::enums::task_media_file_class::TaskMediaFileClass;
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
@@ -63,18 +59,7 @@ pub struct CompleteTaskArgs<'a> {
 /// Returns `Ok(true)` if this call completed the task, `Ok(false)` if it was
 /// already complete. Errors leave the task pending so the poller retries.
 pub async fn complete_task_with_local_files(args: CompleteTaskArgs<'_>) -> AnyhowResult<bool> {
-  let CompleteTaskArgs {
-    app_handle,
-    app_data_root,
-    app_preferences,
-    task_database,
-    task,
-    generation_provider,
-    media_class,
-    prompt,
-    fallback_model_slug,
-    local_files,
-  } = args;
+  let CompleteTaskArgs { app_handle, app_data_root, app_preferences, task_database, task, generation_provider, media_class, prompt, fallback_model_slug, local_files } = args;
 
   let task_id = task.id.as_str();
 
@@ -84,17 +69,10 @@ pub async fn complete_task_with_local_files(args: CompleteTaskArgs<'_>) -> Anyho
 
   info!("[TaskCompletion] Delivering {} file(s) for task {} ({:?})", local_files.len(), task_id, generation_provider);
 
-  let downloaded = save_results_to_download_dir(
-    app_data_root,
-    app_preferences,
-    task,
-    fallback_model_slug,
-    local_files,
-  );
+  let downloaded = save_results_to_download_dir(app_data_root, app_preferences, task, fallback_model_slug, local_files);
 
   // The upload ledger lets a re-delivered file reuse its earlier upload.
-  let maybe_ledger = app_handle.try_state::<LocalFilesDatabase>()
-      .map(|database| AssetUploadLedger::new(database.inner().clone()));
+  let maybe_ledger = app_handle.try_state::<LocalFilesDatabase>().map(|database| AssetUploadLedger::new(database.inner().clone()));
 
   // The same rail for every third-party service: results go to the backup
   // account the user picked, or stay local when backups are off.
@@ -103,27 +81,16 @@ pub async fn complete_task_with_local_files(args: CompleteTaskArgs<'_>) -> Anyho
   let maybe_uploaded = match &maybe_backup {
     Some(backup) => {
       info!("[TaskCompletion] Backing up task {} to ArtCraft account {}", task_id, backup.credential_id);
-      let uploaded = upload_results_to_artcraft(
-        &backup.api_host,
-        &backup.creds,
-        task,
-        generation_provider,
-        media_class,
-        prompt,
-        local_files,
-        maybe_ledger.as_ref(),
-      ).await?;
+      let uploaded = upload_results_to_artcraft(&backup.api_host, &backup.creds, task, generation_provider, media_class, prompt, local_files, maybe_ledger.as_ref()).await?;
       Some(uploaded)
-    }
+    },
     None => {
       info!("[TaskCompletion] Backups are off or unconfigured; completing task {} locally only", task_id);
       None
-    }
+    },
   };
 
-  let maybe_cdn_url_str = maybe_uploaded.as_ref()
-      .and_then(|uploaded| uploaded.maybe_cdn_url.as_ref())
-      .map(|url| url.to_string());
+  let maybe_cdn_url_str = maybe_uploaded.as_ref().and_then(|uploaded| uploaded.maybe_cdn_url.as_ref()).map(|url| url.to_string());
 
   let updated = update_successful_task_status_with_metadata(UpdateSuccessfulTaskArgs {
     db: task_database.get_connection(),
@@ -132,9 +99,9 @@ pub async fn complete_task_with_local_files(args: CompleteTaskArgs<'_>) -> Anyho
     maybe_primary_media_file_token: maybe_uploaded.as_ref().map(|uploaded| &uploaded.primary_media_file_token),
     maybe_primary_media_file_class: Some(media_class),
     maybe_primary_media_file_cdn_url: maybe_cdn_url_str.as_deref(),
-    maybe_primary_media_file_thumbnail_url_template: maybe_uploaded.as_ref()
-        .and_then(|uploaded| uploaded.maybe_thumbnail_url_template.as_deref()),
-  }).await?;
+    maybe_primary_media_file_thumbnail_url_template: maybe_uploaded.as_ref().and_then(|uploaded| uploaded.maybe_thumbnail_url_template.as_deref()),
+  })
+  .await?;
 
   if !updated {
     info!("[TaskCompletion] Task {} was already completed elsewhere; not notifying again", task_id);
@@ -146,16 +113,11 @@ pub async fn complete_task_with_local_files(args: CompleteTaskArgs<'_>) -> Anyho
 
   match maybe_uploaded {
     Some(uploaded) => {
-      let completion = CompletionData {
-        primary_media_file_token: uploaded.primary_media_file_token,
-        maybe_cdn_url: uploaded.maybe_cdn_url,
-        maybe_thumbnail_url_template: uploaded.maybe_thumbnail_url_template,
-        maybe_batch_token: uploaded.maybe_batch_token,
-        media_class,
-      };
+      let completion =
+        CompletionData { primary_media_file_token: uploaded.primary_media_file_token, maybe_cdn_url: uploaded.maybe_cdn_url, maybe_thumbnail_url_template: uploaded.maybe_thumbnail_url_template, maybe_batch_token: uploaded.maybe_batch_token, media_class };
       let backup = maybe_backup.as_ref().expect("uploaded only with a backup target");
       notify_frontend_of_completion(app_handle, &backup.api_host, Some(&backup.creds), task, &completion).await;
-    }
+    },
     None => notify_generation_complete(app_handle, task),
   }
 

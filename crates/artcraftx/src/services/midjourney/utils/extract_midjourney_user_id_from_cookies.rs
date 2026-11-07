@@ -14,9 +14,7 @@ const MIDJOURNEY_ID_CLAIM: &str = "midjourney_id";
 /// Recover the Midjourney user id from the auth cookie's JWT, WITHOUT hitting
 /// the Cloudflare-gated index page. `cookie_header` is a raw `Cookie:` header
 /// string (`"a=1; b=2"`).
-pub fn extract_midjourney_user_id_from_cookie_header(
-  cookie_header: &str,
-) -> Option<MidjourneyUserId> {
+pub fn extract_midjourney_user_id_from_cookie_header(cookie_header: &str) -> Option<MidjourneyUserId> {
   let token = cookie_value(cookie_header, AUTH_ID_TOKEN_COOKIE)?;
   let claims = decode_jwt_payload(token)?;
   let id = claims.get(MIDJOURNEY_ID_CLAIM).and_then(Value::as_str)?;
@@ -27,11 +25,7 @@ pub fn extract_midjourney_user_id_from_cookie_header(
 }
 
 fn cookie_value<'a>(cookie_header: &'a str, name: &str) -> Option<&'a str> {
-  cookie_header
-      .split(';')
-      .filter_map(|pair| pair.trim().split_once('='))
-      .find(|(cookie_name, _)| *cookie_name == name)
-      .map(|(_, value)| value)
+  cookie_header.split(';').filter_map(|pair| pair.trim().split_once('=')).find(|(cookie_name, _)| *cookie_name == name).map(|(_, value)| value)
 }
 
 /// Decode the (unverified) payload of a `header.payload.signature` JWT.

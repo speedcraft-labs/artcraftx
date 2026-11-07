@@ -20,14 +20,6 @@ impl HiggsfieldImageCostState {
   }
 
   pub fn estimate_cost(&self) -> ImageGenerationCostEstimate {
-    ImageGenerationCostEstimate {
-      cost_in_credits: Some(0),
-      cost_in_usd_cents: None,
-      is_free: true,
-      is_unlimited: true,
-      is_rate_limited: false,
-      has_watermark: false,
-      failures_are_refunded: None,
-    }
+    ImageGenerationCostEstimate { cost_in_credits: Some(0), cost_in_usd_cents: None, is_free: true, is_unlimited: true, is_rate_limited: false, has_watermark: false, failures_are_refunded: None }
   }
 }

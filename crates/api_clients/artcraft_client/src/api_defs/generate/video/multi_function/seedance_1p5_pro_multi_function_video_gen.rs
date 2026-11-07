@@ -76,7 +76,6 @@ pub enum Seedance1p5ProMultiFunctionVideoGenAspectRatio {
   Auto,
 }
 
-
 #[derive(Serialize, Deserialize)]
 pub struct Seedance1p5ProMultiFunctionVideoGenResponse {
   pub success: bool,

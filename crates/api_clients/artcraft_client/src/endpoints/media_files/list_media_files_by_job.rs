@@ -12,16 +12,8 @@ use crate::utils::basic_json_get_request::basic_json_get_request;
 /// Requires an authenticated session (cookie or API key); the server only
 /// returns files from the caller's own jobs — other users' jobs and unknown
 /// tokens come back as an empty list.
-pub async fn list_media_files_by_job(
-  api_host: &ApiHost,
-  creds: &StorytellerCredentialSet,
-  job_token: &InferenceJobToken,
-) -> Result<ListMediaFilesByJobSuccessResponse, StorytellerError> {
-  basic_json_get_request(
-    api_host,
-    &list_media_files_by_job_url_path(job_token),
-    Some(creds),
-  ).await
+pub async fn list_media_files_by_job(api_host: &ApiHost, creds: &StorytellerCredentialSet, job_token: &InferenceJobToken) -> Result<ListMediaFilesByJobSuccessResponse, StorytellerError> {
+  basic_json_get_request(api_host, &list_media_files_by_job_url_path(job_token), Some(creds)).await
 }
 
 #[cfg(test)]
@@ -34,13 +26,8 @@ mod tests {
     let path = format!("{home}/Artcraft/artcraftx/credentials/artcraft.toml");
     let contents = std::fs::read_to_string(&path).expect("no production credential on disk");
     let value: toml::Value = toml::from_str(&contents).expect("credential file should parse");
-    let header = value
-        .get("cookie").and_then(|c| c.get("cookie_header"))
-        .and_then(|h| h.as_str())
-        .expect("credential file has no cookie header");
-    StorytellerCredentialSet::parse_multi_cookie_header(header)
-        .expect("cookie header should parse")
-        .expect("cookie header should contain session cookies")
+    let header = value.get("cookie").and_then(|c| c.get("cookie_header")).and_then(|h| h.as_str()).expect("credential file has no cookie header");
+    StorytellerCredentialSet::parse_multi_cookie_header(header).expect("cookie header should parse").expect("cookie header should contain session cookies")
   }
 
   #[tokio::test]

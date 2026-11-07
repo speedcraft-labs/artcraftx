@@ -46,26 +46,13 @@ where
   }))
 }
 
-async fn send_fal_request<T: FalEndpoint>(
-  request: &T,
-  client: &RouterFalClient,
-) -> Result<FalResponseIds, ArtcraftRouterError> {
+async fn send_fal_request<T: FalEndpoint>(request: &T, client: &RouterFalClient) -> Result<FalResponseIds, ArtcraftRouterError> {
   if let Some(webhook_url) = &client.webhook_url {
     let response = request.send_webhook_request(&client.api_key, webhook_url).await?;
-    Ok(FalResponseIds {
-      request_id: response.request_id,
-      gateway_request_id: response.gateway_request_id,
-      status_url: None,
-      response_url: None,
-    })
+    Ok(FalResponseIds { request_id: response.request_id, gateway_request_id: response.gateway_request_id, status_url: None, response_url: None })
   } else {
     let response = request.send_queue_request(&client.api_key).await?;
-    Ok(FalResponseIds {
-      request_id: Some(response.request_id),
-      gateway_request_id: None,
-      status_url: Some(response.status_url),
-      response_url: Some(response.response_url),
-    })
+    Ok(FalResponseIds { request_id: Some(response.request_id), gateway_request_id: None, status_url: Some(response.status_url), response_url: Some(response.response_url) })
   }
 }
 
@@ -73,22 +60,13 @@ async fn send_fal_request<T: FalEndpoint>(
 mod tests {
   use super::*;
   use fal_client::creds::fal_api_key::FalApiKey;
-  use fal_client::requests::api::image::edit::gpt_image_1_edit_image::api::{
-    GptImage1EditImageNumImages, GptImage1EditImageQuality, GptImage1EditImageSize,
-  };
-  use fal_client::requests::api::image::text::gpt_image_1_text_to_image::api::{
-    GptImage1TextToImageNumImages, GptImage1TextToImageQuality,
-    GptImage1TextToImageSize,
-  };
+  use fal_client::requests::api::image::edit::gpt_image_1_edit_image::api::{GptImage1EditImageNumImages, GptImage1EditImageQuality, GptImage1EditImageSize};
+  use fal_client::requests::api::image::text::gpt_image_1_text_to_image::api::{GptImage1TextToImageNumImages, GptImage1TextToImageQuality, GptImage1TextToImageSize};
   use test_data::web::image_urls::JUNO_AT_LAKE_IMAGE_URL;
 
   fn client_with_webhook() -> RouterFalClient {
-    let secret = std::fs::read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt")
-      .expect("Failed to read fal_api_key.txt");
-    RouterFalClient::new_with_webhook(
-      FalApiKey::from_str(secret.trim()),
-      "https://example.com/fal-webhook-test".to_string(),
-    )
+    let secret = std::fs::read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt").expect("Failed to read fal_api_key.txt");
+    RouterFalClient::new_with_webhook(FalApiKey::from_str(secret.trim()), "https://example.com/fal-webhook-test".to_string())
   }
 
   #[tokio::test]

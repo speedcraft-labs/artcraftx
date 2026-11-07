@@ -9,17 +9,13 @@ use cloudflare_mitigation::clearance::clearance_binding::profile_for_captured_us
 /// exact User-Agent, and both check it against the TLS/HTTP fingerprint. A
 /// mainstream desktop Safari UA on a Safari fingerprint matches the macOS
 /// WKWebView that does the capturing.
-pub const HIGGSFIELD_USER_AGENT: &str =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15";
+pub const HIGGSFIELD_USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15";
 
 /// The browser profile for Higgsfield traffic: the captured User-Agent when
 /// the credential recorded one, else [`HIGGSFIELD_USER_AGENT`] — always on a
 /// fingerprint matching the UA's browser family.
 pub fn higgsfield_browser_profile(maybe_captured_user_agent: Option<&str>) -> BrowserProfile {
-  profile_for_captured_user_agent(
-    maybe_captured_user_agent,
-    BrowserProfile::safari_macos_with_user_agent(HIGGSFIELD_USER_AGENT),
-  )
+  profile_for_captured_user_agent(maybe_captured_user_agent, BrowserProfile::safari_macos_with_user_agent(HIGGSFIELD_USER_AGENT))
 }
 
 #[cfg(test)]

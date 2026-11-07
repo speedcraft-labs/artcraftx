@@ -28,11 +28,7 @@ pub struct UpdateAppPreferencesResponse {
 }
 
 #[tauri::command]
-pub async fn update_app_preferences_command(
-  request: UpdateAppPreferencesRequest,
-  app: AppHandle,
-  app_prefs: State<'_, AppPreferencesManager>,
-) -> Result<UpdateAppPreferencesResponse, String> {
+pub async fn update_app_preferences_command(request: UpdateAppPreferencesRequest, app: AppHandle, app_prefs: State<'_, AppPreferencesManager>) -> Result<UpdateAppPreferencesResponse, String> {
   info!("update_app_preferences_command called: {:?}", request);
 
   update_prefs(request, &app_prefs).map_err(|err| {
@@ -53,10 +49,7 @@ fn update_prefs(request: UpdateAppPreferencesRequest, app_prefs: &AppPreferences
 
 fn validate(request: &UpdateAppPreferencesRequest) -> AnyhowResult<()> {
   match request {
-    UpdateAppPreferencesRequest::PreferredDownloadFilename(PreferredDownloadFilename::Custom(format)) => {
-      PreferredDownloadFilename::validate_custom_format(format)
-          .map_err(|reason| anyhow!("Invalid filename format: {}", reason))
-    }
+    UpdateAppPreferencesRequest::PreferredDownloadFilename(PreferredDownloadFilename::Custom(format)) => PreferredDownloadFilename::validate_custom_format(format).map_err(|reason| anyhow!("Invalid filename format: {}", reason)),
     _ => Ok(()),
   }
 }
@@ -81,26 +74,11 @@ mod tests {
   /// Pin the wire format the frontend sends (`UpdateAppPreference.ts`).
   #[test]
   fn decodes_each_preference() {
-    assert!(matches!(
-      decode(r#"{"preference":"play_sounds","value":true}"#),
-      UpdateAppPreferencesRequest::PlaySounds(true),
-    ));
-    assert!(matches!(
-      decode(r#"{"preference":"preferred_download_filename","value":"artcraft_convention"}"#),
-      UpdateAppPreferencesRequest::PreferredDownloadFilename(PreferredDownloadFilename::ArtcraftConvention),
-    ));
-    assert!(matches!(
-      decode(r#"{"preference":"preferred_download_filename","value":{"custom_format":"{model}_{date}"}}"#),
-      UpdateAppPreferencesRequest::PreferredDownloadFilename(PreferredDownloadFilename::Custom(_)),
-    ));
-    assert!(matches!(
-      decode(r#"{"preference":"preferred_download_directory","value":{"custom":"/tmp"}}"#),
-      UpdateAppPreferencesRequest::PreferredDownloadDirectory(PreferredDownloadDirectory::Custom(_)),
-    ));
-    assert!(matches!(
-      decode(r#"{"preference":"preferred_download_directory","value":{"system":"downloads"}}"#),
-      UpdateAppPreferencesRequest::PreferredDownloadDirectory(PreferredDownloadDirectory::System(_)),
-    ));
+    assert!(matches!(decode(r#"{"preference":"play_sounds","value":true}"#), UpdateAppPreferencesRequest::PlaySounds(true),));
+    assert!(matches!(decode(r#"{"preference":"preferred_download_filename","value":"artcraft_convention"}"#), UpdateAppPreferencesRequest::PreferredDownloadFilename(PreferredDownloadFilename::ArtcraftConvention),));
+    assert!(matches!(decode(r#"{"preference":"preferred_download_filename","value":{"custom_format":"{model}_{date}"}}"#), UpdateAppPreferencesRequest::PreferredDownloadFilename(PreferredDownloadFilename::Custom(_)),));
+    assert!(matches!(decode(r#"{"preference":"preferred_download_directory","value":{"custom":"/tmp"}}"#), UpdateAppPreferencesRequest::PreferredDownloadDirectory(PreferredDownloadDirectory::Custom(_)),));
+    assert!(matches!(decode(r#"{"preference":"preferred_download_directory","value":{"system":"downloads"}}"#), UpdateAppPreferencesRequest::PreferredDownloadDirectory(PreferredDownloadDirectory::System(_)),));
   }
 
   #[test]

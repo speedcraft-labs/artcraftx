@@ -19,10 +19,6 @@ pub struct RouterMidjourneyClient {
 
 impl RouterMidjourneyClient {
   pub fn new(cookie_header: String, user_id: MidjourneyUserId, browser: BrowserProfile) -> Self {
-    Self {
-      cookie_header,
-      user_id,
-      browser,
-    }
+    Self { cookie_header, user_id, browser }
   }
 }

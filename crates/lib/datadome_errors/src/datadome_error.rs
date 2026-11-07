@@ -18,9 +18,7 @@ pub enum DataDomeError {
 
   /// A device-check interstitial (`/interstitial/`): a JavaScript proof
   /// rather than a visible puzzle. Same remedy as a CAPTCHA.
-  Interstitial {
-    challenge_url: String,
-  },
+  Interstitial { challenge_url: String },
 
   /// A hard block (`t=bv`): DataDome has decided this client is a bot and
   /// won't offer a challenge. Only a new identity (IP / browser session)
@@ -32,10 +30,7 @@ pub enum DataDomeError {
 
   /// A response that carried DataDome's block signature (the `x-dd-b`
   /// header, or a 403 JSON body naming DataDome) but no usable detail.
-  Unclassified {
-    status_code: u16,
-    raw_http_body: String,
-  },
+  Unclassified { status_code: u16, raw_http_body: String },
 }
 
 impl Error for DataDomeError {}
@@ -45,17 +40,16 @@ impl Display for DataDomeError {
     match self {
       Self::CaptchaChallenge { challenge_url } => {
         write!(f, "DataDome CAPTCHA challenge; a browser must solve it to earn a new datadome cookie (challenge url: {})", challenge_url)
-      }
+      },
       Self::Interstitial { challenge_url } => {
         write!(f, "DataDome device-check interstitial; a browser must pass it to earn a new datadome cookie (challenge url: {})", challenge_url)
-      }
+      },
       Self::Blocked { maybe_block_url } => {
-        write!(f, "DataDome blocked this client outright (no challenge offered){}",
-          maybe_block_url.as_deref().map(|url| format!(" (block url: {url})")).unwrap_or_default())
-      }
+        write!(f, "DataDome blocked this client outright (no challenge offered){}", maybe_block_url.as_deref().map(|url| format!(" (block url: {url})")).unwrap_or_default())
+      },
       Self::Unclassified { status_code, raw_http_body } => {
         write!(f, "DataDome rejected the request (status {}) with an unrecognized body: {}", status_code, raw_http_body)
-      }
+      },
     }
   }
 }

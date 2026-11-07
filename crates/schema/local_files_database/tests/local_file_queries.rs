@@ -81,7 +81,9 @@ async fn failures_count_attempts_and_keep_the_error() {
     maybe_thumbnail_jpg_path: None,
     maybe_animated_preview_webp_path: None,
     maybe_error: Some("decoder exploded"),
-  }).await.unwrap();
+  })
+  .await
+  .unwrap();
 
   let record = get_local_file_by_path(&db, "/a/video.mp4").await.unwrap().unwrap();
   assert_eq!(record.thumbnail_state(), ThumbnailState::Failed);
@@ -116,10 +118,7 @@ async fn worker_scan_lists_pending_and_retryable_failures_only() {
     record_state(&db, "/failed_thrice.mp4", ThumbnailState::Failed).await;
   }
 
-  let mut paths: Vec<String> = list_local_files_needing_thumbnails(&db, 3, GENERATOR_VERSION, 100).await.unwrap()
-      .into_iter()
-      .map(|record| record.file_path)
-      .collect();
+  let mut paths: Vec<String> = list_local_files_needing_thumbnails(&db, 3, GENERATOR_VERSION, 100).await.unwrap().into_iter().map(|record| record.file_path).collect();
   paths.sort();
   assert_eq!(paths, vec!["/failed_once.mp4".to_string(), "/pending.mp4".to_string()]);
 
@@ -127,10 +126,7 @@ async fn worker_scan_lists_pending_and_retryable_failures_only() {
   assert_eq!(limited.len(), 1);
 
   // A newer generator makes every generated row owed again.
-  let mut paths: Vec<String> = list_local_files_needing_thumbnails(&db, 3, GENERATOR_VERSION + 1, 100).await.unwrap()
-      .into_iter()
-      .map(|record| record.file_path)
-      .collect();
+  let mut paths: Vec<String> = list_local_files_needing_thumbnails(&db, 3, GENERATOR_VERSION + 1, 100).await.unwrap().into_iter().map(|record| record.file_path).collect();
   paths.sort();
   assert_eq!(paths, vec!["/failed_once.mp4".to_string(), "/generated.mp4".to_string(), "/pending.mp4".to_string()]);
 }
@@ -172,22 +168,11 @@ async fn batch_path_lookup_skips_unknown_paths() {
 // ── Helpers ──
 
 async fn test_db(dir: &tempfile::TempDir) -> LocalFilesDbConnection {
-  LocalFilesDbConnection::connect_and_migrate(dir.path().join("local_files.sqlite"))
-      .await
-      .expect("connect and migrate")
+  LocalFilesDbConnection::connect_and_migrate(dir.path().join("local_files.sqlite")).await.expect("connect and migrate")
 }
 
 async fn upsert(db: &LocalFilesDbConnection, path: &str, size: i64, mtime: i64, hash: &str) {
-  upsert_local_file(UpsertLocalFileArgs {
-    db,
-    file_path: path,
-    maybe_file_type: Some("mp4"),
-    file_size_bytes: size,
-    file_mtime_ms: mtime,
-    file_hash_blake3: hash,
-  })
-      .await
-      .expect("upsert");
+  upsert_local_file(UpsertLocalFileArgs { db, file_path: path, maybe_file_type: Some("mp4"), file_size_bytes: size, file_mtime_ms: mtime, file_hash_blake3: hash }).await.expect("upsert");
 }
 
 async fn record_generated(db: &LocalFilesDbConnection, path: &str, with_animated: bool) -> bool {
@@ -200,20 +185,10 @@ async fn record_generated(db: &LocalFilesDbConnection, path: &str, with_animated
     maybe_animated_preview_webp_path: with_animated.then_some("/cache/a.webp"),
     maybe_error: None,
   })
-      .await
-      .expect("set result")
+  .await
+  .expect("set result")
 }
 
 async fn record_state(db: &LocalFilesDbConnection, path: &str, state: ThumbnailState) {
-  set_thumbnail_result(SetThumbnailResultArgs {
-    db,
-    file_path: path,
-    state,
-    generator_version: GENERATOR_VERSION,
-    maybe_thumbnail_jpg_path: None,
-    maybe_animated_preview_webp_path: None,
-    maybe_error: Some("nope"),
-  })
-      .await
-      .expect("set result");
+  set_thumbnail_result(SetThumbnailResultArgs { db, file_path: path, state, generator_version: GENERATOR_VERSION, maybe_thumbnail_jpg_path: None, maybe_animated_preview_webp_path: None, maybe_error: Some("nope") }).await.expect("set result");
 }

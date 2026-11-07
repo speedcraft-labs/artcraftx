@@ -21,19 +21,14 @@ pub fn check_upload_source_url(source_url: &str) -> Result<(), HiggsfieldClientE
     return Ok(());
   };
   match blocked_domain_for_host(&host) {
-    Some(domain) => Err(HiggsfieldClientError::UploadSourceDomainBlocked {
-      source_url: source_url.to_string(),
-      domain,
-    }),
+    Some(domain) => Err(HiggsfieldClientError::UploadSourceDomainBlocked { source_url: source_url.to_string(), domain }),
     None => Ok(()),
   }
 }
 
 fn blocked_domain_for_host(host: &str) -> Option<&'static str> {
   let host = host.to_ascii_lowercase();
-  BLOCKED_UPLOAD_SOURCE_DOMAINS.iter().copied().find(|domain| {
-    host == *domain || host.ends_with(&format!(".{domain}"))
-  })
+  BLOCKED_UPLOAD_SOURCE_DOMAINS.iter().copied().find(|domain| host == *domain || host.ends_with(&format!(".{domain}")))
 }
 
 /// The host of a URL, without scheme, userinfo, port, path or query. `None`
@@ -60,35 +55,16 @@ mod tests {
 
   #[test]
   fn first_party_domains_are_blocked() {
-    for url in [
-      "https://fakeyou.com/media/a.png",
-      "https://cdn-2.fakeyou.com/media/a/5/a/image_x.png",
-      "https://storage.getartcraft.com/media/a.png?query=1",
-      "https://artcraft.ai/a.png",
-      "https://ARTCRAFT.AI/a.png",
-      "http://user:pass@cdn.fakeyou.com:8080/a.png",
-    ] {
-      assert!(
-        matches!(
-          check_upload_source_url(url),
-          Err(HiggsfieldClientError::UploadSourceDomainBlocked { .. }),
-        ),
-        "{url} should be blocked",
-      );
+    for url in
+      ["https://fakeyou.com/media/a.png", "https://cdn-2.fakeyou.com/media/a/5/a/image_x.png", "https://storage.getartcraft.com/media/a.png?query=1", "https://artcraft.ai/a.png", "https://ARTCRAFT.AI/a.png", "http://user:pass@cdn.fakeyou.com:8080/a.png"]
+    {
+      assert!(matches!(check_upload_source_url(url), Err(HiggsfieldClientError::UploadSourceDomainBlocked { .. }),), "{url} should be blocked",);
     }
   }
 
   #[test]
   fn third_party_urls_pass() {
-    for url in [
-      "https://cdn.example.com/a.png",
-      "https://notfakeyou.com/a.png",
-      "https://fakeyou.com.evil.example/a.png",
-      "https://higgsfield.ai/a.png",
-      "http://[::1]:8080/a.png",
-      "not a url",
-      "",
-    ] {
+    for url in ["https://cdn.example.com/a.png", "https://notfakeyou.com/a.png", "https://fakeyou.com.evil.example/a.png", "https://higgsfield.ai/a.png", "http://[::1]:8080/a.png", "not a url", ""] {
       assert!(check_upload_source_url(url).is_ok(), "{url:?} should pass");
     }
   }

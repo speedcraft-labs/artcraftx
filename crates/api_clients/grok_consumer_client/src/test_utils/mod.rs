@@ -1,5 +1,5 @@
 #[cfg(test)]
-pub (crate) mod grok_test_secrets;
+pub(crate) mod grok_test_secrets;
 
 #[cfg(test)]
-pub (crate) mod setup_test_logging;
+pub(crate) mod setup_test_logging;

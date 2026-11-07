@@ -5,20 +5,10 @@ use crate::generate::generate_splat::splat_generation_cost_estimate::SplatGenera
 /// ($1 per 1,250 credits), so it is flat priced.
 const COST_IN_USD_CENTS: u64 = 126;
 
-pub(crate) fn estimate_splat_cost_artcraft_marble_0p1_plus(
-  _plan: &PlanArtcraftMarble0p1Plus,
-) -> SplatGenerationCostEstimate {
+pub(crate) fn estimate_splat_cost_artcraft_marble_0p1_plus(_plan: &PlanArtcraftMarble0p1Plus) -> SplatGenerationCostEstimate {
   let cost_in_usd_cents = COST_IN_USD_CENTS;
 
-  SplatGenerationCostEstimate {
-    cost_in_credits: Some(cost_in_usd_cents),
-    cost_in_usd_cents: Some(cost_in_usd_cents),
-    is_free: false,
-    is_unlimited: false,
-    is_rate_limited: false,
-    has_watermark: false,
-    failures_are_refunded: None,
-  }
+  SplatGenerationCostEstimate { cost_in_credits: Some(cost_in_usd_cents), cost_in_usd_cents: Some(cost_in_usd_cents), is_free: false, is_unlimited: false, is_rate_limited: false, has_watermark: false, failures_are_refunded: None }
 }
 
 #[cfg(test)]
@@ -37,11 +27,7 @@ mod tests {
       reference_images: image_tokens.map(crate::api::image_list_ref::ImageListRef::MediaFileTokens),
       idempotency_token: None,
     };
-    request.build()
-      .expect("build should succeed")
-      .estimate_costs()
-      .cost_in_usd_cents
-      .expect("cost_in_usd_cents should be present")
+    request.build().expect("build should succeed").estimate_costs().cost_in_usd_cents.expect("cost_in_usd_cents should be present")
   }
 
   #[test]

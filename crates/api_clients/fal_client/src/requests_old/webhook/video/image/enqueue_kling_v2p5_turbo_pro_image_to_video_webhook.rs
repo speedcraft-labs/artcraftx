@@ -36,29 +36,26 @@ impl FalRequestCostCalculator for EnqueueKlingV2p5TurboProImageToVideoRequest {
     // "For 5s video your request will cost $0.35.
     //  For every additional second you will be charged $0.07."
     match self.duration {
-      None => 35, // $0.35
+      None => 35,                                                            // $0.35
       Some(EnqueueKlingV2p5TurboProImageToVideoDurationSeconds::Five) => 35, // $0.35
-      Some(EnqueueKlingV2p5TurboProImageToVideoDurationSeconds::Ten) => 70, // $0.35 + (5 * $0.07) = $0.70
+      Some(EnqueueKlingV2p5TurboProImageToVideoDurationSeconds::Ten) => 70,  // $0.35 + (5 * $0.07) = $0.70
     }
   }
 }
 
-
 /// Kling 2.5 Turbo Pro Image-to-Video
 /// https://fal.ai/models/fal-ai/kling-video/v2.5-turbo/pro/image-to-video
-pub async fn enqueue_kling_v2p5_turbo_pro_image_to_video_webhook<R: IntoUrl>(
-  args: EnqueueKlingV2p5TurboProImageToVideoArgs<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
-
+pub async fn enqueue_kling_v2p5_turbo_pro_image_to_video_webhook<R: IntoUrl>(args: EnqueueKlingV2p5TurboProImageToVideoArgs<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
 
   // NB: Defaults to 5 seconds
-  let duration = req.duration
-      .map(|resolution| match resolution {
-        EnqueueKlingV2p5TurboProImageToVideoDurationSeconds::Five => "5",
-        EnqueueKlingV2p5TurboProImageToVideoDurationSeconds::Ten => "10",
-      })
-      .map(|resolution| resolution.to_string());
+  let duration = req
+    .duration
+    .map(|resolution| match resolution {
+      EnqueueKlingV2p5TurboProImageToVideoDurationSeconds::Five => "5",
+      EnqueueKlingV2p5TurboProImageToVideoDurationSeconds::Ten => "10",
+    })
+    .map(|resolution| resolution.to_string());
 
   let request = KlingV2p5TurboProImageToVideoInput {
     prompt: req.prompt,
@@ -71,10 +68,7 @@ pub async fn enqueue_kling_v2p5_turbo_pro_image_to_video_webhook<R: IntoUrl>(
     cfg_scale: None,
   };
 
-  let result = kling_v2p5_turbo_pro_image_to_video(request)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await;
+  let result = kling_v2p5_turbo_pro_image_to_video(request).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await;
 
   result.map_err(|err| classify_fal_error(err))
 }
@@ -82,7 +76,9 @@ pub async fn enqueue_kling_v2p5_turbo_pro_image_to_video_webhook<R: IntoUrl>(
 #[cfg(test)]
 mod tests {
   use crate::creds::fal_api_key::FalApiKey;
-  use crate::requests_old::webhook::video::image::enqueue_kling_v2p5_turbo_pro_image_to_video_webhook::{enqueue_kling_v2p5_turbo_pro_image_to_video_webhook, EnqueueKlingV2p5TurboProImageToVideoArgs, EnqueueKlingV2p5TurboProImageToVideoRequest, EnqueueKlingV2p5TurboProImageToVideoDurationSeconds};
+  use crate::requests_old::webhook::video::image::enqueue_kling_v2p5_turbo_pro_image_to_video_webhook::{
+    enqueue_kling_v2p5_turbo_pro_image_to_video_webhook, EnqueueKlingV2p5TurboProImageToVideoArgs, EnqueueKlingV2p5TurboProImageToVideoRequest, EnqueueKlingV2p5TurboProImageToVideoDurationSeconds,
+  };
   use errors::AnyhowResult;
   use std::fs::read_to_string;
   use test_data::web::image_urls::TREX_SKELETON_IMAGE_URL;

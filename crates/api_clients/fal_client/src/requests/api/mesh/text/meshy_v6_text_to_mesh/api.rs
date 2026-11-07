@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::mesh::text::meshy_v6_text_to_mesh::raw_request::{
-  MeshyV6TextToMeshInput, MeshyV6TextToMeshOutput,
-};
+use crate::requests::api::mesh::text::meshy_v6_text_to_mesh::raw_request::{MeshyV6TextToMeshInput, MeshyV6TextToMeshOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 /// Meshy 6 text-to-3D.
@@ -255,11 +253,7 @@ mod tests {
 
   #[test]
   fn every_symmetry_mode_maps_to_wire_string() {
-    for (variant, expected) in [
-      (MeshyV6SymmetryMode::Off, "off"),
-      (MeshyV6SymmetryMode::Auto, "auto"),
-      (MeshyV6SymmetryMode::On, "on"),
-    ] {
+    for (variant, expected) in [(MeshyV6SymmetryMode::Off, "off"), (MeshyV6SymmetryMode::Auto, "auto"), (MeshyV6SymmetryMode::On, "on")] {
       assert_eq!(variant.to_str(), expected);
     }
   }

@@ -11,10 +11,8 @@ pub struct AppSettingsDir {
 impl DataSubdir for AppSettingsDir {
   const DIRECTORY_NAME: &'static str = "settings";
 
-  fn new_from<P: AsRef<Path>> (dir: P) -> Self {
-    Self {
-      path: dir.as_ref().to_path_buf(),
-    }
+  fn new_from<P: AsRef<Path>>(dir: P) -> Self {
+    Self { path: dir.as_ref().to_path_buf() }
   }
 
   fn path(&self) -> &Path {

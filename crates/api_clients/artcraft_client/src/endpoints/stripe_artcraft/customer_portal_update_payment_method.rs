@@ -9,10 +9,5 @@ pub async fn customer_portal_update_payment_method(
   maybe_creds: Option<&StorytellerCredentialSet>,
   request: StripeArtcraftCustomerPortalUpdatePaymentMethodRequest,
 ) -> Result<StripeArtcraftCustomerPortalUpdatePaymentMethodResponse, StorytellerError> {
-  Ok(basic_json_post_request(
-    api_host,
-    CUSTOMER_PORTAL_UPDATE_PAYMENT_METHOD_URL_PATH,
-    maybe_creds,
-    request,
-  ).await?)
+  Ok(basic_json_post_request(api_host, CUSTOMER_PORTAL_UPDATE_PAYMENT_METHOD_URL_PATH, maybe_creds, request).await?)
 }

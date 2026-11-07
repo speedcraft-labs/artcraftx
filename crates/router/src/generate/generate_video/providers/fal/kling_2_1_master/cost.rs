@@ -10,24 +10,14 @@ pub struct FalKling21MasterCostState {
 
 impl FalKling21MasterCostState {
   pub fn from_request(request: &FalKling21MasterRequestState) -> Self {
-    Self {
-      is_ten_seconds: matches!(request.request.duration, Kling2p1MasterDuration::TenSeconds),
-    }
+    Self { is_ten_seconds: matches!(request.request.duration, Kling2p1MasterDuration::TenSeconds) }
   }
 
   pub fn estimate_cost(&self) -> VideoGenerationCostEstimate {
     // Mirrors fal_client kling_v2p1_master: 5s = $1.40, 10s = $2.80.
     let cost_in_usd_cents: u64 = if self.is_ten_seconds { 280 } else { 140 };
 
-    VideoGenerationCostEstimate {
-      cost_in_credits: Some(cost_in_usd_cents),
-      cost_in_usd_cents: Some(cost_in_usd_cents),
-      is_free: false,
-      is_unlimited: false,
-      is_rate_limited: false,
-      has_watermark: false,
-      failures_are_refunded: None,
-    }
+    VideoGenerationCostEstimate { cost_in_credits: Some(cost_in_usd_cents), cost_in_usd_cents: Some(cost_in_usd_cents), is_free: false, is_unlimited: false, is_rate_limited: false, has_watermark: false, failures_are_refunded: None }
   }
 }
 
@@ -51,11 +41,17 @@ mod tests {
   }
 
   #[test]
-  fn five_seconds_is_140() { assert_eq!(cost_cents(Some(5)), 140); }
+  fn five_seconds_is_140() {
+    assert_eq!(cost_cents(Some(5)), 140);
+  }
 
   #[test]
-  fn ten_seconds_is_280() { assert_eq!(cost_cents(Some(10)), 280); }
+  fn ten_seconds_is_280() {
+    assert_eq!(cost_cents(Some(10)), 280);
+  }
 
   #[test]
-  fn default_duration_is_5s_priced_at_140() { assert_eq!(cost_cents(None), 140); }
+  fn default_duration_is_5s_priced_at_140() {
+    assert_eq!(cost_cents(None), 140);
+  }
 }

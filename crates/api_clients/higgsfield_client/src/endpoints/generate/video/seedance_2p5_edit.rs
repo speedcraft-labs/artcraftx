@@ -79,17 +79,7 @@ impl Seedance2p5EditRequest {
   /// An edit with the web app's defaults (1 clip, audio on, high bitrate,
   /// credits).
   pub fn new(prompt: impl Into<String>, source_video: MediaInput, resolution: Seedance2p5Resolution) -> Self {
-    Self {
-      prompt: prompt.into(),
-      source_video,
-      resolution,
-      references: Vec::new(),
-      batch_size: ImageBatchSize::One,
-      generate_audio: true,
-      bitrate_mode: VideoBitrateMode::High,
-      use_unlim: false,
-      maybe_dimensions: None,
-    }
+    Self { prompt: prompt.into(), source_video, resolution, references: Vec::new(), batch_size: ImageBatchSize::One, generate_audio: true, bitrate_mode: VideoBitrateMode::High, use_unlim: false, maybe_dimensions: None }
   }
 
   /// Add one image / audio reference.
@@ -106,9 +96,7 @@ impl Seedance2p5EditRequest {
   }
 
   fn dimensions(&self) -> VideoDimensions {
-    self.maybe_dimensions
-        .or_else(|| VideoDimensions::for_aspect_ratio(&ImageAspectRatio::Landscape16x9, &self.resolution.to_video_resolution()))
-        .expect("16:9 dimensions are derivable for every known resolution")
+    self.maybe_dimensions.or_else(|| VideoDimensions::for_aspect_ratio(&ImageAspectRatio::Landscape16x9, &self.resolution.to_video_resolution())).expect("16:9 dimensions are derivable for every known resolution")
   }
 
   fn to_body(&self) -> Seedance2p5EditRequestBody {
@@ -177,7 +165,7 @@ mod tests {
   #[test]
   fn wire_body_matches_the_bundles_edit_shape() {
     let request = Seedance2p5EditRequest::new("make it snow", source(), Seedance2p5Resolution::P480)
-        .with_reference(MediaReference::image(MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png")));
+      .with_reference(MediaReference::image(MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png")));
     let actual: Value = serde_json::to_value(request.to_body()).unwrap();
     let expected: Value = serde_json::from_str(r#"{"params":{"prompt":"make it snow","width":854,"height":480,"medias":[{"role":"video","data":{"id":"00000000-0000-4000-8000-0000000000cc","type":"video_input","url":"https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000cc.mp4"}},{"role":"image","data":{"id":"00000000-0000-4000-8000-0000000000aa","type":"media_input","url":"https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png"}}],"resolution":"480p","generate_audio":true,"bitrate_mode":"high","batch_size":1,"model":"video_edit","use_unlim":false},"use_unlim":false}"#).unwrap();
     assert_eq!(actual, expected);
@@ -188,8 +176,7 @@ mod tests {
   #[test]
   fn validation() {
     assert!(matches!(Seedance2p5EditRequest::new(" ", source(), Seedance2p5Resolution::P480).validate(), Err(HiggsfieldClientError::InvalidRequest(_))));
-    let frame = Seedance2p5EditRequest::new("p", source(), Seedance2p5Resolution::P480)
-        .with_reference(MediaReference::start_frame(MediaInput::uploaded("a", "https://cdn.example.com/a.png")));
+    let frame = Seedance2p5EditRequest::new("p", source(), Seedance2p5Resolution::P480).with_reference(MediaReference::start_frame(MediaInput::uploaded("a", "https://cdn.example.com/a.png")));
     assert!(matches!(frame.validate(), Err(HiggsfieldClientError::InvalidRequest(_))));
     assert!(Seedance2p5EditRequest::new("p", source(), Seedance2p5Resolution::P480).validate().is_ok());
   }
@@ -197,11 +184,7 @@ mod tests {
   #[tokio::test]
   async fn invalid_request_fails_before_any_http() {
     let auth = HiggsfieldAuth::new("token");
-    let err = seedance_2p5_edit(Seedance2p5EditArgs {
-      request: Seedance2p5EditRequest::new("", source(), Seedance2p5Resolution::P480),
-      auth: &auth,
-      host: &HiggsfieldHost::Custom("http://127.0.0.1:9".into()),
-    }).await.unwrap_err();
+    let err = seedance_2p5_edit(Seedance2p5EditArgs { request: Seedance2p5EditRequest::new("", source(), Seedance2p5Resolution::P480), auth: &auth, host: &HiggsfieldHost::Custom("http://127.0.0.1:9".into()) }).await.unwrap_err();
     assert!(matches!(err, HiggsfieldError::Client(HiggsfieldClientError::InvalidRequest(_))));
   }
 }

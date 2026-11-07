@@ -15,13 +15,6 @@ pub struct OmniGenSplatCostArgs<'a> {
 
 /// Estimate the cost of a splat generation. Anonymous calls are allowed;
 /// credentials personalize the estimate (free/unlimited plans).
-pub async fn omni_gen_splat_cost(
-  args: OmniGenSplatCostArgs<'_>,
-) -> Result<OmniGenSplatCostResponse, StorytellerError> {
-  Ok(api_or_web_json_post_request(
-    args.api_host,
-    OMNI_GEN_SPLAT_COST_PATH,
-    args.api_or_web_creds,
-    args.request,
-  ).await?)
+pub async fn omni_gen_splat_cost(args: OmniGenSplatCostArgs<'_>) -> Result<OmniGenSplatCostResponse, StorytellerError> {
+  Ok(api_or_web_json_post_request(args.api_host, OMNI_GEN_SPLAT_COST_PATH, args.api_or_web_creds, args.request).await?)
 }

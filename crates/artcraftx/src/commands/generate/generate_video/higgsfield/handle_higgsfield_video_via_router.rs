@@ -9,12 +9,8 @@ use router::generate::generate_video::generate_video_request_builder::GenerateVi
 use sqlite_identifiers::enums::task_type::TaskType;
 use tauri::AppHandle;
 
-use crate::commands::generate::common::higgsfield_generation::{
-  higgsfield_media_url_map, higgsfield_router_client, join_higgsfield_job_ids, send_higgsfield_video_request,
-};
-use crate::commands::generate::common::media_source_conversion::{
-  collect_source_tokens, source_to_image_ref, sources_to_audio_list, sources_to_image_list, sources_to_video_list,
-};
+use crate::commands::generate::common::higgsfield_generation::{higgsfield_media_url_map, higgsfield_router_client, join_higgsfield_job_ids, send_higgsfield_video_request};
+use crate::commands::generate::common::media_source_conversion::{collect_source_tokens, source_to_image_ref, sources_to_audio_list, sources_to_image_list, sources_to_video_list};
 use crate::commands::generate::generate_error::GenerateError;
 use crate::commands::generate::generate_video::request::TauriGenerateVideoRequest;
 use crate::commands::generate::task_enqueue_success::TaskEnqueueSuccess;
@@ -32,12 +28,7 @@ use crate::services::asset_uploads::asset_upload_ledger::AssetUploadLedger;
 /// (running Higgsfield's IP check where the model demands it). The returned
 /// task carries every job id of the Higgsfield job set so the poller can
 /// follow a batch.
-pub async fn handle_higgsfield_video_via_router(
-  maybe_app: Option<&AppHandle>,
-  request: &TauriGenerateVideoRequest,
-  credential: &AuthCredential,
-  ledger: &AssetUploadLedger,
-) -> Result<TaskEnqueueSuccess, GenerateError> {
+pub async fn handle_higgsfield_video_via_router(maybe_app: Option<&AppHandle>, request: &TauriGenerateVideoRequest, credential: &AuthCredential, ledger: &AssetUploadLedger) -> Result<TaskEnqueueSuccess, GenerateError> {
   let tauri_model = request.model.ok_or(GenerateError::no_model_specified())?;
   let router_model = tauri_video_model_to_router_model(tauri_model);
   let generation_model = tauri_video_model_to_generation_model(tauri_model);
@@ -73,14 +64,9 @@ pub async fn handle_higgsfield_video_via_router(
   let upload_cache = ledger.for_higgsfield_credential(&credential.id);
   let response = send_higgsfield_video_request(maybe_app, credential, router_request, &client, &media_url_map, &upload_cache).await?;
 
-  let payload = response
-      .get_higgsfield_payload()
-      .ok_or(GenerateError::ResponseHadNoJobTokens)?;
+  let payload = response.get_higgsfield_payload().ok_or(GenerateError::ResponseHadNoJobTokens)?;
 
-  info!(
-    "Higgsfield video generation enqueued: job_set={} jobs={:?}",
-    payload.job_set_id, payload.job_ids,
-  );
+  info!("Higgsfield video generation enqueued: job_set={} jobs={:?}", payload.job_set_id, payload.job_ids,);
 
   Ok(TaskEnqueueSuccess {
     task_type: TaskType::VideoGeneration,
@@ -120,13 +106,7 @@ mod live_higgsfield_video_tests {
 
   fn higgsfield_credential() -> AuthCredential {
     let app_data_root = AppDataRoot::create_default().expect("app data root");
-    app_data_root
-        .credentials_dir()
-        .load_credentials()
-        .expect("load credentials")
-        .into_iter()
-        .find(|c| c.service == GenerationSource::HiggsfieldCookies)
-        .expect("no `higgsfield_cookies` credential on disk; log into Higgsfield via the app first")
+    app_data_root.credentials_dir().load_credentials().expect("load credentials").into_iter().find(|c| c.service == GenerationSource::HiggsfieldCookies).expect("no `higgsfield_cookies` credential on disk; log into Higgsfield via the app first")
   }
 
   #[tokio::test]

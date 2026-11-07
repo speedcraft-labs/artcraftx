@@ -10,9 +10,7 @@ pub static VIDEO_MODELS: Lazy<Vec<VideoModelConfig>> = Lazy::new(video_models);
 
 /// Look up one model's config.
 pub fn video_model_config(model: VideoModel) -> &'static VideoModelConfig {
-  VIDEO_MODELS.iter()
-      .find(|config| config.model == model)
-      .expect("every VideoModel variant has a config (see tests)")
+  VIDEO_MODELS.iter().find(|config| config.model == model).expect("every VideoModel variant has a config (see tests)")
 }
 
 fn video_models() -> Vec<VideoModelConfig> {
@@ -56,10 +54,7 @@ mod tests {
   fn defaults_are_within_their_options() {
     for config in VIDEO_MODELS.iter() {
       assert!(!config.full_name.is_empty() && !config.selector_name.is_empty(), "{:?} needs names", config.model);
-      assert!(
-        config.aspect_ratio_options.is_empty() || config.legacy_size_options.is_empty(),
-        "{:?} must use either aspect ratios or legacy sizes, not both", config.model,
-      );
+      assert!(config.aspect_ratio_options.is_empty() || config.legacy_size_options.is_empty(), "{:?} must use either aspect ratios or legacy sizes, not both", config.model,);
       if let Some(default) = config.aspect_ratio_default {
         assert!(config.aspect_ratio_options.contains(&default), "{:?} aspect default not offered", config.model);
       }

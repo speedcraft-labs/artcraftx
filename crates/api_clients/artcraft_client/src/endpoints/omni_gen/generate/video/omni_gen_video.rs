@@ -13,13 +13,6 @@ pub struct OmniGenVideoGenerateArgs<'a> {
   pub request: &'a OmniGenVideoCostAndGenerateRequest,
 }
 
-pub async fn omni_gen_video_generate(
-  args: OmniGenVideoGenerateArgs<'_>,
-) -> Result<OmniGenVideoGenerateResponse, StorytellerError> {
-  Ok(api_or_web_json_post_request(
-    args.api_host,
-    OMNI_GEN_VIDEO_GENERATE_PATH,
-    args.api_or_web_creds,
-    args.request,
-  ).await?)
+pub async fn omni_gen_video_generate(args: OmniGenVideoGenerateArgs<'_>) -> Result<OmniGenVideoGenerateResponse, StorytellerError> {
+  Ok(api_or_web_json_post_request(args.api_host, OMNI_GEN_VIDEO_GENERATE_PATH, args.api_or_web_creds, args.request).await?)
 }

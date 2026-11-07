@@ -95,40 +95,25 @@ pub struct FailedItemData {
 impl SerializeMarker for GetTaskQueueCommandResponse {}
 
 #[tauri::command]
-pub async fn get_task_queue_command(
-  _app: AppHandle,
-  task_database: State<'_, TaskDatabase>,
-  local_files_database: State<'_, LocalFilesDatabase>,
-) -> ResponseOrErrorMessage<GetTaskQueueCommandResponse> {
-
+pub async fn get_task_queue_command(_app: AppHandle, task_database: State<'_, TaskDatabase>, local_files_database: State<'_, LocalFilesDatabase>) -> ResponseOrErrorMessage<GetTaskQueueCommandResponse> {
   // NB: This is debug because it spams the logs.
   debug!("get_task_queue_command called");
 
-  let result = handle_request(
-    &task_database,
-    &local_files_database,
-  ).await;
+  let result = handle_request(&task_database, &local_files_database).await;
 
   let tasks = match result {
     Ok(items) => items,
     Err(err) => {
       error!("get_task_queue_command failed: {:?}", err);
-      return Err("get_task_queue_command failed".into())
-    }
+      return Err("get_task_queue_command failed".into());
+    },
   };
 
-  Ok(GetTaskQueueCommandResponse{
-    tasks,
-  }.into())
+  Ok(GetTaskQueueCommandResponse { tasks }.into())
 }
 
-pub async fn handle_request(
-  task_database: &TaskDatabase,
-  local_files_database: &LocalFilesDatabase,
-) -> AnyhowResult<Vec<TaskQueueItem>> {
-
-  let tasks = list_tasks_for_frontend(task_database.get_connection())
-      .await?;
+pub async fn handle_request(task_database: &TaskDatabase, local_files_database: &LocalFilesDatabase) -> AnyhowResult<Vec<TaskQueueItem>> {
+  let tasks = list_tasks_for_frontend(task_database.get_connection()).await?;
 
   let mut transformed_tasks = Vec::with_capacity(tasks.tasks.len());
 
@@ -140,15 +125,13 @@ pub async fn handle_request(
       // The cloud media file only exists when the result was uploaded to
       // ArtCraft; a local-only completion still gets a completed item so
       // the frontend can render (and thumbnail) the downloaded files.
-      let primary_media_file = task.on_complete_primary_media_file_token
-          .zip(task.on_complete_primary_media_file_cdn_url)
-          .map(|(primary_media_file_token, media_file_url)| MediaFileData {
-            token: primary_media_file_token,
-            cdn_url: media_file_url,
-            maybe_thumbnail_url_template: task.on_complete_primary_media_file_thumbnail_url_template.clone(),
-            // NB: This isn't the exact completion date. Also, fallback to now if missing.
-            created_at: task.completed_at.unwrap_or_else(Utc::now),
-          });
+      let primary_media_file = task.on_complete_primary_media_file_token.zip(task.on_complete_primary_media_file_cdn_url).map(|(primary_media_file_token, media_file_url)| MediaFileData {
+        token: primary_media_file_token,
+        cdn_url: media_file_url,
+        maybe_thumbnail_url_template: task.on_complete_primary_media_file_thumbnail_url_template.clone(),
+        // NB: This isn't the exact completion date. Also, fallback to now if missing.
+        created_at: task.completed_at.unwrap_or_else(Utc::now),
+      });
 
       if primary_media_file.is_none() && task.on_complete_first_file_location.is_none() {
         warn!("Task {} is marked complete but has neither a cloud media file nor a local download.", task.id);
@@ -166,15 +149,9 @@ pub async fn handle_request(
     } else {
       // If either failure field is present, fill out the failure report.
       if let Some(failure_message) = task.on_failure_message.as_deref() {
-        failure_reason = Some(FailedItemData {
-          failure_type: task.on_failure_type.unwrap_or(TaskFailureType::Unknown),
-          failure_message: Some(failure_message.to_string()),
-        });
+        failure_reason = Some(FailedItemData { failure_type: task.on_failure_type.unwrap_or(TaskFailureType::Unknown), failure_message: Some(failure_message.to_string()) });
       } else if let Some(failure_type) = task.on_failure_type {
-        failure_reason = Some(FailedItemData {
-          failure_type,
-          failure_message: None,
-        });
+        failure_reason = Some(FailedItemData { failure_type, failure_message: None });
       }
     }
 
@@ -202,10 +179,7 @@ pub async fn handle_request(
 /// Fill in the worker-generated thumbnails for every downloaded result, in
 /// one batch lookup. Fails open: a lookup error just leaves them unset.
 async fn attach_local_thumbnails(local_files_database: &LocalFilesDatabase, tasks: &mut [TaskQueueItem]) {
-  let file_paths: Vec<String> = tasks.iter()
-      .filter_map(|task| task.completed_item.as_ref())
-      .filter_map(|item| item.maybe_first_downloaded_file.clone())
-      .collect();
+  let file_paths: Vec<String> = tasks.iter().filter_map(|task| task.completed_item.as_ref()).filter_map(|item| item.maybe_first_downloaded_file.clone()).collect();
   if file_paths.is_empty() {
     return;
   }
@@ -215,7 +189,7 @@ async fn attach_local_thumbnails(local_files_database: &LocalFilesDatabase, task
     Err(err) => {
       warn!("Could not look up local thumbnails for the task queue: {}", err);
       return;
-    }
+    },
   };
 
   for item in tasks.iter_mut().filter_map(|task| task.completed_item.as_mut()) {

@@ -7,10 +7,7 @@ use higgsfield_client::endpoints::generate::video::seedance_2p5::{Seedance2p5Req
 use crate::api::router_resolution::RouterResolution;
 use crate::errors::artcraft_router_error::ArtcraftRouterError;
 use crate::generate::generate_video::generate_video_request_builder::GenerateVideoRequestBuilder;
-use crate::generate::generate_video::providers::higgsfield::common::{
-  finish, plan_batch_size, plan_bitrate, plan_duration, plan_seedance_aspect_ratio, require_prompt, snap_resolution,
-  warn_ignored, HiggsfieldVideoReferences,
-};
+use crate::generate::generate_video::providers::higgsfield::common::{finish, plan_batch_size, plan_bitrate, plan_duration, plan_seedance_aspect_ratio, require_prompt, snap_resolution, warn_ignored, HiggsfieldVideoReferences};
 use crate::generate::generate_video::providers::higgsfield::draft::HiggsfieldVideoPlan;
 use crate::generate::generate_video::providers::higgsfield::video_request::HiggsfieldVideoRequest;
 use crate::generate::generate_video::video_generation_draft_or_request::VideoGenerationDraftOrRequest;
@@ -21,11 +18,8 @@ pub const MAX_REFERENCE_VIDEOS: usize = 3;
 pub const MAX_REFERENCE_AUDIO: usize = 3;
 const DEFAULT_DURATION_SECONDS: u32 = 5;
 
-const RESOLUTION_TIERS: &[(RouterResolution, Seedance2p5Resolution)] = &[
-  (RouterResolution::FourEightyP, Seedance2p5Resolution::P480),
-  (RouterResolution::SevenTwentyP, Seedance2p5Resolution::P720),
-  (RouterResolution::TenEightyP, Seedance2p5Resolution::P1080),
-];
+const RESOLUTION_TIERS: &[(RouterResolution, Seedance2p5Resolution)] =
+  &[(RouterResolution::FourEightyP, Seedance2p5Resolution::P480), (RouterResolution::SevenTwentyP, Seedance2p5Resolution::P720), (RouterResolution::TenEightyP, Seedance2p5Resolution::P1080)];
 
 pub fn build_higgsfield_seedance_2p5(mut builder: GenerateVideoRequestBuilder) -> Result<VideoGenerationDraftOrRequest, ArtcraftRouterError> {
   let strategy = builder.request_mismatch_mitigation_strategy;

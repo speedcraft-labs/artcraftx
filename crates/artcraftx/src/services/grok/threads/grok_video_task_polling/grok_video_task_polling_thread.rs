@@ -34,14 +34,7 @@ pub async fn grok_video_task_polling_thread(
   storyteller_creds_manager: StorytellerCredentialManager,
 ) -> ! {
   loop {
-    let res = polling_loop(
-      &app_handle,
-      &app_data_root,
-      &app_preferences,
-      &task_database,
-      &creds,
-      &storyteller_creds_manager,
-    ).await;
+    let res = polling_loop(&app_handle, &app_data_root, &app_preferences, &task_database, &creds, &storyteller_creds_manager).await;
     if let Err(err) = res {
       error!("An error occurred: {:?}", err);
     }
@@ -65,69 +58,38 @@ async fn polling_loop(
       continue;
     }
 
-
     let grok_full_creds = match get_or_update_grok_full_credentials(&grok_creds).await {
       Ok(creds) => creds,
       Err(err) => {
         info!("No full grok credentials: {:?}", err);
         tokio::time::sleep(std::time::Duration::from_millis(30_000)).await;
         continue;
-      }
+      },
     };
 
-    let local_tasks = list_tasks_by_provider_and_status(ListTasksByProviderAndStatusArgs {
-      db: task_database.get_connection(),
-      provider: GenerationSource::Grok,
-      task_statuses: &TASK_DATABASE_PENDING_STATUSES,
-    }).await?;
+    let local_tasks = list_tasks_by_provider_and_status(ListTasksByProviderAndStatusArgs { db: task_database.get_connection(), provider: GenerationSource::Grok, task_statuses: &TASK_DATABASE_PENDING_STATUSES }).await?;
 
-    poll_grok_tasks(
-      app_handle,
-      app_data_root,
-      app_preferences,
-      task_database,
-      &grok_full_creds,
-      local_tasks,
-    ).await?;
+    poll_grok_tasks(app_handle, app_data_root, app_preferences, task_database, &grok_full_creds, local_tasks).await?;
 
     tokio::time::sleep(std::time::Duration::from_millis(2_000)).await;
   }
 }
 
-async fn poll_grok_tasks(
-  app_handle: &AppHandle,
-  app_data_root: &AppDataRoot,
-  app_preferences: &AppPreferencesManager,
-  task_database: &TaskDatabase,
-  grok_full_creds: &GrokFullCredentials,
-  local_tasks: TaskList,
-) -> AnyhowResult<()> {
+async fn poll_grok_tasks(app_handle: &AppHandle, app_data_root: &AppDataRoot, app_preferences: &AppPreferencesManager, task_database: &TaskDatabase, grok_full_creds: &GrokFullCredentials, local_tasks: TaskList) -> AnyhowResult<()> {
   let local_tasks = local_tasks.tasks;
 
   if local_tasks.is_empty() {
-    return Ok(())
+    return Ok(());
   }
-  
+
   info!("Grok tasks waiting: {:?}", local_tasks.len());
 
   // Map of Grok Post ID to Local Task.
-  let local_tasks_by_grok_post_id = local_tasks.iter()
-      .filter_map(|task| {
-        if let Some(provider_job_id) = &task.provider_job_id {
-          Some((provider_job_id.clone(), task.clone()))
-        } else {
-          None
-        }
-      })
-      .collect::<HashMap<String, Task>>();
+  let local_tasks_by_grok_post_id = local_tasks.iter().filter_map(|task| if let Some(provider_job_id) = &task.provider_job_id { Some((provider_job_id.clone(), task.clone())) } else { None }).collect::<HashMap<String, Task>>();
 
-  let list_media_request = GrokMediaPostListRequest {
-    cookie: grok_full_creds.cookies.as_str(),
-    cursor: None,
-    request_timeout: Some(Duration::from_millis(20_000)),
-  };
+  let list_media_request = GrokMediaPostListRequest { cookie: grok_full_creds.cookies.as_str(), cursor: None, request_timeout: Some(Duration::from_millis(20_000)) };
 
-  let list_result  = list_media_request.send().await?;
+  let list_result = list_media_request.send().await?;
 
   let grok_posts = list_result.posts;
 
@@ -148,16 +110,7 @@ async fn poll_grok_tasks(
       None => continue,
     };
 
-    let result = complete_grok_video(
-      app_handle,
-      app_data_root,
-      app_preferences,
-      task_database,
-      grok_full_creds,
-      grok_post_id,
-      local_task,
-      grok_video_data,
-    ).await;
+    let result = complete_grok_video(app_handle, app_data_root, app_preferences, task_database, grok_full_creds, grok_post_id, local_task, grok_video_data).await;
 
     if let Err(err) = result {
       error!("Failed to complete Grok video task {}: {:?}", local_task.id.as_str(), err);
@@ -187,12 +140,7 @@ async fn complete_grok_video(
 
   let download_path = app_data_root.temp_dir().path().join(format!("{}.mp4", grok_post_id));
 
-  let download = GrokDownloadVideo {
-    cookies: grok_full_creds.cookies.as_str(),
-    user_id: grok_full_creds.get_user_id_ref(),
-    file_id: &grok_video_post.file_id,
-    request_timeout: None,
-  };
+  let download = GrokDownloadVideo { cookies: grok_full_creds.cookies.as_str(), user_id: grok_full_creds.get_user_id_ref(), file_id: &grok_video_post.file_id, request_timeout: None };
 
   download.download_to_path(&download_path).await?;
 
@@ -204,11 +152,9 @@ async fn complete_grok_video(
     task: local_task,
     generation_provider: GenerationSource::Grok,
     media_class: TaskMediaFileClass::Video,
-    prompt: CompletionPrompt::Create {
-      model_type: CommonModelType::GrokVideo,
-      maybe_prompt: grok_video_post.prompt.clone(),
-    },
+    prompt: CompletionPrompt::Create { model_type: CommonModelType::GrokVideo, maybe_prompt: grok_video_post.prompt.clone() },
     fallback_model_slug: GROK_VIDEO_FALLBACK_MODEL_SLUG,
     local_files: &[download_path],
-  }).await
+  })
+  .await
 }

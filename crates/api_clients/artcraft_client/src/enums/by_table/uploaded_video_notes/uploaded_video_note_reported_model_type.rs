@@ -225,16 +225,9 @@ mod tests {
   /// Retired `preview_model*` values must still decode, collapsing onto Seedance 2.0.
   #[test]
   fn legacy_preview_values_map_to_seedance() {
-    assert_eq!(
-      UploadedVideoNoteReportedModelType::from_str("preview_model").unwrap(),
-      UploadedVideoNoteReportedModelType::Seedance2p0
-    );
-    assert_eq!(
-      UploadedVideoNoteReportedModelType::from_str("preview_model_fast").unwrap(),
-      UploadedVideoNoteReportedModelType::Seedance2p0Fast
-    );
-    let decoded: UploadedVideoNoteReportedModelType =
-      serde_json::from_str("\"preview_model\"").unwrap();
+    assert_eq!(UploadedVideoNoteReportedModelType::from_str("preview_model").unwrap(), UploadedVideoNoteReportedModelType::Seedance2p0);
+    assert_eq!(UploadedVideoNoteReportedModelType::from_str("preview_model_fast").unwrap(), UploadedVideoNoteReportedModelType::Seedance2p0Fast);
+    let decoded: UploadedVideoNoteReportedModelType = serde_json::from_str("\"preview_model\"").unwrap();
     assert_eq!(decoded, UploadedVideoNoteReportedModelType::Seedance2p0);
   }
 

@@ -10,9 +10,7 @@ use higgsfield_client::types::media_role::MediaRole;
 use crate::api::router_resolution::RouterResolution;
 use crate::errors::artcraft_router_error::ArtcraftRouterError;
 use crate::generate::generate_video::generate_video_request_builder::GenerateVideoRequestBuilder;
-use crate::generate::generate_video::providers::higgsfield::common::{
-  finish, plan_batch_size, plan_bitrate, require_prompt, snap_resolution, warn_ignored, HiggsfieldVideoReferences,
-};
+use crate::generate::generate_video::providers::higgsfield::common::{finish, plan_batch_size, plan_bitrate, require_prompt, snap_resolution, warn_ignored, HiggsfieldVideoReferences};
 use crate::generate::generate_video::providers::higgsfield::draft::{HiggsfieldVideoPlan, Seedance2p5EditPlan};
 use crate::generate::generate_video::video_generation_draft_or_request::VideoGenerationDraftOrRequest;
 
@@ -22,11 +20,8 @@ pub const MAX_REFERENCE_IMAGES: usize = 9;
 pub const MAX_REFERENCE_VIDEOS: usize = 1;
 pub const MAX_REFERENCE_AUDIO: usize = 3;
 
-const RESOLUTION_TIERS: &[(RouterResolution, Seedance2p5Resolution)] = &[
-  (RouterResolution::FourEightyP, Seedance2p5Resolution::P480),
-  (RouterResolution::SevenTwentyP, Seedance2p5Resolution::P720),
-  (RouterResolution::TenEightyP, Seedance2p5Resolution::P1080),
-];
+const RESOLUTION_TIERS: &[(RouterResolution, Seedance2p5Resolution)] =
+  &[(RouterResolution::FourEightyP, Seedance2p5Resolution::P480), (RouterResolution::SevenTwentyP, Seedance2p5Resolution::P720), (RouterResolution::TenEightyP, Seedance2p5Resolution::P1080)];
 
 /// The roles the edit takes on top of its source clip.
 const ACCEPTED_ROLES: &[MediaRole] = &[MediaRole::Video, MediaRole::Image, MediaRole::Audio];
@@ -87,7 +82,7 @@ mod tests {
         assert_eq!(plan.resolution, Seedance2p5Resolution::P1080);
         assert_eq!(plan.batch_size.as_u32(), 2);
         assert!(!plan.generate_audio);
-      }
+      },
       other => panic!("expected an edit plan, got {other:?}"),
     }
     assert_eq!(draft.unhandled_request_state.unwrap().reference_video_count(), 1);

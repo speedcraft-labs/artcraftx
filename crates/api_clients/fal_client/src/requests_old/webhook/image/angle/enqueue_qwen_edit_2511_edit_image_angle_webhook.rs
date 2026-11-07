@@ -65,30 +65,27 @@ impl FalRequestCostCalculator for EnqueueQwenEdit2511EditImageAngleRequest {
   }
 }
 
-pub async fn enqueue_qwen_edit_2511_edit_image_angle_webhook<R: IntoUrl>(
-  args: EnqueueQwenEdit2511EditImageAngleArgs<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
-
+pub async fn enqueue_qwen_edit_2511_edit_image_angle_webhook<R: IntoUrl>(args: EnqueueQwenEdit2511EditImageAngleArgs<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
 
-  let num_images = req.num_images
-      .map(|n| match n {
-        EnqueueQwenEdit2511AngleNumImages::One => 1,
-        EnqueueQwenEdit2511AngleNumImages::Two => 2,
-        EnqueueQwenEdit2511AngleNumImages::Three => 3,
-        EnqueueQwenEdit2511AngleNumImages::Four => 4,
-      });
+  let num_images = req.num_images.map(|n| match n {
+    EnqueueQwenEdit2511AngleNumImages::One => 1,
+    EnqueueQwenEdit2511AngleNumImages::Two => 2,
+    EnqueueQwenEdit2511AngleNumImages::Three => 3,
+    EnqueueQwenEdit2511AngleNumImages::Four => 4,
+  });
 
-  let image_size = req.image_size
-      .map(|s| match s {
-        EnqueueQwenEdit2511AngleImageSize::Square => "square",
-        EnqueueQwenEdit2511AngleImageSize::SquareHd => "square_hd",
-        EnqueueQwenEdit2511AngleImageSize::PortraitFourThree => "portrait_4_3",
-        EnqueueQwenEdit2511AngleImageSize::PortraitSixteenNine => "portrait_16_9",
-        EnqueueQwenEdit2511AngleImageSize::LandscapeFourThree => "landscape_4_3",
-        EnqueueQwenEdit2511AngleImageSize::LandscapeSixteenNine => "landscape_16_9",
-      })
-      .map(|s| s.to_string());
+  let image_size = req
+    .image_size
+    .map(|s| match s {
+      EnqueueQwenEdit2511AngleImageSize::Square => "square",
+      EnqueueQwenEdit2511AngleImageSize::SquareHd => "square_hd",
+      EnqueueQwenEdit2511AngleImageSize::PortraitFourThree => "portrait_4_3",
+      EnqueueQwenEdit2511AngleImageSize::PortraitSixteenNine => "portrait_16_9",
+      EnqueueQwenEdit2511AngleImageSize::LandscapeFourThree => "landscape_4_3",
+      EnqueueQwenEdit2511AngleImageSize::LandscapeSixteenNine => "landscape_16_9",
+    })
+    .map(|s| s.to_string());
 
   let request = QwenEdit2511EditImageAngleInput {
     image_urls: req.image_urls,
@@ -109,10 +106,7 @@ pub async fn enqueue_qwen_edit_2511_edit_image_angle_webhook<R: IntoUrl>(
     seed: None,
   };
 
-  let result = http_qwen_edit_2511_edit_image_angle(request)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await;
+  let result = http_qwen_edit_2511_edit_image_angle(request).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await;
 
   result.map_err(|err| classify_fal_error(err))
 }
@@ -120,7 +114,9 @@ pub async fn enqueue_qwen_edit_2511_edit_image_angle_webhook<R: IntoUrl>(
 #[cfg(test)]
 mod tests {
   use crate::creds::fal_api_key::FalApiKey;
-  use crate::requests_old::webhook::image::angle::enqueue_qwen_edit_2511_edit_image_angle_webhook::{enqueue_qwen_edit_2511_edit_image_angle_webhook, EnqueueQwenEdit2511EditImageAngleArgs, EnqueueQwenEdit2511EditImageAngleRequest, EnqueueQwenEdit2511AngleNumImages, EnqueueQwenEdit2511AngleImageSize};
+  use crate::requests_old::webhook::image::angle::enqueue_qwen_edit_2511_edit_image_angle_webhook::{
+    enqueue_qwen_edit_2511_edit_image_angle_webhook, EnqueueQwenEdit2511EditImageAngleArgs, EnqueueQwenEdit2511EditImageAngleRequest, EnqueueQwenEdit2511AngleNumImages, EnqueueQwenEdit2511AngleImageSize,
+  };
   use errors::AnyhowResult;
   use std::fs::read_to_string;
   use test_data::web::image_urls::JUNO_AT_LAKE_IMAGE_URL;

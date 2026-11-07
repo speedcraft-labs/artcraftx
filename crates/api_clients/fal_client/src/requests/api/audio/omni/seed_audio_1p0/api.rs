@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::audio::omni::seed_audio_1p0::raw_request::{
-  SeedAudio1p0Input, SeedAudio1p0Output,
-};
+use crate::requests::api::audio::omni::seed_audio_1p0::raw_request::{SeedAudio1p0Input, SeedAudio1p0Output};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 /// ByteDance Seed Audio 1.0: omni audio generation (speech, drama, ambience)
@@ -224,17 +222,8 @@ mod tests {
     let secret = read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt")?;
     let api_key = FalApiKey::from_str(&secret);
 
-    let request = SeedAudio1p0Request {
-      prompt: "Generate a short suspense radio drama in a late-night convenience store.".to_string(),
-      voice: None,
-      audio_urls: None,
-      image_url: None,
-      output_format: None,
-      sample_rate: None,
-      speed: None,
-      volume: None,
-      pitch: None,
-    };
+    let request =
+      SeedAudio1p0Request { prompt: "Generate a short suspense radio drama in a late-night convenience store.".to_string(), voice: None, audio_urls: None, image_url: None, output_format: None, sample_rate: None, speed: None, volume: None, pitch: None };
 
     let result = request.send_queue_request(&api_key).await?;
     println!("Queue result — request_id: {}", result.request_id);
@@ -297,11 +286,7 @@ mod tests {
     let request = SeedAudio1p0Request {
       prompt: "Read @Audio1 in this voice.".to_string(),
       voice: Some(SeedAudio1p0Voice::Preset(SeedAudio1p0VoicePreset::ViviMixedEnZhJaEsId)),
-      audio_urls: Some(vec![
-        "https://example.com/a1.mp3".to_string(),
-        "https://example.com/a2.wav".to_string(),
-        "https://example.com/a3.ogg".to_string(),
-      ]),
+      audio_urls: Some(vec!["https://example.com/a1.mp3".to_string(), "https://example.com/a2.wav".to_string(), "https://example.com/a3.ogg".to_string()]),
       image_url: None,
       output_format: Some(SeedAudio1p0OutputFormat::OggOpus),
       sample_rate: Some(SeedAudio1p0SampleRate::Hz48000),
@@ -323,51 +308,23 @@ mod tests {
 
   #[test]
   fn raw_request_omits_unset_optionals() {
-    let request = SeedAudio1p0Request {
-      prompt: "minimal".to_string(),
-      voice: None,
-      audio_urls: None,
-      image_url: None,
-      output_format: None,
-      sample_rate: None,
-      speed: None,
-      volume: None,
-      pitch: None,
-    };
+    let request = SeedAudio1p0Request { prompt: "minimal".to_string(), voice: None, audio_urls: None, image_url: None, output_format: None, sample_rate: None, speed: None, volume: None, pitch: None };
     let json = serde_json::to_value(request.to_raw_request().unwrap()).unwrap();
     assert_eq!(json, serde_json::json!({ "prompt": "minimal" }));
   }
 
   #[test]
   fn custom_voice_id_passes_through_verbatim() {
-    let request = SeedAudio1p0Request {
-      prompt: "p".to_string(),
-      voice: Some(SeedAudio1p0Voice::Custom("my_cloned_voice_id_123".to_string())),
-      audio_urls: None,
-      image_url: None,
-      output_format: None,
-      sample_rate: None,
-      speed: None,
-      volume: None,
-      pitch: None,
-    };
+    let request =
+      SeedAudio1p0Request { prompt: "p".to_string(), voice: Some(SeedAudio1p0Voice::Custom("my_cloned_voice_id_123".to_string())), audio_urls: None, image_url: None, output_format: None, sample_rate: None, speed: None, volume: None, pitch: None };
     let raw = request.to_raw_request().unwrap();
     assert_eq!(raw.voice.as_deref(), Some("my_cloned_voice_id_123"));
   }
 
   #[test]
   fn image_url_serializes_when_set() {
-    let request = SeedAudio1p0Request {
-      prompt: "Narrate this scene.".to_string(),
-      voice: None,
-      audio_urls: None,
-      image_url: Some("https://example.com/scene.png".to_string()),
-      output_format: None,
-      sample_rate: None,
-      speed: None,
-      volume: None,
-      pitch: None,
-    };
+    let request =
+      SeedAudio1p0Request { prompt: "Narrate this scene.".to_string(), voice: None, audio_urls: None, image_url: Some("https://example.com/scene.png".to_string()), output_format: None, sample_rate: None, speed: None, volume: None, pitch: None };
     let json = serde_json::to_value(request.to_raw_request().unwrap()).unwrap();
     assert_eq!(
       json,
@@ -380,17 +337,7 @@ mod tests {
 
   #[test]
   fn negative_pitch_serializes() {
-    let request = SeedAudio1p0Request {
-      prompt: "p".to_string(),
-      voice: None,
-      audio_urls: None,
-      image_url: None,
-      output_format: None,
-      sample_rate: None,
-      speed: None,
-      volume: None,
-      pitch: Some(-12),
-    };
+    let request = SeedAudio1p0Request { prompt: "p".to_string(), voice: None, audio_urls: None, image_url: None, output_format: None, sample_rate: None, speed: None, volume: None, pitch: Some(-12) };
     let json = serde_json::to_value(request.to_raw_request().unwrap()).unwrap();
     assert_eq!(json.get("pitch").and_then(|p| p.as_i64()), Some(-12));
   }
@@ -426,12 +373,7 @@ mod tests {
 
   #[test]
   fn every_output_format_maps_to_wire_string() {
-    for (variant, expected) in [
-      (SeedAudio1p0OutputFormat::Wav, "wav"),
-      (SeedAudio1p0OutputFormat::Mp3, "mp3"),
-      (SeedAudio1p0OutputFormat::Pcm, "pcm"),
-      (SeedAudio1p0OutputFormat::OggOpus, "ogg_opus"),
-    ] {
+    for (variant, expected) in [(SeedAudio1p0OutputFormat::Wav, "wav"), (SeedAudio1p0OutputFormat::Mp3, "mp3"), (SeedAudio1p0OutputFormat::Pcm, "pcm"), (SeedAudio1p0OutputFormat::OggOpus, "ogg_opus")] {
       assert_eq!(variant.to_str(), expected);
     }
   }

@@ -1,8 +1,6 @@
 use crate::state::database::task_database::TaskDatabase;
 use log::{error, info};
-use sqlite_database::queries::update::update_task_download_locations::{
-  update_task_download_locations, UpdateTaskDownloadLocationsArgs,
-};
+use sqlite_database::queries::update::update_task_download_locations::{update_task_download_locations, UpdateTaskDownloadLocationsArgs};
 use sqlite_identifiers::ids::task_id::TaskId;
 use std::path::Path;
 
@@ -18,12 +16,7 @@ pub async fn record_task_download_locations(task_database: &TaskDatabase, task_i
     return;
   };
 
-  let result = update_task_download_locations(UpdateTaskDownloadLocationsArgs {
-    db: task_database.get_connection(),
-    task_id,
-    directory_location: directory,
-    first_file_location: first_file,
-  }).await;
+  let result = update_task_download_locations(UpdateTaskDownloadLocationsArgs { db: task_database.get_connection(), task_id, directory_location: directory, first_file_location: first_file }).await;
 
   match result {
     Ok(true) => info!("Recorded download location for task {}: {:?}", task_id.as_str(), first_file),

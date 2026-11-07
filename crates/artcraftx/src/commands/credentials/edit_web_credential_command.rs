@@ -21,27 +21,22 @@ pub struct EditWebCredentialResponse {
 /// replaces the cookies when provided (non-empty). Omitted fields are left
 /// unchanged. The common case is simply renaming the credential.
 #[tauri::command]
-pub async fn edit_web_credential_command(
-  app_data_root: State<'_, AppDataRoot>,
-  credential_id: String,
-  name: Option<String>,
-  cookie_header: Option<String>,
-) -> Result<EditWebCredentialResponse, String> {
+pub async fn edit_web_credential_command(app_data_root: State<'_, AppDataRoot>, credential_id: String, name: Option<String>, cookie_header: Option<String>) -> Result<EditWebCredentialResponse, String> {
   info!("edit_web_credential_command called for: {}", credential_id);
 
   let creds_dir = app_data_root.credentials_dir();
 
   let mut credential = creds_dir
-      .find_credential_by_id(&credential_id)
-      .map_err(|err| {
-        error!("Error looking up credential {}: {}", credential_id, err);
-        format!("Error looking up credential {}: {}", credential_id, err)
-      })?
-      .ok_or_else(|| {
-        let message = format!("No credential found for id {}", credential_id);
-        error!("{}", message);
-        message
-      })?;
+    .find_credential_by_id(&credential_id)
+    .map_err(|err| {
+      error!("Error looking up credential {}: {}", credential_id, err);
+      format!("Error looking up credential {}: {}", credential_id, err)
+    })?
+    .ok_or_else(|| {
+      let message = format!("No credential found for id {}", credential_id);
+      error!("{}", message);
+      message
+    })?;
 
   let CredentialSecret::Cookies(existing_cookie) = &credential.secret else {
     let message = format!("AuthCredential {} is not a cookie credential", credential_id);
@@ -84,14 +79,10 @@ pub async fn edit_web_credential_command(
     credential.name = if new_name.is_empty() { None } else { Some(new_name) };
   }
 
-  creds_dir
-      .save_credential(&credential)
-      .map_err(|err| {
-        error!("Error saving credential {}: {}", credential_id, err);
-        format!("Error saving credential {}: {}", credential_id, err)
-      })?;
+  creds_dir.save_credential(&credential).map_err(|err| {
+    error!("Error saving credential {}: {}", credential_id, err);
+    format!("Error saving credential {}: {}", credential_id, err)
+  })?;
 
-  Ok(EditWebCredentialResponse {
-    credential: CredentialPayload::from_auth_credential(&credential),
-  })
+  Ok(EditWebCredentialResponse { credential: CredentialPayload::from_auth_credential(&credential) })
 }

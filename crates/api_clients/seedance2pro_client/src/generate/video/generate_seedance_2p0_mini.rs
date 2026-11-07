@@ -2,11 +2,7 @@ use crate::creds::seedance2pro_session::Seedance2ProSession;
 use crate::error::seedance2pro_error::Seedance2ProError;
 use crate::cost::kinovi_seedance_mini_generation_cost::KinoviSeedanceMiniGenerationCost;
 use crate::requests::kinovi_host::KinoviHost;
-use crate::requests::workflow_run_task::workflow_run_task::{
-  workflow_run_task, KinoviAspectRatioRaw, KinoviBatchCountRaw, KinoviBitrateRaw,
-  KinoviModelTypeRaw, KinoviOutputResolutionRaw, WorkflowRunTaskArgs,
-  WorkflowRunTaskRequest,
-};
+use crate::requests::workflow_run_task::workflow_run_task::{workflow_run_task, KinoviAspectRatioRaw, KinoviBatchCountRaw, KinoviBitrateRaw, KinoviModelTypeRaw, KinoviOutputResolutionRaw, WorkflowRunTaskArgs, WorkflowRunTaskRequest};
 
 // ── Args ──
 
@@ -112,22 +108,13 @@ impl GenerateSeedance2p0MiniRequest {
     let duration = f64::from(self.duration_seconds);
 
     let base_credits = duration * credits_per_second * batch_multiplier;
-    let maybe_video_reference_surcharge_credits = if self.has_video_reference() {
-      Some(duration * video_reference_surcharge_per_second * batch_multiplier)
-    } else {
-      None
-    };
+    let maybe_video_reference_surcharge_credits = if self.has_video_reference() { Some(duration * video_reference_surcharge_per_second * batch_multiplier) } else { None };
 
-    KinoviSeedanceMiniGenerationCost::from_base_and_surcharge(
-      base_credits,
-      maybe_video_reference_surcharge_credits,
-    )
+    KinoviSeedanceMiniGenerationCost::from_base_and_surcharge(base_credits, maybe_video_reference_surcharge_credits)
   }
 
   fn has_video_reference(&self) -> bool {
-    self.reference_video_urls
-      .as_ref()
-      .is_some_and(|urls| !urls.is_empty())
+    self.reference_video_urls.as_ref().is_some_and(|urls| !urls.is_empty())
   }
 
   fn batch_multiplier(&self) -> u8 {
@@ -155,21 +142,10 @@ pub struct GenerateSeedance2p0MiniResponse {
 
 // ── Entry point ──
 
-pub async fn generate_seedance_2p0_mini(
-  args: GenerateSeedance2p0MiniArgs<'_>,
-) -> Result<GenerateSeedance2p0MiniResponse, Seedance2ProError> {
-  let raw_response = workflow_run_task(WorkflowRunTaskArgs {
-    request: to_raw_request(args.request),
-    session: args.session,
-    host_override: args.host_override,
-  }).await?;
+pub async fn generate_seedance_2p0_mini(args: GenerateSeedance2p0MiniArgs<'_>) -> Result<GenerateSeedance2p0MiniResponse, Seedance2ProError> {
+  let raw_response = workflow_run_task(WorkflowRunTaskArgs { request: to_raw_request(args.request), session: args.session, host_override: args.host_override }).await?;
 
-  Ok(GenerateSeedance2p0MiniResponse {
-    task_id: raw_response.task_id,
-    order_id: raw_response.order_id,
-    task_ids: raw_response.task_ids,
-    order_ids: raw_response.order_ids,
-  })
+  Ok(GenerateSeedance2p0MiniResponse { task_id: raw_response.task_id, order_id: raw_response.order_id, task_ids: raw_response.task_ids, order_ids: raw_response.order_ids })
 }
 
 // ── Mapping helpers ──
@@ -248,11 +224,7 @@ mod tests {
 
     const FLOAT_TOLERANCE: f64 = 1e-9;
 
-    fn build_request(
-      duration_seconds: u8,
-      output_resolution: Option<KinoviSeedance2p0MiniOutputResolution>,
-      batch_count: Option<KinoviSeedance2p0MiniBatchCount>,
-    ) -> GenerateSeedance2p0MiniRequest {
+    fn build_request(duration_seconds: u8, output_resolution: Option<KinoviSeedance2p0MiniOutputResolution>, batch_count: Option<KinoviSeedance2p0MiniBatchCount>) -> GenerateSeedance2p0MiniRequest {
       GenerateSeedance2p0MiniRequest {
         prompt: String::new(),
         aspect_ratio: None,
@@ -350,11 +322,7 @@ mod tests {
         for (make, duration, base, surcharge) in cases {
           let costs = with_video_ref(make(*duration)).calculate_costs();
           assert_eq!(costs.base_cost.kinovi_credits, *base, "base at {duration}s");
-          assert_eq!(
-            costs.video_reference_surcharge_cost.map(|c| c.kinovi_credits),
-            Some(*surcharge),
-            "surcharge at {duration}s",
-          );
+          assert_eq!(costs.video_reference_surcharge_cost.map(|c| c.kinovi_credits), Some(*surcharge), "surcharge at {duration}s",);
           assert_eq!(costs.total_cost.kinovi_credits, base + surcharge, "total at {duration}s");
         }
       }
@@ -378,11 +346,7 @@ mod tests {
       /// The surcharge applies per generated video, so batches multiply it.
       #[test]
       fn batch_multiplies_surcharge() {
-        let request = with_video_ref(build_request(
-          5,
-          Some(KinoviSeedance2p0MiniOutputResolution::FourEightyP),
-          Some(KinoviSeedance2p0MiniBatchCount::Two),
-        ));
+        let request = with_video_ref(build_request(5, Some(KinoviSeedance2p0MiniOutputResolution::FourEightyP), Some(KinoviSeedance2p0MiniBatchCount::Two)));
         // (37.5 base + 10 surcharge) × 2
         let costs = request.calculate_costs();
         assert_eq!(costs.base_cost.kinovi_credits, 75.0);
@@ -453,11 +417,7 @@ mod tests {
 
       #[test]
       fn batch_eight_480p_with_video_reference() {
-        let costs = with_video_ref(build_request(
-          5,
-          Some(KinoviSeedance2p0MiniOutputResolution::FourEightyP),
-          Some(KinoviSeedance2p0MiniBatchCount::Eight),
-        )).calculate_costs();
+        let costs = with_video_ref(build_request(5, Some(KinoviSeedance2p0MiniOutputResolution::FourEightyP), Some(KinoviSeedance2p0MiniBatchCount::Eight))).calculate_costs();
         // (37.5 + 10) × 8 = 380
         assert_eq!(costs.total_cost.kinovi_credits, 380.0);
       }
@@ -468,8 +428,7 @@ mod tests {
     #[test]
     fn default_resolution_is_720p() {
       let default = r720(5).calculate_costs().total_cost.kinovi_credits;
-      let explicit = build_request(5, Some(KinoviSeedance2p0MiniOutputResolution::SevenTwentyP), None)
-        .calculate_costs().total_cost.kinovi_credits;
+      let explicit = build_request(5, Some(KinoviSeedance2p0MiniOutputResolution::SevenTwentyP), None).calculate_costs().total_cost.kinovi_credits;
       assert_eq!(default, explicit);
       assert_eq!(default, 100.0);
     }
@@ -650,7 +609,8 @@ mod tests {
           use_face_blur_hack: None,
           bitrate: None,
         },
-      }).await?;
+      })
+      .await?;
       println!("mini t2v 720p — task_id={}, order_id={}", result.task_id, result.order_id);
       assert!(!result.task_id.is_empty());
       assert!(!result.order_id.is_empty());
@@ -681,7 +641,8 @@ mod tests {
           use_face_blur_hack: None,
           bitrate: None,
         },
-      }).await?;
+      })
+      .await?;
       println!("mini t2v 480p — task_id={}, order_id={}", result.task_id, result.order_id);
       assert!(!result.task_id.is_empty());
       assert_eq!(1, 2);
@@ -704,16 +665,15 @@ mod tests {
           duration_seconds: 15,
           start_frame_url: None,
           end_frame_url: None,
-          reference_image_urls: Some(vec![
-            "https://static.seedance2-pro.com/materials/20260624/1782342102687-53fe5496.png".to_string(),
-          ]),
+          reference_image_urls: Some(vec!["https://static.seedance2-pro.com/materials/20260624/1782342102687-53fe5496.png".to_string()]),
           reference_video_urls: None,
           reference_audio_urls: None,
           character_ids: None,
           use_face_blur_hack: None,
           bitrate: None,
         },
-      }).await?;
+      })
+      .await?;
       println!("mini reference-to-video 720p — task_id={}, order_id={}", result.task_id, result.order_id);
       assert!(!result.task_id.is_empty());
       assert_eq!(1, 2);
@@ -737,15 +697,14 @@ mod tests {
           start_frame_url: None,
           end_frame_url: None,
           reference_image_urls: None,
-          reference_video_urls: Some(vec![
-            "https://static.seedance2-pro.com/materials/20260315/1773594284659-3a46d231.mp4".to_string(),
-          ]),
+          reference_video_urls: Some(vec!["https://static.seedance2-pro.com/materials/20260315/1773594284659-3a46d231.mp4".to_string()]),
           reference_audio_urls: None,
           character_ids: None,
           use_face_blur_hack: None,
           bitrate: None,
         },
-      }).await?;
+      })
+      .await?;
       println!("mini video ref 480p — task_id={}, order_id={}", result.task_id, result.order_id);
       assert!(!result.task_id.is_empty());
       assert_eq!(1, 2);

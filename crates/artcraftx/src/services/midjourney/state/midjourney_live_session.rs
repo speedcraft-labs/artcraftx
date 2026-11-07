@@ -62,16 +62,14 @@ impl MidjourneyLiveSession {
   /// re-opens one.
   pub fn connected_websocket(&self) -> Option<MidjourneyWebSocket> {
     // Fast path: read lock to check.
-    let maybe_connected = self.read(|inner| {
-      inner.websocket.as_ref().map(|ws| (ws.clone(), ws.is_connected()))
-    });
+    let maybe_connected = self.read(|inner| inner.websocket.as_ref().map(|ws| (ws.clone(), ws.is_connected())));
 
     match maybe_connected {
       Some((ws, true)) => Some(ws),
       Some((_, false)) => {
         self.clear_websocket();
         None
-      }
+      },
       None => None,
     }
   }

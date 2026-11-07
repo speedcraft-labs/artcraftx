@@ -26,12 +26,7 @@ const LOGIN_PATH_FRAGMENTS: &[&str] = &["login", "signin", "sign-in"];
 /// captured cookies (and any detected identity) and close the window.
 ///
 /// Exits when the window is gone (user closed it) or once cookies are saved.
-pub async fn login_window_thread(
-  app: AppHandle,
-  app_data_root: AppDataRoot,
-  website: LoginWebsite,
-  maybe_target_credential_id: Option<String>,
-) {
+pub async fn login_window_thread(app: AppHandle, app_data_root: AppDataRoot, website: LoginWebsite, maybe_target_credential_id: Option<String>) {
   let site = login_site_for(website);
   let window_name = login_window_name(website);
 
@@ -41,30 +36,23 @@ pub async fn login_window_thread(
       None => {
         info!("Exit {} login thread (window gone).", website);
         return; // NB: Only exit if we don't have the webview.
-      }
+      },
     };
 
-    let result = check_login_window(
-      &app,
-      &login_webview_window,
-      &app_data_root,
-      website,
-      site.as_ref(),
-      maybe_target_credential_id.as_deref(),
-    );
+    let result = check_login_window(&app, &login_webview_window, &app_data_root, website, site.as_ref(), maybe_target_credential_id.as_deref());
 
     match result {
       Err(err) => {
         error!("Error checking {} login window: {:?}", website, err);
-      }
-      Ok(false) => {} // Continue iteration and try again...
+      },
+      Ok(false) => {}, // Continue iteration and try again...
       Ok(true) => {
         info!("Saved {} cookies from login window. Closing.", website);
         if let Err(err) = login_webview_window.close() {
           error!("Error closing {} login window: {:?}", website, err);
         }
         return;
-      }
+      },
     }
 
     tokio::time::sleep(POLL_INTERVAL).await;
@@ -76,14 +64,7 @@ pub async fn login_window_thread(
 /// Stateless by design: login is "done" when the webview is on a recognized
 /// destination host, not on a login/auth page, and the session signal is
 /// present. No cross-poll flags to get wrong.
-fn check_login_window(
-  app_handle: &AppHandle,
-  webview_window: &WebviewWindow,
-  app_data_root: &AppDataRoot,
-  website: LoginWebsite,
-  site: &dyn LoginWindowSite,
-  maybe_target_credential_id: Option<&str>,
-) -> AnyhowResult<bool> {
+fn check_login_window(app_handle: &AppHandle, webview_window: &WebviewWindow, app_data_root: &AppDataRoot, website: LoginWebsite, site: &dyn LoginWindowSite, maybe_target_credential_id: Option<&str>) -> AnyhowResult<bool> {
   let url = webview_window.url()?;
   let hostname = url.host_str().unwrap_or_default().to_string();
   let path = url.path().to_ascii_lowercase();
@@ -97,9 +78,7 @@ fn check_login_window(
   // host and not the login page itself. Substring path matching keeps this
   // robust to www / trailing-slash / query-string redirects on the login URL.
   let at_destination = site.destination_hostnames().contains(&hostname.as_str());
-  let on_login_page = LOGIN_PATH_FRAGMENTS
-      .iter()
-      .any(|fragment| path.contains(fragment));
+  let on_login_page = LOGIN_PATH_FRAGMENTS.iter().any(|fragment| path.contains(fragment));
 
   if !at_destination || on_login_page {
     return Ok(false);
@@ -116,18 +95,10 @@ fn check_login_window(
   // here. (Login pages set few, small cookies, so the size/count thresholds
   // miss real logins; those are only a fallback for sites whose session cookie
   // names we don't know.)
-  let has_captured_session = if session_cookie_names.is_empty() {
-    cookie_store.len() >= site.min_cookie_count()
-        && cookie_length >= site.min_cookie_char_length()
-  } else {
-    session_cookie_names.iter().any(|name| cookie_store.has_cookie(name))
-  };
+  let has_captured_session = if session_cookie_names.is_empty() { cookie_store.len() >= site.min_cookie_count() && cookie_length >= site.min_cookie_char_length() } else { session_cookie_names.iter().any(|name| cookie_store.has_cookie(name)) };
 
   let cookie_names = cookie_store.cookie_names().join(", ");
-  info!(
-    "{} login check: host `{}`, path `{}`, cookies={} [{}], length={}, has_session={}",
-    website, hostname, path, cookie_store.len(), cookie_names, cookie_length, has_captured_session,
-  );
+  info!("{} login check: host `{}`, path `{}`, cookies={} [{}], length={}, has_session={}", website, hostname, path, cookie_store.len(), cookie_names, cookie_length, has_captured_session,);
 
   if !has_captured_session {
     return Ok(false);
@@ -153,21 +124,12 @@ fn check_login_window(
   // 3) Save the credential file to the credentials directory.
   let credential = save_web_credential(
     app_data_root.credentials_dir(),
-    WebCredentialSave {
-      service: site.credential_service(),
-      cookies: cookie_store,
-      maybe_user_info,
-      maybe_statsig,
-      maybe_user_agent: site.user_agent().map(str::to_string),
-      maybe_target_credential_id: maybe_target_credential_id.map(str::to_string),
-    },
+    WebCredentialSave { service: site.credential_service(), cookies: cookie_store, maybe_user_info, maybe_statsig, maybe_user_agent: site.user_agent().map(str::to_string), maybe_target_credential_id: maybe_target_credential_id.map(str::to_string) },
   )?;
 
   info!("Saved {} credential to {:?}.", website, credential.source_path);
 
-  let event = RefreshAccountStateEvent {
-    provider: website.generation_provider(),
-  };
+  let event = RefreshAccountStateEvent { provider: website.generation_provider() };
   event.send_infallible(app_handle);
 
   Ok(true)

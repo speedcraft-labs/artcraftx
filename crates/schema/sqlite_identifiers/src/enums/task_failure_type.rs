@@ -66,7 +66,6 @@ pub enum TaskFailureType {
 impl_enum_display_and_debug_using_to_str!(TaskFailureType);
 
 impl TaskFailureType {
-
   pub const fn to_str(&self) -> &'static str {
     match self {
       Self::Unknown => "unknown",

@@ -28,14 +28,8 @@ pub struct OmniGenListSplatModelsArgs<'a> {
 }
 
 /// List available splat models.
-pub async fn omni_gen_list_splat_models(
-  args: OmniGenListSplatModelsArgs<'_>,
-) -> Result<OmniGenSplatModelsResponse, StorytellerError> {
-  Ok(basic_json_get_request(
-    args.api_host,
-    OMNI_GEN_SPLAT_MODELS_PATH,
-    args.maybe_creds,
-  ).await?)
+pub async fn omni_gen_list_splat_models(args: OmniGenListSplatModelsArgs<'_>) -> Result<OmniGenSplatModelsResponse, StorytellerError> {
+  Ok(basic_json_get_request(args.api_host, OMNI_GEN_SPLAT_MODELS_PATH, args.maybe_creds).await?)
 }
 
 // ============================ Response types ============================
@@ -115,19 +109,10 @@ mod tests {
     let resp: OmniGenSplatModelsResponse = serde_json::from_str(json).unwrap();
     assert!(resp.success);
     assert_eq!(resp.models.len(), 1);
-    assert_eq!(
-      resp.models[0].model,
-      ApiClientSplatModel::Unknown("brand_new_splat_model".to_string()),
-    );
-    assert_eq!(
-      resp.models[0].model_creator,
-      Some(ApiClientModelCreator::Unknown("some_new_studio".to_string())),
-    );
+    assert_eq!(resp.models[0].model, ApiClientSplatModel::Unknown("brand_new_splat_model".to_string()),);
+    assert_eq!(resp.models[0].model_creator, Some(ApiClientModelCreator::Unknown("some_new_studio".to_string())),);
     assert_eq!(resp.models[0].is_disabled, None);
-    assert_eq!(
-      resp.providers[0].provider,
-      ApiClientGenerationProvider::Unknown("new_provider".to_string()),
-    );
+    assert_eq!(resp.providers[0].provider, ApiClientGenerationProvider::Unknown("new_provider".to_string()),);
   }
 
   #[test]
@@ -152,12 +137,7 @@ mod live_tests {
     #[ignore] // live: hits http://localhost:12345
     async fn list_splat_models() {
       let api_host = ApiHost::Localhost { port: 12345 };
-      let response = omni_gen_list_splat_models(OmniGenListSplatModelsArgs {
-        api_host: &api_host,
-        maybe_creds: None,
-      })
-      .await
-      .expect("request should succeed");
+      let response = omni_gen_list_splat_models(OmniGenListSplatModelsArgs { api_host: &api_host, maybe_creds: None }).await.expect("request should succeed");
 
       println!("[localhost] splat models response: {:#?}", response);
       assert!(response.success);
@@ -173,12 +153,7 @@ mod live_tests {
     #[ignore] // live: hits https://api.storyteller.ai
     async fn list_splat_models() {
       let api_host = ApiHost::Storyteller;
-      let response = omni_gen_list_splat_models(OmniGenListSplatModelsArgs {
-        api_host: &api_host,
-        maybe_creds: None,
-      })
-      .await
-      .expect("request should succeed");
+      let response = omni_gen_list_splat_models(OmniGenListSplatModelsArgs { api_host: &api_host, maybe_creds: None }).await.expect("request should succeed");
 
       println!("[production] splat models response: {:#?}", response);
       assert!(response.success);

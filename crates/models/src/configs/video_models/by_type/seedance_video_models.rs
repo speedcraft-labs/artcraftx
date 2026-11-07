@@ -6,14 +6,8 @@ use crate::enums::common_resolution::CommonResolution;
 use crate::enums::model_creator::ModelCreator;
 use crate::enums::video_model::VideoModel;
 
-const SEEDANCE_ASPECT_RATIOS: &[CommonAspectRatio] = &[
-  CommonAspectRatio::WideTwentyOneByNine,
-  CommonAspectRatio::WideSixteenByNine,
-  CommonAspectRatio::WideFourByThree,
-  CommonAspectRatio::Square,
-  CommonAspectRatio::TallThreeByFour,
-  CommonAspectRatio::TallNineBySixteen,
-];
+const SEEDANCE_ASPECT_RATIOS: &[CommonAspectRatio] =
+  &[CommonAspectRatio::WideTwentyOneByNine, CommonAspectRatio::WideSixteenByNine, CommonAspectRatio::WideFourByThree, CommonAspectRatio::Square, CommonAspectRatio::TallThreeByFour, CommonAspectRatio::TallNineBySixteen];
 
 /// Bytedance Seedance video models: 2.5 (Higgsfield), the 2.0 family (with
 /// references), 1.5 Pro, and 1.0 Lite.
@@ -143,16 +137,7 @@ pub fn seedance_video_models() -> Vec<VideoModelConfig> {
     &[CommonResolution::FourEightyP, CommonResolution::SevenTwentyP, CommonResolution::TenEightyP, CommonResolution::FourK],
     true,
   ));
-  models.push(seedance_2p0(
-    VideoModel::Seedance2p0UltraFast,
-    "Seedance 2.0 Ultra Fast",
-    "Seedance 2.0 Fast; less filtered",
-    "~5 min.",
-    300_000,
-    None,
-    &[CommonResolution::FourEightyP, CommonResolution::SevenTwentyP],
-    true,
-  ));
+  models.push(seedance_2p0(VideoModel::Seedance2p0UltraFast, "Seedance 2.0 Ultra Fast", "Seedance 2.0 Fast; less filtered", "~5 min.", 300_000, None, &[CommonResolution::FourEightyP, CommonResolution::SevenTwentyP], true));
   models.push(seedance_2p0(
     VideoModel::Seedance2p0BytePlusUltra,
     "Seedance 2.0 Plus Ultra",
@@ -268,16 +253,7 @@ pub fn seedance_video_models() -> Vec<VideoModelConfig> {
 
 /// The Seedance 2.0 family shares one capability surface: keyframes, image /
 /// video / audio (and sometimes character) references, bitrate, and batches.
-fn seedance_2p0(
-  model: VideoModel,
-  full_name: &str,
-  description: &str,
-  badge: &str,
-  progress_bar_ms: u32,
-  extra_info: Option<&str>,
-  resolutions: &[CommonResolution],
-  character_references_supported: bool,
-) -> VideoModelConfig {
+fn seedance_2p0(model: VideoModel, full_name: &str, description: &str, badge: &str, progress_bar_ms: u32, extra_info: Option<&str>, resolutions: &[CommonResolution], character_references_supported: bool) -> VideoModelConfig {
   VideoModelConfig {
     model,
     model_creator: ModelCreator::Bytedance,

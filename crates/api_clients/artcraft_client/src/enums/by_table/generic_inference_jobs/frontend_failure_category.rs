@@ -330,11 +330,7 @@ mod tests {
       const MAX_LENGTH: usize = 32;
       for variant in FrontendFailureCategory::all_variants() {
         let serialized = variant.to_str();
-        assert!(
-          serialized.len() <= MAX_LENGTH,
-          "{:?} serializes to {:?} ({} chars), exceeds VARCHAR({}) limit",
-          variant, serialized, serialized.len(), MAX_LENGTH,
-        );
+        assert!(serialized.len() <= MAX_LENGTH, "{:?} serializes to {:?} ({} chars), exceeds VARCHAR({}) limit", variant, serialized, serialized.len(), MAX_LENGTH,);
       }
     }
   }

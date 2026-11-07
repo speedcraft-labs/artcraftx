@@ -43,34 +43,20 @@ pub struct CompletionData {
 ///
 /// This is the cross-cutting equivalent of the Storyteller-specific
 /// `maybe_handle_frontend_caller_notification` — it works for any provider.
-pub async fn notify_frontend_of_completion(
-  app: &AppHandle,
-  api_host: &ApiHost,
-  maybe_creds: Option<&StorytellerCredentialSet>,
-  task: &Task,
-  completion: &CompletionData,
-) {
+pub async fn notify_frontend_of_completion(app: &AppHandle, api_host: &ApiHost, maybe_creds: Option<&StorytellerCredentialSet>, task: &Task, completion: &CompletionData) {
   notify_generation_complete(app, task);
 
   // Fire the typed frontend notification (for the specific page/component that initiated the job).
   let result = match task.task_type {
-    TaskType::ImageGeneration => {
-      notify_image_generation(app, api_host, maybe_creds, task, completion).await
-    }
-    TaskType::VideoGeneration => {
-      notify_video_generation(app, task, completion)
-    }
+    TaskType::ImageGeneration => notify_image_generation(app, api_host, maybe_creds, task, completion).await,
+    TaskType::VideoGeneration => notify_video_generation(app, task, completion),
     TaskType::AudioGeneration => {
       // No typed audio notification yet; the generic GenerationCompleteEvent
       // above already fired.
       Ok(())
-    }
-    TaskType::MeshGeneration => {
-      notify_object_generation(app, task, completion)
-    }
-    TaskType::SplatGeneration => {
-      notify_gaussian_generation(app, task, completion)
-    }
+    },
+    TaskType::MeshGeneration => notify_object_generation(app, task, completion),
+    TaskType::SplatGeneration => notify_gaussian_generation(app, task, completion),
   };
 
   if let Err(err) = result {
@@ -85,44 +71,22 @@ pub fn notify_generation_complete(app: &AppHandle, task: &Task) {
   let generation_model = task.model_type.and_then(task_model_type_to_generation_model);
   let generation_service = to_generation_service_provider(task.provider);
 
-  let complete_event = GenerationCompleteEvent {
-    action: Some(generation_action),
-    service: generation_service,
-    model: generation_model,
-  };
+  let complete_event = GenerationCompleteEvent { action: Some(generation_action), service: generation_service, model: generation_model };
   complete_event.send_infallible(app);
 }
 
 // ── Per-type handlers ──
 
-async fn notify_image_generation(
-  app: &AppHandle,
-  api_host: &ApiHost,
-  maybe_creds: Option<&StorytellerCredentialSet>,
-  task: &Task,
-  completion: &CompletionData,
-) -> Result<(), Box<dyn std::error::Error>> {
-  let generated_images = collect_generated_images(
-    api_host,
-    maybe_creds,
-    completion,
-  ).await;
+async fn notify_image_generation(app: &AppHandle, api_host: &ApiHost, maybe_creds: Option<&StorytellerCredentialSet>, task: &Task, completion: &CompletionData) -> Result<(), Box<dyn std::error::Error>> {
+  let generated_images = collect_generated_images(api_host, maybe_creds, completion).await;
 
-  let event = TextToImageGenerationCompleteEvent {
-    generated_images,
-    maybe_frontend_subscriber_id: task.frontend_subscriber_id.clone(),
-    maybe_frontend_subscriber_payload: task.frontend_subscriber_payload.clone(),
-  };
+  let event = TextToImageGenerationCompleteEvent { generated_images, maybe_frontend_subscriber_id: task.frontend_subscriber_id.clone(), maybe_frontend_subscriber_payload: task.frontend_subscriber_payload.clone() };
 
   event.send_infallible(app);
   Ok(())
 }
 
-fn notify_video_generation(
-  app: &AppHandle,
-  task: &Task,
-  completion: &CompletionData,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn notify_video_generation(app: &AppHandle, task: &Task, completion: &CompletionData) -> Result<(), Box<dyn std::error::Error>> {
   let event = VideoGenerationCompleteEvent {
     generated_videos: vec![GeneratedVideo {
       media_token: completion.primary_media_file_token.clone(),
@@ -137,11 +101,7 @@ fn notify_video_generation(
   Ok(())
 }
 
-fn notify_object_generation(
-  app: &AppHandle,
-  task: &Task,
-  completion: &CompletionData,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn notify_object_generation(app: &AppHandle, task: &Task, completion: &CompletionData) -> Result<(), Box<dyn std::error::Error>> {
   let event = ObjectGenerationCompleteEvent {
     generated_objects: vec![GeneratedObject {
       media_token: completion.primary_media_file_token.clone(),
@@ -156,11 +116,7 @@ fn notify_object_generation(
   Ok(())
 }
 
-fn notify_gaussian_generation(
-  app: &AppHandle,
-  task: &Task,
-  completion: &CompletionData,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn notify_gaussian_generation(app: &AppHandle, task: &Task, completion: &CompletionData) -> Result<(), Box<dyn std::error::Error>> {
   let event = GaussianGenerationCompleteEvent {
     generated_gaussians: vec![GeneratedGaussian {
       media_token: completion.primary_media_file_token.clone(),
@@ -175,34 +131,23 @@ fn notify_gaussian_generation(
   Ok(())
 }
 
-
 // ── Helpers ──
 
 /// Collect generated images. If there's a batch token, fetch all files in the batch.
 /// Otherwise, return a single-element list with the primary file.
-async fn collect_generated_images(
-  api_host: &ApiHost,
-  maybe_creds: Option<&StorytellerCredentialSet>,
-  completion: &CompletionData,
-) -> Vec<GeneratedImage> {
+async fn collect_generated_images(api_host: &ApiHost, maybe_creds: Option<&StorytellerCredentialSet>, completion: &CompletionData) -> Vec<GeneratedImage> {
   // If we have a batch token, try to fetch all files in the batch.
   if let Some(batch_token) = &completion.maybe_batch_token {
     match list_batch_generated_redux_media_files(api_host, maybe_creds, batch_token).await {
       Ok(result) if !result.media_files.is_empty() => {
-        return result.media_files.into_iter()
-          .map(|file| GeneratedImage {
-            media_token: file.token,
-            cdn_url: file.media_links.cdn_url,
-            maybe_thumbnail_template: file.media_links.maybe_thumbnail_template,
-          })
-          .collect();
-      }
+        return result.media_files.into_iter().map(|file| GeneratedImage { media_token: file.token, cdn_url: file.media_links.cdn_url, maybe_thumbnail_template: file.media_links.maybe_thumbnail_template }).collect();
+      },
       Ok(_) => {
         warn!("[ThirdPartyEvents] Batch token {} returned no media files, falling back to primary", batch_token);
-      }
+      },
       Err(err) => {
         error!("[ThirdPartyEvents] Failed to list batch media files: {:?}, falling back to primary", err);
-      }
+      },
     }
   }
 

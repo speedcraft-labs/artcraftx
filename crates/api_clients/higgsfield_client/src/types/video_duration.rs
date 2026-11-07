@@ -47,13 +47,7 @@ impl VideoDurationRange {
   }
 
   pub fn validate(&self, duration: VideoDurationSeconds) -> Result<(), HiggsfieldClientError> {
-    if self.contains(duration) {
-      Ok(())
-    } else {
-      Err(HiggsfieldClientError::InvalidRequest(format!(
-        "duration must be between {}s and {}s, got {}", self.min_seconds, self.max_seconds, duration,
-      )))
-    }
+    if self.contains(duration) { Ok(()) } else { Err(HiggsfieldClientError::InvalidRequest(format!("duration must be between {}s and {}s, got {}", self.min_seconds, self.max_seconds, duration,))) }
   }
 }
 

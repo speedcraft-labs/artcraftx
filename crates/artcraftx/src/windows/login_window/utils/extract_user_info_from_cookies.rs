@@ -22,8 +22,7 @@ pub fn extract_user_info_from_cookies(cookie_store: &CookieStore) -> Option<Cred
       continue;
     };
 
-    let email = first_string_claim(&claims, EMAIL_CLAIM_KEYS)
-        .filter(|value| value.contains('@'));
+    let email = first_string_claim(&claims, EMAIL_CLAIM_KEYS).filter(|value| value.contains('@'));
     let username = first_string_claim(&claims, USERNAME_CLAIM_KEYS);
 
     if email.is_some() || username.is_some() {

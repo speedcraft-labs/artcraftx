@@ -21,10 +21,7 @@ pub struct GrokCredentialManager {
 
 impl GrokCredentialManager {
   pub fn initialize_empty(app_data_root: &AppDataRoot) -> Self {
-    Self {
-      credential_data: Arc::new(RwLock::new(GrokCredentialHolder::empty())),
-      app_data_root: app_data_root.clone(),
-    }
+    Self { credential_data: Arc::new(RwLock::new(GrokCredentialHolder::empty())), app_data_root: app_data_root.clone() }
   }
 
   pub fn initialize_from_disk_infallible(app_data_root: &AppDataRoot) -> Self {
@@ -38,7 +35,7 @@ impl GrokCredentialManager {
       },
       Ok(None) => {
         credential_data = Arc::new(RwLock::new(GrokCredentialHolder::empty()));
-      }
+      },
       Ok(Some(state)) => {
         let maybe_cookies = state.user_cookies;
 
@@ -51,13 +48,10 @@ impl GrokCredentialManager {
           browser_cookies: maybe_cookies,
           grok_full_credentials: None, // NB: We don't want to keep this on disk. It goes stale.
         }));
-      }
+      },
     };
 
-    Self {
-      credential_data,
-      app_data_root: app_data_root.clone(),
-    }
+    Self { credential_data, app_data_root: app_data_root.clone() }
   }
 
   pub fn maybe_copy_cookie_store(&self) -> anyhow::Result<Option<CookieStore>> {
@@ -69,17 +63,13 @@ impl GrokCredentialManager {
 
   pub fn maybe_copy_cookie_header_string(&self) -> anyhow::Result<Option<String>> {
     let maybe_cookies = self.maybe_copy_cookie_store()?;
-    let maybe_cookies = maybe_cookies.map(|cookies| {
-      cookies.to_cookie_string()
-    });
+    let maybe_cookies = maybe_cookies.map(|cookies| cookies.to_cookie_string());
     Ok(maybe_cookies)
   }
 
   pub fn maybe_copy_typed_cookies(&self) -> anyhow::Result<Option<GrokCookies>> {
     let maybe_cookies = self.maybe_copy_cookie_header_string()?;
-    let maybe_cookies = maybe_cookies.map(|cookies| {
-      GrokCookies::new(cookies)
-    });
+    let maybe_cookies = maybe_cookies.map(|cookies| GrokCookies::new(cookies));
     Ok(maybe_cookies)
   }
 
@@ -96,7 +86,7 @@ impl GrokCredentialManager {
       Ok(mut holder) => {
         holder.browser_cookies = Some(store);
         Ok(())
-      }
+      },
     }
   }
 
@@ -106,7 +96,7 @@ impl GrokCredentialManager {
       Ok(mut holder) => {
         holder.grok_full_credentials = Some(creds);
         Ok(())
-      }
+      },
     }
   }
 
@@ -122,7 +112,7 @@ impl GrokCredentialManager {
         }
         holder.grok_full_credentials = maybe_full_creds;
         Ok(())
-      }
+      },
     }
   }
 
@@ -184,14 +174,8 @@ impl GrokCredentialManager {
     let state = GrokSerializableState {
       version: SERIALIZABLE_GROK_STATE_VERSION,
       user_cookies: creds.browser_cookies.clone(),
-      user_id: creds.grok_full_credentials
-          .as_ref()
-          .map(|creds| creds.client_secrets.user_id.to_string()),
-      user_email: creds.grok_full_credentials
-          .as_ref()
-          .map(|data| data.client_secrets.user_email.as_ref())
-          .flatten()
-          .map(|email| email.to_string()),
+      user_id: creds.grok_full_credentials.as_ref().map(|creds| creds.client_secrets.user_id.to_string()),
+      user_email: creds.grok_full_credentials.as_ref().map(|data| data.client_secrets.user_email.as_ref()).flatten().map(|email| email.to_string()),
     };
 
     let path = self.app_data_root.credentials_dir().get_grok_state_path();
@@ -209,4 +193,3 @@ impl GrokCredentialManager {
     Ok(())
   }
 }
-

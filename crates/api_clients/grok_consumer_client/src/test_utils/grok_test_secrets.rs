@@ -14,10 +14,7 @@ use std::fs::read_to_string;
 /// Repo-root-relative directory holding the captured secrets. Resolved from
 /// this crate's manifest dir (`crates/api_clients/grok_consumer_client`), so
 /// tests work regardless of the shell's working directory.
-const SECRETS_DIR: &str = concat!(
-  env!("CARGO_MANIFEST_DIR"),
-  "/../../../external/credentials/grok",
-);
+const SECRETS_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../external/credentials/grok",);
 
 /// A loaded browser session: cookies plus the captured request headers.
 pub struct GrokTestSecrets {
@@ -43,24 +40,13 @@ pub fn load_grok_test_secrets() -> AnyhowResult<GrokTestSecrets> {
   let cookies_path = format!("{SECRETS_DIR}/cookies.txt");
   let headers_path = format!("{SECRETS_DIR}/headers.toml");
 
-  let cookies_raw = read_to_string(&cookies_path).map_err(|err| {
-    anyhow::anyhow!("Could not read Grok test cookies at {cookies_path}: {err}")
-  })?;
+  let cookies_raw = read_to_string(&cookies_path).map_err(|err| anyhow::anyhow!("Could not read Grok test cookies at {cookies_path}: {err}"))?;
   let cookies = GrokCookies::new(cookies_raw.trim().to_string());
 
-  let headers_raw = read_to_string(&headers_path).map_err(|err| {
-    anyhow::anyhow!("Could not read Grok test headers at {headers_path}: {err}")
-  })?;
-  let parsed: HeadersToml = toml::from_str(&headers_raw).map_err(|err| {
-    anyhow::anyhow!("Could not parse Grok test headers at {headers_path}: {err}")
-  })?;
+  let headers_raw = read_to_string(&headers_path).map_err(|err| anyhow::anyhow!("Could not read Grok test headers at {headers_path}: {err}"))?;
+  let parsed: HeadersToml = toml::from_str(&headers_raw).map_err(|err| anyhow::anyhow!("Could not parse Grok test headers at {headers_path}: {err}"))?;
 
-  let headers = GrokRequestHeaders {
-    statsig_id: parsed.statsig_id,
-    xai_request_id: parsed.xai_request_id,
-    traceparent: parsed.traceparent,
-    sentry_trace: parsed.sentry_trace,
-  };
+  let headers = GrokRequestHeaders { statsig_id: parsed.statsig_id, xai_request_id: parsed.xai_request_id, traceparent: parsed.traceparent, sentry_trace: parsed.sentry_trace };
 
   Ok(GrokTestSecrets { cookies, headers })
 }

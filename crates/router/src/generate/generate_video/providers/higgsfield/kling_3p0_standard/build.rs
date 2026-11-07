@@ -7,10 +7,7 @@ use higgsfield_client::endpoints::generate::video::kling_3p0::{Kling3p0Request, 
 use crate::api::router_resolution::RouterResolution;
 use crate::errors::artcraft_router_error::ArtcraftRouterError;
 use crate::generate::generate_video::generate_video_request_builder::GenerateVideoRequestBuilder;
-use crate::generate::generate_video::providers::higgsfield::common::{
-  finish, plan_duration, plan_kling_aspect_ratio, plan_single_video, require_prompt, snap_resolution, warn_ignored,
-  HiggsfieldVideoReferences,
-};
+use crate::generate::generate_video::providers::higgsfield::common::{finish, plan_duration, plan_kling_aspect_ratio, plan_single_video, require_prompt, snap_resolution, warn_ignored, HiggsfieldVideoReferences};
 use crate::generate::generate_video::providers::higgsfield::draft::HiggsfieldVideoPlan;
 use crate::generate::generate_video::providers::higgsfield::video_request::HiggsfieldVideoRequest;
 use crate::generate::generate_video::video_generation_draft_or_request::VideoGenerationDraftOrRequest;
@@ -19,21 +16,14 @@ const MODEL: &str = "Kling 3.0 Standard";
 const DEFAULT_DURATION_SECONDS: u32 = 5;
 
 /// Standard is the 720p tier; the other modes belong to Kling 3.0 Pro.
-const RESOLUTION_TIERS: &[(RouterResolution, Kling3p0Resolution)] = &[
-  (RouterResolution::SevenTwentyP, Kling3p0Resolution::P720),
-];
+const RESOLUTION_TIERS: &[(RouterResolution, Kling3p0Resolution)] = &[(RouterResolution::SevenTwentyP, Kling3p0Resolution::P720)];
 
 pub fn build_higgsfield_kling_3p0_standard(builder: GenerateVideoRequestBuilder) -> Result<VideoGenerationDraftOrRequest, ArtcraftRouterError> {
   build_kling_3p0(builder, MODEL, RESOLUTION_TIERS, Kling3p0Resolution::P720)
 }
 
 /// Shared by Standard and Pro: only the resolution tiers differ.
-pub(crate) fn build_kling_3p0(
-  mut builder: GenerateVideoRequestBuilder,
-  model: &str,
-  resolution_tiers: &[(RouterResolution, Kling3p0Resolution)],
-  default_resolution: Kling3p0Resolution,
-) -> Result<VideoGenerationDraftOrRequest, ArtcraftRouterError> {
+pub(crate) fn build_kling_3p0(mut builder: GenerateVideoRequestBuilder, model: &str, resolution_tiers: &[(RouterResolution, Kling3p0Resolution)], default_resolution: Kling3p0Resolution) -> Result<VideoGenerationDraftOrRequest, ArtcraftRouterError> {
   let strategy = builder.request_mismatch_mitigation_strategy;
   let prompt = require_prompt(builder.prompt.take())?;
   warn_ignored(model, "negative prompt", builder.negative_prompt.take());

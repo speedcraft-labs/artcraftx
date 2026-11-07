@@ -55,10 +55,7 @@ impl ClerkClientResponse {
   /// active, else the first active session.
   pub fn active_session(&self) -> Option<&ClerkSession> {
     let is_active = |session: &&ClerkSession| session.status == ClerkSessionStatus::Active;
-    self.maybe_last_active_session_id.as_deref()
-        .and_then(|id| self.sessions.iter().find(|session| session.id == id))
-        .filter(is_active)
-        .or_else(|| self.sessions.iter().find(is_active))
+    self.maybe_last_active_session_id.as_deref().and_then(|id| self.sessions.iter().find(|session| session.id == id)).filter(is_active).or_else(|| self.sessions.iter().find(is_active))
   }
 }
 
@@ -83,41 +80,30 @@ pub struct ClerkSession {
 /// [`HiggsfieldApiError::NoActiveSession`] when Clerk knows the client but
 /// it has no active session (signed out / expired).
 pub async fn clerk_client(args: ClerkClientArgs<'_>) -> Result<ClerkClientResponse, HiggsfieldError> {
-  let raw: ClerkClientEnvelope = send_clerk_request(
-    HttpMethod::Get,
-    PATH,
-    args.cookies,
-    args.maybe_user_agent,
-    args.host,
-    RequestBody::<()>::None,
-  ).await?;
+  let raw: ClerkClientEnvelope = send_clerk_request(HttpMethod::Get, PATH, args.cookies, args.maybe_user_agent, args.host, RequestBody::<()>::None).await?;
 
   let Some(client) = raw.response else {
     return Err(HiggsfieldApiError::NoActiveSession { raw_http_body: "{\"response\":null}".to_string() }.into());
   };
 
-  let sessions = client.sessions.into_iter().map(|session| ClerkSession {
-    id: session.id,
-    status: session.status,
-    maybe_expire_at: session.expire_at,
-    // A token that doesn't parse is treated as absent; the caller will mint
-    // one explicitly instead.
-    maybe_last_active_token: session.last_active_token
-        .and_then(|token| token.jwt)
-        .and_then(|jwt| ClerkSessionToken::parse(jwt).ok()),
-    maybe_user_id: session.user.map(|user| user.id),
-  }).collect::<Vec<_>>();
+  let sessions = client
+    .sessions
+    .into_iter()
+    .map(|session| ClerkSession {
+      id: session.id,
+      status: session.status,
+      maybe_expire_at: session.expire_at,
+      // A token that doesn't parse is treated as absent; the caller will mint
+      // one explicitly instead.
+      maybe_last_active_token: session.last_active_token.and_then(|token| token.jwt).and_then(|jwt| ClerkSessionToken::parse(jwt).ok()),
+      maybe_user_id: session.user.map(|user| user.id),
+    })
+    .collect::<Vec<_>>();
 
-  let response = ClerkClientResponse {
-    id: client.id,
-    sessions,
-    maybe_last_active_session_id: client.last_active_session_id,
-  };
+  let response = ClerkClientResponse { id: client.id, sessions, maybe_last_active_session_id: client.last_active_session_id };
 
   if response.active_session().is_none() {
-    return Err(HiggsfieldApiError::NoActiveSession {
-      raw_http_body: format!("client {} has {} session(s), none active", response.id, response.sessions.len()),
-    }.into());
+    return Err(HiggsfieldApiError::NoActiveSession { raw_http_body: format!("client {} has {} session(s), none active", response.id, response.sessions.len()) }.into());
   }
 
   Ok(response)
@@ -180,7 +166,9 @@ mod tests {
       Some(id) => format!("\"{id}\""),
       None => "null".to_string(),
     };
-    format!(r#"{{"response":{{"object":"client","id":"client_TEST","sessions":[{sessions_json}],"sign_in":null,"sign_up":null,"last_active_session_id":{last_active},"cookie_expires_at":null,"created_at":1788147000000,"updated_at":1788147200000}},"client":null}}"#)
+    format!(
+      r#"{{"response":{{"object":"client","id":"client_TEST","sessions":[{sessions_json}],"sign_in":null,"sign_up":null,"last_active_session_id":{last_active},"cookie_expires_at":null,"created_at":1788147000000,"updated_at":1788147200000}},"client":null}}"#
+    )
   }
 
   fn session_json(id: &str, status: &str, jwt: Option<&str>) -> String {
@@ -188,7 +176,9 @@ mod tests {
       Some(jwt) => format!(r#"{{"object":"token","jwt":"{jwt}"}}"#),
       None => "null".to_string(),
     };
-    format!(r#"{{"object":"session","id":"{id}","status":"{status}","expire_at":1788751996000,"abandon_at":1790739196000,"last_active_at":1788147196000,"last_active_organization_id":null,"actor":null,"user":{{"id":"user_TESTUSER0000000000000000000","object":"user"}},"public_user_data":{{"identifier":"user@example.com"}},"created_at":1788147196000,"updated_at":1788147196000,"last_active_token":{token}}}"#)
+    format!(
+      r#"{{"object":"session","id":"{id}","status":"{status}","expire_at":1788751996000,"abandon_at":1790739196000,"last_active_at":1788147196000,"last_active_organization_id":null,"actor":null,"user":{{"id":"user_TESTUSER0000000000000000000","object":"user"}},"public_user_data":{{"identifier":"user@example.com"}},"created_at":1788147196000,"updated_at":1788147196000,"last_active_token":{token}}}"#
+    )
   }
 
   fn parse(body: &str) -> ClerkClientEnvelope {
@@ -243,12 +233,7 @@ mod tests {
     setup_test_logging();
 
     let cookies = load_higgsfield_test_cookies()?;
-    let response = clerk_client(ClerkClientArgs {
-      request: ClerkClientRequest,
-      cookies: &cookies,
-      maybe_user_agent: None,
-      host: &ClerkHost::Higgsfield,
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let response = clerk_client(ClerkClientArgs { request: ClerkClientRequest, cookies: &cookies, maybe_user_agent: None, host: &ClerkHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
     let session = response.active_session().unwrap();
     println!("Active session {} (status {}), token expires {:?}", session.id, session.status, session.maybe_last_active_token.as_ref().map(|t| t.expires_at()));

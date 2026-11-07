@@ -1,8 +1,7 @@
 use serde_derive::{Deserialize, Serialize};
 use crate::tokens::users::UserToken;
 
-pub const MODERATOR_LIST_TOP_SPENDERS_PATH: &str =
-  "/v1/moderation/top_spenders/list";
+pub const MODERATOR_LIST_TOP_SPENDERS_PATH: &str = "/v1/moderation/top_spenders/list";
 
 /// Rolling aggregation window for the top spenders list.
 #[derive(Deserialize, Serialize, Clone, Copy)]

@@ -28,9 +28,6 @@ mod tests {
 
   #[test]
   fn catches_challenge_pages() {
-    assert_eq!(
-      filter_cloudflare_errors(403, "<title>Just a moment...</title>"),
-      Err(CloudflareError::ChallengeInterstitial403),
-    );
+    assert_eq!(filter_cloudflare_errors(403, "<title>Just a moment...</title>"), Err(CloudflareError::ChallengeInterstitial403),);
   }
 }

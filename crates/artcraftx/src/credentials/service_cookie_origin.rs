@@ -9,26 +9,15 @@ use reqwest::Url;
 /// Returns `None` for API-key services, which have no cookies.
 pub fn cookie_origin_for_service(service: GenerationSource) -> Option<Url> {
   let origin = match service {
-    GenerationSource::Artcraft
-    | GenerationSource::ArtcraftLocal
-    | GenerationSource::ArtcraftCookies => "https://storyteller.ai/",
-    GenerationSource::Grok
-    | GenerationSource::GrokCookies => "https://grok.com/",
-    GenerationSource::Midjourney
-    | GenerationSource::MidjourneyCookies => "https://www.midjourney.com/",
-    GenerationSource::WorldLabs
-    | GenerationSource::WorldLabsCookies => "https://worldlabs.ai/",
-    GenerationSource::Higgsfield
-    | GenerationSource::HiggsfieldCookies => "https://higgsfield.ai/",
+    GenerationSource::Artcraft | GenerationSource::ArtcraftLocal | GenerationSource::ArtcraftCookies => "https://storyteller.ai/",
+    GenerationSource::Grok | GenerationSource::GrokCookies => "https://grok.com/",
+    GenerationSource::Midjourney | GenerationSource::MidjourneyCookies => "https://www.midjourney.com/",
+    GenerationSource::WorldLabs | GenerationSource::WorldLabsCookies => "https://worldlabs.ai/",
+    GenerationSource::Higgsfield | GenerationSource::HiggsfieldCookies => "https://higgsfield.ai/",
     GenerationSource::MagnificCookies => "https://www.magnific.com/",
     GenerationSource::OpenArtCookies => "https://openart.ai/",
     GenerationSource::RunwayCookies => "https://app.runwayml.com/",
-    GenerationSource::ArtcraftApi
-    | GenerationSource::Fal
-    | GenerationSource::FalApi
-    | GenerationSource::OpenAiApi
-    | GenerationSource::ReplicateApi
-    | GenerationSource::XAiApi => return None,
+    GenerationSource::ArtcraftApi | GenerationSource::Fal | GenerationSource::FalApi | GenerationSource::OpenAiApi | GenerationSource::ReplicateApi | GenerationSource::XAiApi => return None,
   };
   Some(Url::parse(origin).expect("static origin URL should parse"))
 }
@@ -45,10 +34,10 @@ mod tests {
       match service.kind() {
         CredentialKind::Cookies => {
           assert!(origin.is_some(), "cookie service {service} has no cookie origin");
-        }
+        },
         CredentialKind::ApiKey => {
           assert!(origin.is_none(), "api-key service {service} should have no cookie origin");
-        }
+        },
       }
     }
   }

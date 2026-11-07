@@ -29,12 +29,7 @@ pub struct MintedStatsig {
 
 impl MintedStatsig {
   pub fn new(request: StatsigRequest, statsig_id: impl Into<String>, minted_at_unix: i64, ttl_secs: u64) -> Self {
-    Self {
-      request,
-      statsig_id: statsig_id.into(),
-      minted_at_unix,
-      ttl_secs,
-    }
+    Self { request, statsig_id: statsig_id.into(), minted_at_unix, ttl_secs }
   }
 
   /// Whether the signature is still within its freshness window at `now_unix`.

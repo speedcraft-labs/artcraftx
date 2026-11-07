@@ -53,26 +53,14 @@ impl MidjourneyWebSocket {
   /// Take ownership of a freshly upgraded socket, spawn its driver task, and
   /// return a handle. The caller is responsible for the `subscribe_to_user`
   /// handshake (see `open_midjourney_websocket`).
-  pub (crate) fn spawn(user_id: MidjourneyUserId, websocket: WebSocket) -> Self {
+  pub(crate) fn spawn(user_id: MidjourneyUserId, websocket: WebSocket) -> Self {
     let (outbound_tx, outbound_rx) = mpsc::unbounded_channel::<Message>();
     let (events_tx, _events_rx) = broadcast::channel::<Arc<MidjourneyWsEvent>>(EVENT_CHANNEL_CAPACITY);
     let connected = Arc::new(AtomicBool::new(true));
 
-    tokio::spawn(run_websocket_loop(
-      websocket,
-      outbound_rx,
-      events_tx.clone(),
-      connected.clone(),
-    ));
+    tokio::spawn(run_websocket_loop(websocket, outbound_rx, events_tx.clone(), connected.clone()));
 
-    Self {
-      inner: Arc::new(WebSocketInner {
-        user_id,
-        outbound: outbound_tx,
-        events: events_tx,
-        connected,
-      }),
-    }
+    Self { inner: Arc::new(WebSocketInner { user_id, outbound: outbound_tx, events: events_tx, connected }) }
   }
 
   /// The user this connection is bound to.
@@ -117,11 +105,7 @@ impl MidjourneyWebSocket {
   /// This is the ergonomic path for reading images: each `Progress` event
   /// carries the preview `images` for the current step, and the call returns
   /// when the `Completed` event arrives.
-  pub async fn stream_job<F>(
-    &self,
-    job_id: &str,
-    mut on_event: F,
-  ) -> Result<(), MidjourneyClientError>
+  pub async fn stream_job<F>(&self, job_id: &str, mut on_event: F) -> Result<(), MidjourneyClientError>
   where
     F: FnMut(&MidjourneyWsEvent),
   {
@@ -138,13 +122,13 @@ impl MidjourneyWebSocket {
           if event.is_terminal() {
             return Ok(());
           }
-        }
+        },
         Err(broadcast::error::RecvError::Lagged(skipped)) => {
           warn!("Midjourney websocket consumer lagged, skipped {} events", skipped);
-        }
+        },
         Err(broadcast::error::RecvError::Closed) => {
           return Err(MidjourneyClientError::WebSocketClosed);
-        }
+        },
       }
     }
   }
@@ -156,21 +140,13 @@ impl MidjourneyWebSocket {
   }
 
   fn send_message(&self, message: Message) -> Result<(), MidjourneyClientError> {
-    self.inner
-        .outbound
-        .send(message)
-        .map_err(|_| MidjourneyClientError::WebSocketClosed)
+    self.inner.outbound.send(message).map_err(|_| MidjourneyClientError::WebSocketClosed)
   }
 }
 
 /// Owns the raw socket: forwards outbound command frames and decodes inbound
 /// CBOR frames into events. Ends when the socket closes or all handles drop.
-async fn run_websocket_loop(
-  mut websocket: WebSocket,
-  mut outbound_rx: mpsc::UnboundedReceiver<Message>,
-  events_tx: broadcast::Sender<Arc<MidjourneyWsEvent>>,
-  connected: Arc<AtomicBool>,
-) {
+async fn run_websocket_loop(mut websocket: WebSocket, mut outbound_rx: mpsc::UnboundedReceiver<Message>, events_tx: broadcast::Sender<Arc<MidjourneyWsEvent>>, connected: Arc<AtomicBool>) {
   loop {
     tokio::select! {
       maybe_outbound = outbound_rx.recv() => {

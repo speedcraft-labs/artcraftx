@@ -19,8 +19,9 @@ pub fn provider_offers_mesh_model(provider: GenerationProvider, model: MeshModel
 }
 
 fn mesh_providers() -> Vec<MeshProviderOffering> {
-  vec![
-    MeshProviderOffering::of(GenerationProvider::Artcraft, &[
+  vec![MeshProviderOffering::of(
+    GenerationProvider::Artcraft,
+    &[
       MeshModel::Hunyuan3d3,
       MeshModel::Hunyuan3d3p1Pro,
       MeshModel::Hunyuan3d3p1Rapid,
@@ -32,8 +33,8 @@ fn mesh_providers() -> Vec<MeshProviderOffering> {
       MeshModel::Tripo3dH3p1,
       MeshModel::MeshyV6,
       MeshModel::Rodin2p5Fast,
-    ]),
-  ]
+    ],
+  )]
 }
 
 #[cfg(test)]

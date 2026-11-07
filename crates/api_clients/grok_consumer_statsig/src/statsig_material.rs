@@ -77,12 +77,7 @@ fn assemble(seed: &[u8], method: &str, path: &str, generated_at: DateTime<Utc>, 
   out.extend(digest[..16].iter().map(|byte| byte ^ key));
   out.push(STATSIG_MARK ^ key);
 
-  Statsig {
-    statsig: BASE64_STANDARD_NO_PAD.encode(out),
-    generated_at,
-    method,
-    path: path.to_string(),
-  }
+  Statsig { statsig: BASE64_STANDARD_NO_PAD.encode(out), generated_at, method, path: path.to_string() }
 }
 
 /// Grok's seed → "genuine hex" fingerprint. Currently unavailable: Grok derives
@@ -123,9 +118,7 @@ mod tests {
     assert_eq!(number as i64, 1_787_535_100 - STATSIG_EPOCH);
 
     let digest = unmask(&raw[53..69]);
-    let expected = &Sha256::digest(
-      format!("POST!{NEW_CONVERSATION}!{number}{STATSIG_SALT}{hex}").as_bytes(),
-    )[..16];
+    let expected = &Sha256::digest(format!("POST!{NEW_CONVERSATION}!{number}{STATSIG_SALT}{hex}").as_bytes())[..16];
     assert_eq!(digest, expected);
 
     assert_eq!(raw[69] ^ key, STATSIG_MARK);

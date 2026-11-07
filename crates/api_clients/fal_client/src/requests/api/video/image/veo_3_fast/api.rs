@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::video::image::veo_3_fast::raw_request::{
-  Veo3FastImageToVideoInput, Veo3FastImageToVideoOutput,
-};
+use crate::requests::api::video::image::veo_3_fast::raw_request::{Veo3FastImageToVideoInput, Veo3FastImageToVideoOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 #[derive(Clone, Debug)]
@@ -250,29 +248,19 @@ mod tests {
       safety_tolerance: None,
     };
     let json = serde_json::to_value(request.to_raw_request().unwrap()).unwrap();
-    assert_eq!(
-      json,
-      serde_json::json!({ "prompt": "p", "image_url": "https://example.com/start.png" }),
-    );
+    assert_eq!(json, serde_json::json!({ "prompt": "p", "image_url": "https://example.com/start.png" }),);
   }
 
   #[test]
   fn every_aspect_ratio_maps_to_wire_string() {
-    for (variant, expected) in [
-      (Veo3FastImageToVideoAspectRatio::Auto, "auto"),
-      (Veo3FastImageToVideoAspectRatio::SixteenByNine, "16:9"),
-      (Veo3FastImageToVideoAspectRatio::NineBySixteen, "9:16"),
-    ] {
+    for (variant, expected) in [(Veo3FastImageToVideoAspectRatio::Auto, "auto"), (Veo3FastImageToVideoAspectRatio::SixteenByNine, "16:9"), (Veo3FastImageToVideoAspectRatio::NineBySixteen, "9:16")] {
       assert_eq!(variant.to_str(), expected);
     }
   }
 
   #[test]
   fn endpoint_path_is_canonical() {
-    assert_eq!(
-      Veo3FastImageToVideoRequest::ENDPOINT,
-      "fal-ai/veo3/fast/image-to-video",
-    );
+    assert_eq!(Veo3FastImageToVideoRequest::ENDPOINT, "fal-ai/veo3/fast/image-to-video",);
   }
 
   // NB: Pricing tests are in cost.rs

@@ -4,9 +4,7 @@ use crate::cost::kinovi_generation_cost::KinoviGenerationCost;
 use crate::creds::seedance2pro_session::Seedance2ProSession;
 use crate::error::seedance2pro_error::Seedance2ProError;
 use crate::requests::kinovi_host::KinoviHost;
-use crate::requests::workflow_run_task::workflow_run_task::{
-  workflow_run_task_custom, WorkflowRunTaskCustomArgs, WorkflowRunTaskResponse,
-};
+use crate::requests::workflow_run_task::workflow_run_task::{workflow_run_task_custom, WorkflowRunTaskCustomArgs, WorkflowRunTaskResponse};
 
 const BUSINESS_TYPE: &str = "suno-sample-generation";
 const MODEL: &str = "suno-sample";
@@ -73,20 +71,10 @@ pub struct GenerateSunoSampleResponse {
 
 // ── Entry point ──
 
-pub async fn generate_suno_sample(
-  args: GenerateSunoSampleArgs<'_>,
-) -> Result<GenerateSunoSampleResponse, Seedance2ProError> {
-  let raw_response: WorkflowRunTaskResponse = workflow_run_task_custom(WorkflowRunTaskCustomArgs {
-    business_type: BUSINESS_TYPE,
-    api_params: build_api_params(&args.request),
-    session: args.session,
-    host_override: args.host_override,
-  }).await?;
+pub async fn generate_suno_sample(args: GenerateSunoSampleArgs<'_>) -> Result<GenerateSunoSampleResponse, Seedance2ProError> {
+  let raw_response: WorkflowRunTaskResponse = workflow_run_task_custom(WorkflowRunTaskCustomArgs { business_type: BUSINESS_TYPE, api_params: build_api_params(&args.request), session: args.session, host_override: args.host_override }).await?;
 
-  Ok(GenerateSunoSampleResponse {
-    task_id: raw_response.task_id,
-    order_id: raw_response.order_id,
-  })
+  Ok(GenerateSunoSampleResponse { task_id: raw_response.task_id, order_id: raw_response.order_id })
 }
 
 // ── Wire payload ──
@@ -140,14 +128,7 @@ mod tests {
     use super::*;
 
     fn base_request() -> GenerateSunoSampleRequest {
-      GenerateSunoSampleRequest {
-        prompt: "Mystical RPG adventure".to_string(),
-        audio_url: "https://example.com/a.aac".to_string(),
-        chop_sample_start_seconds: 0,
-        chop_sample_end_seconds: 41,
-        style_tags: None,
-        instrumental: true,
-      }
+      GenerateSunoSampleRequest { prompt: "Mystical RPG adventure".to_string(), audio_url: "https://example.com/a.aac".to_string(), chop_sample_start_seconds: 0, chop_sample_end_seconds: 41, style_tags: None, instrumental: true }
     }
 
     #[test]
@@ -175,7 +156,8 @@ mod tests {
         chop_sample_end_seconds: 30,
         style_tags: Some("Fantasy video game".to_string()),
         instrumental: false,
-      }.calculate_costs();
+      }
+      .calculate_costs();
       assert_eq!(base, other);
     }
   }
@@ -252,7 +234,8 @@ mod tests {
           style_tags: Some("Fantasy video game score".to_string()),
           instrumental: true,
         },
-      }).await?;
+      })
+      .await?;
       println!("suno sample — task_id={}, order_id={}", result.task_id, result.order_id);
       assert!(!result.task_id.is_empty());
       assert!(!result.order_id.is_empty());
@@ -266,22 +249,12 @@ mod tests {
     }
 
     async fn upload_test_audio(session: &Seedance2ProSession) -> AnyhowResult<String> {
-      let audio_path = test_utils::test_file_path::test_file_path(
-        "test_data/audio/aac/golden_sun_elemental_stars_cyanne.aac",
-      )?;
+      let audio_path = test_utils::test_file_path::test_file_path("test_data/audio/aac/golden_sun_elemental_stars_cyanne.aac")?;
       let audio_bytes = std::fs::read(&audio_path)?;
 
-      let prepare_result = prepare_file_upload(PrepareFileUploadArgs {
-        session,
-        extension: "aac".to_string(),
-        host_override: None,
-      }).await?;
+      let prepare_result = prepare_file_upload(PrepareFileUploadArgs { session, extension: "aac".to_string(), host_override: None }).await?;
 
-      let upload_result = upload_file(UploadFileArgs {
-        upload_url: prepare_result.upload_url,
-        file_bytes: audio_bytes,
-        host_override: None,
-      }).await?;
+      let upload_result = upload_file(UploadFileArgs { upload_url: prepare_result.upload_url, file_bytes: audio_bytes, host_override: None }).await?;
 
       Ok(upload_result.public_url)
     }

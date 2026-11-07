@@ -3,7 +3,6 @@ use std::fmt::Debug;
 use serde::Deserialize;
 use serde::Serialize;
 
-
 /// The primary key for Audit Logs.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Serialize, Deserialize)]
 pub struct BatchGenerationToken(pub String);

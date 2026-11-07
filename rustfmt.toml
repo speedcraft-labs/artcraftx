@@ -50,14 +50,14 @@ use_field_init_shorthand = false
 
 
 #width_heuristics = "Off"
-array_width = 1000
-attr_fn_like_width = 1000
-chain_width = 1000
-fn_call_width = 1000
-max_width = 1000
-single_line_if_else_max_width = 1000
-struct_lit_width = 1000
-struct_variant_width = 1000
+array_width = 255
+attr_fn_like_width = 255
+chain_width = 255
+fn_call_width = 255
+max_width = 255
+single_line_if_else_max_width = 255
+struct_lit_width = 255
+struct_variant_width = 255
 
 #blank_lines_upper_bound = 1000
 

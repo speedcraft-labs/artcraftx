@@ -44,10 +44,7 @@ fn session() -> anyhow::Result<HiggsfieldSession> {
 /// Print the enqueue, check the job set, and follow every job to completion.
 async fn follow(session: &HiggsfieldSession, label: &str, expected_type: JobSetType, expected_jobs: usize, response: EnqueueJobsResponse) -> anyhow::Result<()> {
   let job_set = response.first_job_set().ok_or_else(|| anyhow::anyhow!("no job set"))?;
-  println!(
-    "\n##### {label}: enqueued job set {} type={} cost={:?} jobs={} server size={:?}x{:?}",
-    job_set.id, job_set.job_set_type, job_set.cost, job_set.jobs.len(), job_set.params.width, job_set.params.height,
-  );
+  println!("\n##### {label}: enqueued job set {} type={} cost={:?} jobs={} server size={:?}x{:?}", job_set.id, job_set.job_set_type, job_set.cost, job_set.jobs.len(), job_set.params.width, job_set.params.height,);
   println!("wallet after: {:?}", response.wallet.as_ref().map(|w| (w.credits_balance, w.subscription_balance)));
   assert_eq!(job_set.job_set_type, expected_type);
   assert_eq!(job_set.jobs.len(), expected_jobs, "batch size should fan out into one job per image");

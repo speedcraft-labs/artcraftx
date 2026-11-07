@@ -61,7 +61,7 @@ pub enum TauriEventName {
   /// Object (3D mesh) generation is complete
   #[serde(rename = "object_generation_complete_event")]
   ObjectGenerationCompleteEvent,
-  
+
   /// Special event:
   /// Gaussian generation is complete
   #[serde(rename = "gaussian_generation_complete_event")]
@@ -221,7 +221,7 @@ mod tests {
       assert_serialization(TauriEventName::VideoGenerationCompleteEvent, "video_generation_complete_event");
       assert_serialization(TauriEventName::RefreshAccountStateEvent, "refresh_account_state_event");
       assert_serialization(TauriEventName::LocalThumbnailReadyEvent, "local_thumbnail_ready_event");
-      assert_serialization(TauriEventName::ShowProviderBillingModalEvent, "show_provider_billing_modal_event"); 
+      assert_serialization(TauriEventName::ShowProviderBillingModalEvent, "show_provider_billing_modal_event");
       assert_serialization(TauriEventName::ShowCredentialErrorModalEvent, "show_credential_error_modal_event");
       assert_serialization(TauriEventName::FlashNoticeEvent, "flash_notice_event");
       assert_serialization(TauriEventName::ProgressNoticeEvent, "progress_notice_event");

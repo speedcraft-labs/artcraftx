@@ -12,12 +12,9 @@ use artcraft_client::utils::api_host::ApiHost;
 use fal_client::creds::fal_api_key::FalApiKey;
 
 pub fn get_artcraft_client_for_env(host: ApiHost) -> RouterClient {
-  let cookies = std::fs::read_to_string("/Users/bt/Artcraft/credentials/artcraft_cookies.txt")
-    .expect("Failed to read /Users/bt/Artcraft/credentials/artcraft_cookies.txt");
+  let cookies = std::fs::read_to_string("/Users/bt/Artcraft/credentials/artcraft_cookies.txt").expect("Failed to read /Users/bt/Artcraft/credentials/artcraft_cookies.txt");
   let cookies = cookies.trim().to_string();
-  let credentials = StorytellerCredentialSet::parse_multi_cookie_header(&cookies)
-      .expect("Failed to parse cookies")
-      .expect("No credentials found");
+  let credentials = StorytellerCredentialSet::parse_multi_cookie_header(&cookies).expect("Failed to parse cookies").expect("No credentials found");
   RouterClient::Artcraft(RouterArtcraftClient::new(host, credentials))
 }
 
@@ -45,8 +42,7 @@ pub fn base_image_request() -> GenerateImageRequestBuilder {
 }
 
 pub fn get_fal_client() -> RouterClient {
-  let secret = std::fs::read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt")
-    .expect("Failed to read /Users/bt/Artcraft/credentials/fal_api_key.txt");
+  let secret = std::fs::read_to_string("/Users/bt/Artcraft/credentials/fal_api_key.txt").expect("Failed to read /Users/bt/Artcraft/credentials/fal_api_key.txt");
   let api_key = FalApiKey::from_str(secret.trim());
   let webhook_url = "https://example.com/fal-webhook-test".to_string();
   RouterClient::Fal(RouterFalClient::new_with_webhook(api_key, webhook_url))

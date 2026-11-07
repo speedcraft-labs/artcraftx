@@ -58,10 +58,7 @@ pub enum GptImage2AspectRatio {
 
 impl GptImage2AspectRatio {
   pub fn all() -> [Self; 9] {
-    [
-      Self::Auto, Self::Square1x1, Self::Landscape3x2, Self::Portrait2x3, Self::Landscape16x9,
-      Self::Portrait9x16, Self::Landscape4x3, Self::Portrait3x4, Self::Landscape21x9,
-    ]
+    [Self::Auto, Self::Square1x1, Self::Landscape3x2, Self::Portrait2x3, Self::Landscape16x9, Self::Portrait9x16, Self::Landscape4x3, Self::Portrait3x4, Self::Landscape21x9]
   }
 
   /// The wire vocabulary value.
@@ -232,23 +229,8 @@ pub struct GptImage2Request {
 
 impl GptImage2Request {
   /// A text-to-image request with the web app's defaults (1 image, credits).
-  pub fn text_to_image(
-    prompt: impl Into<String>,
-    aspect_ratio: GptImage2AspectRatio,
-    quality: GptImage2Quality,
-    resolution: GptImage2Resolution,
-  ) -> Self {
-    Self {
-      prompt: prompt.into(),
-      aspect_ratio,
-      quality,
-      resolution,
-      batch_size: ImageBatchSize::One,
-      reference_images: Vec::new(),
-      sub_model: GptImage2SubModel::default(),
-      use_unlim: false,
-      maybe_dimensions: None,
-    }
+  pub fn text_to_image(prompt: impl Into<String>, aspect_ratio: GptImage2AspectRatio, quality: GptImage2Quality, resolution: GptImage2Resolution) -> Self {
+    Self { prompt: prompt.into(), aspect_ratio, quality, resolution, batch_size: ImageBatchSize::One, reference_images: Vec::new(), sub_model: GptImage2SubModel::default(), use_unlim: false, maybe_dimensions: None }
   }
 
   /// Add reference images (image-to-image).
@@ -269,10 +251,7 @@ impl GptImage2Request {
       return Ok(dimensions);
     }
     ImageDimensions::for_aspect_ratio(&self.aspect_ratio.to_image_aspect_ratio(), &self.resolution.to_image_resolution())
-        .ok_or_else(|| HiggsfieldClientError::InvalidRequest(format!(
-          "can't derive dimensions for aspect ratio {} at {}; pass maybe_dimensions",
-          self.aspect_ratio.as_str(), self.resolution.as_str(),
-        )))
+      .ok_or_else(|| HiggsfieldClientError::InvalidRequest(format!("can't derive dimensions for aspect ratio {} at {}; pass maybe_dimensions", self.aspect_ratio.as_str(), self.resolution.as_str(),)))
   }
 
   fn to_body(&self) -> Result<GptImage2RequestBody, HiggsfieldClientError> {
@@ -360,7 +339,10 @@ mod tests {
     // Captured from the web app: 9:16 at 2k, high quality, one image.
     let request = GptImage2Request::text_to_image("a corgi on a bike", GptImage2AspectRatio::Portrait9x16, GptImage2Quality::High, GptImage2Resolution::TwoK);
     let actual: Value = serde_json::to_value(request.to_body().unwrap()).unwrap();
-    let expected: Value = serde_json::from_str(r#"{"params":{"prompt":"a corgi on a bike","aspect_ratio":"9:16","quality":"high","resolution":"2k","sub_model":"videotape-alpha","batch_size":1,"model":"gpt_image_2","width":1152,"height":2048,"medias":[]},"use_unlim":false}"#).unwrap();
+    let expected: Value = serde_json::from_str(
+      r#"{"params":{"prompt":"a corgi on a bike","aspect_ratio":"9:16","quality":"high","resolution":"2k","sub_model":"videotape-alpha","batch_size":1,"model":"gpt_image_2","width":1152,"height":2048,"medias":[]},"use_unlim":false}"#,
+    )
+    .unwrap();
     assert_eq!(actual, expected);
   }
 
@@ -371,11 +353,10 @@ mod tests {
     // sent the reference's own 640x640 as width/height; this client sends
     // its derived Auto size (or `maybe_dimensions`).
     let request = GptImage2Request::text_to_image("a corgi on a bike", GptImage2AspectRatio::Auto, GptImage2Quality::Low, GptImage2Resolution::FourK)
-        .with_reference_images(vec![MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png")]);
+      .with_reference_images(vec![MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png")]);
     let actual: Value = serde_json::to_value(request.to_body().unwrap()).unwrap();
     let dimensions = request.dimensions().unwrap();
-    let expected_json = r#"{"params":{"prompt":"a corgi on a bike","aspect_ratio":"auto","quality":"low","resolution":"4k","sub_model":"videotape-alpha","batch_size":1,"model":"gpt_image_2","width":W,"height":H,"medias":[{"role":"image","data":{"id":"00000000-0000-4000-8000-0000000000aa","type":"media_input","url":"https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png"}}]},"use_unlim":false}"#
-        .replace("\"width\":W", &format!("\"width\":{}", dimensions.width)).replace("\"height\":H", &format!("\"height\":{}", dimensions.height));
+    let expected_json = r#"{"params":{"prompt":"a corgi on a bike","aspect_ratio":"auto","quality":"low","resolution":"4k","sub_model":"videotape-alpha","batch_size":1,"model":"gpt_image_2","width":W,"height":H,"medias":[{"role":"image","data":{"id":"00000000-0000-4000-8000-0000000000aa","type":"media_input","url":"https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png"}}]},"use_unlim":false}"#.replace("\"width\":W", &format!("\"width\":{}", dimensions.width)).replace("\"height\":H", &format!("\"height\":{}", dimensions.height));
     let expected: Value = serde_json::from_str(&expected_json).unwrap();
     assert_eq!(actual, expected);
   }
@@ -439,11 +420,9 @@ mod tests {
     setup_test_logging();
 
     let auth = load_higgsfield_test_auth().await?;
-    let response = gpt_image_2(GptImage2Args {
-      request: GptImage2Request::text_to_image("a corgi on a bike", GptImage2AspectRatio::Portrait9x16, GptImage2Quality::High, GptImage2Resolution::TwoK),
-      auth: &auth,
-      host: &HiggsfieldHost::Higgsfield,
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let response = gpt_image_2(GptImage2Args { request: GptImage2Request::text_to_image("a corgi on a bike", GptImage2AspectRatio::Portrait9x16, GptImage2Quality::High, GptImage2Resolution::TwoK), auth: &auth, host: &HiggsfieldHost::Higgsfield })
+      .await
+      .map_err(|err| anyhow::anyhow!("{err}"))?;
 
     println!("Enqueued job ids: {:?}", response.job_ids());
     println!("Wallet: {:?}", response.wallet);
@@ -469,11 +448,7 @@ mod tests {
     let request = GptImage2Request::text_to_image("a corgi on a bike", GptImage2AspectRatio::Square1x1, GptImage2Quality::Low, GptImage2Resolution::OneK);
     println!("\n===== request =====\n{:#?}", request);
 
-    let response = gpt_image_2(GptImage2Args {
-      request,
-      auth: &auth,
-      host: &HiggsfieldHost::Higgsfield,
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let response = gpt_image_2(GptImage2Args { request, auth: &auth, host: &HiggsfieldHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
     println!("\n===== POST /fnf/jobs/v2/gpt_image_2 =====\n{:#?}", response);
     let job_ids = response.job_ids();

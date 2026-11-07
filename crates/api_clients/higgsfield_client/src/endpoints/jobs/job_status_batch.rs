@@ -107,11 +107,7 @@ mod tests {
   async fn empty_ids_fails_before_any_http() {
     let auth = HiggsfieldAuth::new("token");
     let host = HiggsfieldHost::Custom("http://127.0.0.1:9".to_string());
-    let err = job_status_batch(JobStatusBatchArgs {
-      request: JobStatusBatchRequest { ids: vec![] },
-      auth: &auth,
-      host: &host,
-    }).await.unwrap_err();
+    let err = job_status_batch(JobStatusBatchArgs { request: JobStatusBatchRequest { ids: vec![] }, auth: &auth, host: &host }).await.unwrap_err();
     assert!(matches!(err, HiggsfieldError::Client(HiggsfieldClientError::InvalidRequest(_))));
   }
 
@@ -137,11 +133,7 @@ mod tests {
     let mut ids = load_higgsfield_test_job_ids()?;
     ids.push(unknown.clone());
 
-    let response = job_status_batch(JobStatusBatchArgs {
-      request: JobStatusBatchRequest { ids: ids.clone() },
-      auth: &auth,
-      host: &HiggsfieldHost::Higgsfield,
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let response = job_status_batch(JobStatusBatchArgs { request: JobStatusBatchRequest { ids: ids.clone() }, auth: &auth, host: &HiggsfieldHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
     println!("\n===== /fnf/jobs/status-batch ({} ids) =====\n{:#?}", ids.len(), response);
     for item in &response.items {
@@ -165,11 +157,7 @@ mod tests {
 
     let auth = load_higgsfield_test_auth().await?;
     let job_id = load_higgsfield_test_job_id()?;
-    let response = job_status_batch(JobStatusBatchArgs {
-      request: JobStatusBatchRequest { ids: vec![job_id] },
-      auth: &auth,
-      host: &HiggsfieldHost::Higgsfield,
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let response = job_status_batch(JobStatusBatchArgs { request: JobStatusBatchRequest { ids: vec![job_id] }, auth: &auth, host: &HiggsfieldHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
     println!("Batch status: {:?}", response);
     Ok(())

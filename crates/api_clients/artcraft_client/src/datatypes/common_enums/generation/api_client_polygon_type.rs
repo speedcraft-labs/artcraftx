@@ -54,10 +54,7 @@ mod tests {
 
   #[test]
   fn every_known_variant_round_trips() {
-    let all = [
-      (ApiClientPolygonType::Triangle, "triangle"),
-      (ApiClientPolygonType::Quad, "quad")
-    ];
+    let all = [(ApiClientPolygonType::Triangle, "triangle"), (ApiClientPolygonType::Quad, "quad")];
     for (variant, wire) in all {
       let json = format!("\"{}\"", wire);
       let parsed: ApiClientPolygonType = serde_json::from_str(&json).unwrap();

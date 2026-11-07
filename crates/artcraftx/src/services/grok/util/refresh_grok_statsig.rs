@@ -23,9 +23,7 @@
 //! variant waits for an in-flight refresh instead of starting a second one.
 
 use crate::credentials::auth_credential::CredentialSecret;
-use crate::credentials::cookie_credential_grok_extra_pieces::{
-  grok_statsig_needs_refresh, CookieCredentialGrokExtraPieces, GrokStatsigCapture,
-};
+use crate::credentials::cookie_credential_grok_extra_pieces::{grok_statsig_needs_refresh, CookieCredentialGrokExtraPieces, GrokStatsigCapture};
 use crate::credentials::find_service_credentials::find_first_credential_for_service;
 use crate::state::data_dir::app_data_root::AppDataRoot;
 use crate::windows::login_window::utils::grok_statsig_capture::{grok_statsig_init_script, read_captured_statsig};
@@ -60,10 +58,7 @@ struct RefreshGuard;
 impl RefreshGuard {
   /// Acquire the guard, or `None` if a refresh is already running.
   fn acquire() -> Option<Self> {
-    REFRESH_IN_PROGRESS
-        .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
-        .ok()
-        .map(|_| RefreshGuard)
+    REFRESH_IN_PROGRESS.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst).ok().map(|_| RefreshGuard)
   }
 
   fn is_held() -> bool {
@@ -114,11 +109,7 @@ pub async fn refresh_grok_statsig_if_stale(app: &AppHandle, app_data_root: &AppD
 /// after Grok rejects a request, since the freshness window is a heuristic.
 /// If another refresh is in flight, waits for it and reports its result via
 /// the credential file's freshness rather than starting a second window.
-pub async fn refresh_grok_statsig_blocking(
-  app: &AppHandle,
-  app_data_root: &AppDataRoot,
-  force: bool,
-) -> AnyhowResult<GrokStatsigRefreshOutcome> {
+pub async fn refresh_grok_statsig_blocking(app: &AppHandle, app_data_root: &AppDataRoot, force: bool) -> AnyhowResult<GrokStatsigRefreshOutcome> {
   if find_first_credential_for_service(app_data_root, GenerationSource::GrokCookies).is_none() {
     return Ok(GrokStatsigRefreshOutcome::StillFresh); // Not logged in — nothing to refresh.
   }
@@ -136,9 +127,8 @@ pub async fn refresh_grok_statsig_blocking(
         return Ok(GrokStatsigRefreshOutcome::StillFresh);
       }
       // The other refresh finished without producing fresh material; run our own.
-      RefreshGuard::acquire()
-          .ok_or_else(|| anyhow!("another Grok statsig refresh started before we could"))?
-    }
+      RefreshGuard::acquire().ok_or_else(|| anyhow!("another Grok statsig refresh started before we could"))?
+    },
   };
   let _guard = guard; // held until this function returns (or panics)
 
@@ -147,11 +137,7 @@ pub async fn refresh_grok_statsig_blocking(
   let captured = poll_and_persist(app, app_data_root).await;
   close_refresh_window(app);
 
-  Ok(if captured {
-    GrokStatsigRefreshOutcome::Refreshed
-  } else {
-    GrokStatsigRefreshOutcome::NothingCaptured
-  })
+  Ok(if captured { GrokStatsigRefreshOutcome::Refreshed } else { GrokStatsigRefreshOutcome::NothingCaptured })
 }
 
 /// Whether the stored Grok credential's statsig needs re-capturing. `false`
@@ -199,11 +185,7 @@ fn build_refresh_window(app: &AppHandle) -> AnyhowResult<()> {
     return Err(anyhow!("refresh window already exists"));
   }
 
-  WebviewWindowBuilder::new(app, REFRESH_WINDOW_NAME, WebviewUrl::External(GROK_URL.parse()?))
-      .title("Refreshing Grok…")
-      .visible(false)
-      .initialization_script(&grok_statsig_init_script())
-      .build()?;
+  WebviewWindowBuilder::new(app, REFRESH_WINDOW_NAME, WebviewUrl::External(GROK_URL.parse()?)).title("Refreshing Grok…").visible(false).initialization_script(&grok_statsig_init_script()).build()?;
 
   Ok(())
 }
@@ -231,11 +213,11 @@ async fn poll_and_persist(app: &AppHandle, app_data_root: &AppDataRoot) -> bool 
         Ok(()) => {
           info!("Refreshed Grok statsig and saved it to the credential file.");
           true
-        }
+        },
         Err(err) => {
           warn!("Grok statsig refresh: could not save capture: {err:?}");
           false
-        }
+        },
       };
     }
 
@@ -250,8 +232,7 @@ async fn poll_and_persist(app: &AppHandle, app_data_root: &AppDataRoot) -> bool 
 /// Persist a fresh capture onto the existing Grok credential, updating only
 /// `grok_data` (cookies untouched).
 fn save_refreshed_capture(app_data_root: &AppDataRoot, capture: GrokStatsigCapture) -> AnyhowResult<()> {
-  let mut credential = find_first_credential_for_service(app_data_root, GenerationSource::GrokCookies)
-      .ok_or_else(|| anyhow!("Grok credential vanished mid-refresh"))?;
+  let mut credential = find_first_credential_for_service(app_data_root, GenerationSource::GrokCookies).ok_or_else(|| anyhow!("Grok credential vanished mid-refresh"))?;
 
   let CredentialSecret::Cookies(cookie) = &mut credential.secret else {
     return Err(anyhow!("Grok credential is not a cookie credential"));

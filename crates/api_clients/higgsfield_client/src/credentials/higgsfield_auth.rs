@@ -32,12 +32,7 @@ pub struct HiggsfieldAuth {
 
 impl HiggsfieldAuth {
   pub fn new(bearer_token: impl Into<String>) -> Self {
-    Self {
-      bearer_token: bearer_token.into().trim().to_string(),
-      maybe_cookie_header: None,
-      maybe_datadome_client_id: None,
-      maybe_user_agent: None,
-    }
+    Self { bearer_token: bearer_token.into().trim().to_string(), maybe_cookie_header: None, maybe_datadome_client_id: None, maybe_user_agent: None }
   }
 
   pub fn with_cookie_header(mut self, cookie_header: impl Into<String>) -> Self {
@@ -77,11 +72,11 @@ impl HiggsfieldAuth {
 impl std::fmt::Debug for HiggsfieldAuth {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.debug_struct("HiggsfieldAuth")
-        .field("bearer_token", &"<redacted>")
-        .field("maybe_cookie_header", &self.maybe_cookie_header.as_ref().map(|_| "<redacted>"))
-        .field("maybe_datadome_client_id", &self.maybe_datadome_client_id.as_ref().map(|_| "<redacted>"))
-        .field("maybe_user_agent", &self.maybe_user_agent)
-        .finish()
+      .field("bearer_token", &"<redacted>")
+      .field("maybe_cookie_header", &self.maybe_cookie_header.as_ref().map(|_| "<redacted>"))
+      .field("maybe_datadome_client_id", &self.maybe_datadome_client_id.as_ref().map(|_| "<redacted>"))
+      .field("maybe_user_agent", &self.maybe_user_agent)
+      .finish()
   }
 }
 
@@ -98,25 +93,17 @@ mod tests {
 
   #[test]
   fn empty_token_is_rejected() {
-    assert!(matches!(
-      HiggsfieldAuth::new("   ").validate(),
-      Err(HiggsfieldClientError::MissingBearerToken),
-    ));
+    assert!(matches!(HiggsfieldAuth::new("   ").validate(), Err(HiggsfieldClientError::MissingBearerToken),));
   }
 
   #[test]
   fn token_with_whitespace_is_rejected() {
-    assert!(matches!(
-      HiggsfieldAuth::new("abc def").validate(),
-      Err(HiggsfieldClientError::InvalidBearerToken),
-    ));
+    assert!(matches!(HiggsfieldAuth::new("abc def").validate(), Err(HiggsfieldClientError::InvalidBearerToken),));
   }
 
   #[test]
   fn debug_is_redacted() {
-    let auth = HiggsfieldAuth::new("super-secret-token")
-        .with_cookie_header("__session=secret-cookie")
-        .with_datadome_client_id("secret-datadome");
+    let auth = HiggsfieldAuth::new("super-secret-token").with_cookie_header("__session=secret-cookie").with_datadome_client_id("secret-datadome");
     let debug = format!("{:?}", auth);
     assert!(!debug.contains("super-secret-token"));
     assert!(!debug.contains("secret-cookie"));

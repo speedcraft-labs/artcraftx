@@ -33,12 +33,7 @@ impl HiggsfieldCookies {
 
   /// The value of one cookie, if present.
   pub fn cookie_value(&self, name: &str) -> Option<&str> {
-    self.cookie_header
-        .split(';')
-        .map(str::trim)
-        .filter_map(|pair| pair.split_once('='))
-        .find(|(cookie_name, _)| cookie_name.trim() == name)
-        .map(|(_, value)| value.trim())
+    self.cookie_header.split(';').map(str::trim).filter_map(|pair| pair.split_once('=')).find(|(cookie_name, _)| cookie_name.trim() == name).map(|(_, value)| value.trim())
   }
 
   /// Whether the Clerk client cookie is present — without it no token can
@@ -69,15 +64,8 @@ impl HiggsfieldCookies {
 // Debug is redacted so the cookies can't end up in a log line.
 impl std::fmt::Debug for HiggsfieldCookies {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    let names = self.cookie_header
-        .split(';')
-        .filter_map(|pair| pair.trim().split_once('='))
-        .map(|(name, _)| name.trim())
-        .collect::<Vec<_>>();
-    f.debug_struct("HiggsfieldCookies")
-        .field("cookie_names", &names)
-        .field("values", &"<redacted>")
-        .finish()
+    let names = self.cookie_header.split(';').filter_map(|pair| pair.trim().split_once('=')).map(|(name, _)| name.trim()).collect::<Vec<_>>();
+    f.debug_struct("HiggsfieldCookies").field("cookie_names", &names).field("values", &"<redacted>").finish()
   }
 }
 
@@ -107,10 +95,7 @@ mod tests {
 
   #[test]
   fn empty_is_rejected() {
-    assert!(matches!(
-      HiggsfieldCookies::from_cookie_header("  ").validate(),
-      Err(HiggsfieldClientError::MissingCookies),
-    ));
+    assert!(matches!(HiggsfieldCookies::from_cookie_header("  ").validate(), Err(HiggsfieldClientError::MissingCookies),));
   }
 
   #[test]

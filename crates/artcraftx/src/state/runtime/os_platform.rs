@@ -1,4 +1,3 @@
-
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum OsPlatform {
   Linux,
@@ -17,7 +16,7 @@ impl OsPlatform {
       _ => None,
     }
   }
-  
+
   pub fn maybe_get_str() -> Option<&'static str> {
     match Self::maybe_get() {
       Some(Self::Linux) => Some("linux"),

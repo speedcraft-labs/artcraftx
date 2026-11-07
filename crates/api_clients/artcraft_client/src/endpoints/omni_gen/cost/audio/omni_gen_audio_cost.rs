@@ -15,13 +15,6 @@ pub struct OmniGenAudioCostArgs<'a> {
 
 /// Estimate the cost of a audio generation. Anonymous calls are allowed;
 /// credentials personalize the estimate (free/unlimited plans).
-pub async fn omni_gen_audio_cost(
-  args: OmniGenAudioCostArgs<'_>,
-) -> Result<OmniGenAudioCostResponse, StorytellerError> {
-  Ok(api_or_web_json_post_request(
-    args.api_host,
-    OMNI_GEN_AUDIO_COST_PATH,
-    args.api_or_web_creds,
-    args.request,
-  ).await?)
+pub async fn omni_gen_audio_cost(args: OmniGenAudioCostArgs<'_>) -> Result<OmniGenAudioCostResponse, StorytellerError> {
+  Ok(api_or_web_json_post_request(args.api_host, OMNI_GEN_AUDIO_COST_PATH, args.api_or_web_creds, args.request).await?)
 }

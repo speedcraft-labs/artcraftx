@@ -4,18 +4,14 @@ use crate::generate::generate_audio::audio_generation_draft_or_request::AudioGen
 use crate::generate::generate_audio::generate_audio_request_builder::GenerateAudioRequestBuilder;
 use crate::generate::generate_audio::providers::kinovi::resolve::require_single_audio_ref;
 use crate::generate::generate_audio::providers::kinovi::suno_remix::draft::KinoviSunoRemixDraftState;
-use crate::generate::generate_audio::providers::reject_unsupported::{
-  reject_unsupported_image_references, reject_unsupported_option,
-};
+use crate::generate::generate_audio::providers::reject_unsupported::{reject_unsupported_image_references, reject_unsupported_option};
 
 pub fn build_kinovi_suno_remix(builder: GenerateAudioRequestBuilder) -> Result<AudioGenerationDraftOrRequest, ArtcraftRouterError> {
   let draft = build_kinovi_suno_remix_draft(builder)?;
   Ok(AudioGenerationDraftOrRequest::Draft(AudioGenerationDraftRequest::KinoviSunoRemix(draft)))
 }
 
-pub(crate) fn build_kinovi_suno_remix_draft(
-  mut builder: GenerateAudioRequestBuilder,
-) -> Result<KinoviSunoRemixDraftState, ArtcraftRouterError> {
+pub(crate) fn build_kinovi_suno_remix_draft(mut builder: GenerateAudioRequestBuilder) -> Result<KinoviSunoRemixDraftState, ArtcraftRouterError> {
   let strategy = builder.request_mismatch_mitigation_strategy;
 
   // Options Suno Remix has no equivalent for.
@@ -29,18 +25,11 @@ pub(crate) fn build_kinovi_suno_remix_draft(
   reject_unsupported_option("pitch", builder.pitch.as_ref(), strategy)?;
   reject_unsupported_image_references(builder.image_references.as_ref(), strategy)?;
 
-  let prompt = builder.prompt.take().ok_or_else(|| {
-    ArtcraftRouterError::InvalidInput("A prompt is required for Suno Remix".to_string())
-  })?;
+  let prompt = builder.prompt.take().ok_or_else(|| ArtcraftRouterError::InvalidInput("A prompt is required for Suno Remix".to_string()))?;
 
   let audio_source = require_single_audio_ref(builder.audio_references.take())?;
 
-  Ok(KinoviSunoRemixDraftState {
-    prompt,
-    style_tags: builder.style_prompt.take(),
-    keep_lyrics: builder.keep_lyrics.unwrap_or(false),
-    audio_source: Some(audio_source),
-  })
+  Ok(KinoviSunoRemixDraftState { prompt, style_tags: builder.style_prompt.take(), keep_lyrics: builder.keep_lyrics.unwrap_or(false), audio_source: Some(audio_source) })
 }
 
 #[cfg(test)]
@@ -99,12 +88,7 @@ mod tests {
 
     #[test]
     fn a_media_token_reference_is_accepted() {
-      let builder = GenerateAudioRequestBuilder {
-        audio_references: Some(AudioListRef::MediaFileTokens(vec![
-          MediaFileToken::new("mf_test123".to_string()),
-        ])),
-        ..base_builder()
-      };
+      let builder = GenerateAudioRequestBuilder { audio_references: Some(AudioListRef::MediaFileTokens(vec![MediaFileToken::new("mf_test123".to_string())])), ..base_builder() };
       let draft = build_kinovi_suno_remix_draft(builder).expect("build");
       assert!(matches!(
         draft.audio_source,
@@ -120,13 +104,7 @@ mod tests {
 
     #[test]
     fn two_references_are_rejected() {
-      let builder = GenerateAudioRequestBuilder {
-        audio_references: Some(AudioListRef::Urls(vec![
-          "https://example.com/a.mp3".to_string(),
-          "https://example.com/b.mp3".to_string(),
-        ])),
-        ..base_builder()
-      };
+      let builder = GenerateAudioRequestBuilder { audio_references: Some(AudioListRef::Urls(vec!["https://example.com/a.mp3".to_string(), "https://example.com/b.mp3".to_string()])), ..base_builder() };
       assert!(build_kinovi_suno_remix_draft(builder).is_err());
     }
   }
@@ -153,12 +131,7 @@ mod tests {
 
     #[test]
     fn unsupported_options_are_dropped_under_lenient_strategies() {
-      let builder = GenerateAudioRequestBuilder {
-        is_instrumental: Some(true),
-        bpm: Some(120),
-        request_mismatch_mitigation_strategy: RequestMismatchMitigationStrategy::PayMoreUpgrade,
-        ..base_builder()
-      };
+      let builder = GenerateAudioRequestBuilder { is_instrumental: Some(true), bpm: Some(120), request_mismatch_mitigation_strategy: RequestMismatchMitigationStrategy::PayMoreUpgrade, ..base_builder() };
       assert!(build_kinovi_suno_remix_draft(builder).is_ok());
     }
   }

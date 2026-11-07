@@ -28,10 +28,7 @@ use std::path::Path;
 /// Repo-root-relative directory holding the captured secrets. Resolved from
 /// this crate's manifest dir so tests work regardless of the shell's working
 /// directory.
-const SECRETS_DIR: &str = concat!(
-  env!("CARGO_MANIFEST_DIR"),
-  "/../../../external/credentials/higgsfield",
-);
+const SECRETS_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../external/credentials/higgsfield",);
 
 /// The captured cookies.
 pub fn load_higgsfield_test_cookies() -> AnyhowResult<HiggsfieldCookies> {
@@ -81,13 +78,7 @@ pub fn load_higgsfield_test_job_id() -> AnyhowResult<JobId> {
 /// Every job id listed in `job_ids.txt` (falling back to `job_id.txt`).
 /// Errors if neither file has any.
 pub fn load_higgsfield_test_job_ids() -> AnyhowResult<Vec<JobId>> {
-  let mut ids: Vec<JobId> = read_optional("job_ids.txt")?
-      .unwrap_or_default()
-      .lines()
-      .map(|line| line.split('#').next().unwrap_or("").trim())
-      .filter(|line| !line.is_empty())
-      .map(JobId::new)
-      .collect();
+  let mut ids: Vec<JobId> = read_optional("job_ids.txt")?.unwrap_or_default().lines().map(|line| line.split('#').next().unwrap_or("").trim()).filter(|line| !line.is_empty()).map(JobId::new).collect();
 
   if ids.is_empty() {
     if let Some(single) = read_optional("job_id.txt")? {
@@ -102,9 +93,7 @@ pub fn load_higgsfield_test_job_ids() -> AnyhowResult<Vec<JobId>> {
 }
 
 fn read_required(file_name: &str) -> AnyhowResult<String> {
-  read_optional(file_name)?.ok_or_else(|| {
-    anyhow::anyhow!("Missing Higgsfield test secret {}/{} (capture it from a logged-in browser session)", SECRETS_DIR, file_name)
-  })
+  read_optional(file_name)?.ok_or_else(|| anyhow::anyhow!("Missing Higgsfield test secret {}/{} (capture it from a logged-in browser session)", SECRETS_DIR, file_name))
 }
 
 fn read_optional(file_name: &str) -> AnyhowResult<Option<String>> {
@@ -112,8 +101,7 @@ fn read_optional(file_name: &str) -> AnyhowResult<Option<String>> {
   if !path.exists() {
     return Ok(None);
   }
-  let raw = read_to_string(&path)
-      .map_err(|err| anyhow::anyhow!("Could not read Higgsfield test secret {:?}: {}", path, err))?;
+  let raw = read_to_string(&path).map_err(|err| anyhow::anyhow!("Could not read Higgsfield test secret {:?}: {}", path, err))?;
   let trimmed = raw.trim().to_string();
   Ok((!trimmed.is_empty()).then_some(trimmed))
 }

@@ -13,13 +13,6 @@ pub struct OmniGenAudioGenerateArgs<'a> {
   pub request: &'a OmniGenAudioCostAndGenerateRequest,
 }
 
-pub async fn omni_gen_audio_generate(
-  args: OmniGenAudioGenerateArgs<'_>,
-) -> Result<OmniGenAudioGenerateResponse, StorytellerError> {
-  Ok(api_or_web_json_post_request(
-    args.api_host,
-    OMNI_GEN_AUDIO_GENERATE_PATH,
-    args.api_or_web_creds,
-    args.request,
-  ).await?)
+pub async fn omni_gen_audio_generate(args: OmniGenAudioGenerateArgs<'_>) -> Result<OmniGenAudioGenerateResponse, StorytellerError> {
+  Ok(api_or_web_json_post_request(args.api_host, OMNI_GEN_AUDIO_GENERATE_PATH, args.api_or_web_creds, args.request).await?)
 }

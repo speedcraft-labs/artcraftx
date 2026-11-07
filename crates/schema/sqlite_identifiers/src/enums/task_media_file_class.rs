@@ -57,13 +57,7 @@ impl TaskMediaFileClass {
   pub fn all_variants() -> BTreeSet<Self> {
     // NB: BTreeSet is sorted
     // NB: BTreeSet::from() isn't const, but not worth using LazyStatic, etc.
-    BTreeSet::from([
-      Self::Audio,
-      Self::Image,
-      Self::Video,
-      Self::Splat,
-      Self::Mesh,
-    ])
+    BTreeSet::from([Self::Audio, Self::Image, Self::Video, Self::Splat, Self::Mesh])
   }
 }
 
@@ -102,7 +96,7 @@ mod tests {
       assert_eq!(TaskMediaFileClass::from_str("splat").unwrap(), TaskMediaFileClass::Splat);
       assert_eq!(TaskMediaFileClass::from_str("mesh").unwrap(), TaskMediaFileClass::Mesh);
     }
-    
+
     #[test]
     fn from_str_err() {
       let result = TaskMediaFileClass::from_str("asdf");

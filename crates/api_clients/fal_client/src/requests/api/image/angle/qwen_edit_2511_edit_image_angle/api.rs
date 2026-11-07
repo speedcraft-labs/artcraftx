@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::image::angle::qwen_edit_2511_edit_image_angle::raw_request::{
-  QwenEdit2511EditImageAngleInput, QwenEdit2511EditImageAngleOutput,
-};
+use crate::requests::api::image::angle::qwen_edit_2511_edit_image_angle::raw_request::{QwenEdit2511EditImageAngleInput, QwenEdit2511EditImageAngleOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 #[derive(Clone, Debug)]
@@ -48,15 +46,15 @@ impl FalEndpoint for QwenEdit2511EditImageAngleRequest {
   type RawResponse = QwenEdit2511EditImageAngleOutput;
 
   fn to_raw_request(&self) -> Result<Self::RawRequest, FalErrorPlus> {
-    let num_images = self.num_images
-      .map(|n| match n {
-        QwenEdit2511AngleNumImages::One => 1,
-        QwenEdit2511AngleNumImages::Two => 2,
-        QwenEdit2511AngleNumImages::Three => 3,
-        QwenEdit2511AngleNumImages::Four => 4,
-      });
+    let num_images = self.num_images.map(|n| match n {
+      QwenEdit2511AngleNumImages::One => 1,
+      QwenEdit2511AngleNumImages::Two => 2,
+      QwenEdit2511AngleNumImages::Three => 3,
+      QwenEdit2511AngleNumImages::Four => 4,
+    });
 
-    let image_size = self.image_size
+    let image_size = self
+      .image_size
       .map(|s| match s {
         QwenEdit2511AngleImageSize::Square => "square",
         QwenEdit2511AngleImageSize::SquareHd => "square_hd",

@@ -38,58 +38,47 @@ pub enum EnqueueSora2TextToVideoAspectRatio {
   SixteenByNine,
 }
 
-
 impl FalRequestCostCalculator for EnqueueSora2TextToVideoRequest {
   fn calculate_cost_in_cents(&self) -> UsdCents {
     // "The pricing is $0.1/s for Sora 2."
     let duration = self.duration.unwrap_or(EnqueueSora2TextToVideoDurationSeconds::Four);
     match duration {
-      EnqueueSora2TextToVideoDurationSeconds::Four => 40,   // $0.10 * 4
-      EnqueueSora2TextToVideoDurationSeconds::Eight => 80,  // $0.10 * 8
-      EnqueueSora2TextToVideoDurationSeconds::Twelve => 120 // $0.10 * 12
+      EnqueueSora2TextToVideoDurationSeconds::Four => 40,    // $0.10 * 4
+      EnqueueSora2TextToVideoDurationSeconds::Eight => 80,   // $0.10 * 8
+      EnqueueSora2TextToVideoDurationSeconds::Twelve => 120, // $0.10 * 12
     }
   }
 }
 
 /// Sora 2 Text-to-Video
 /// https://fal.ai/models/fal-ai/sora-2/text-to-video
-pub async fn enqueue_sora_2_text_to_video_webhook<R: IntoUrl>(
-  args: EnqueueSora2TextToVideoArgs<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
+pub async fn enqueue_sora_2_text_to_video_webhook<R: IntoUrl>(args: EnqueueSora2TextToVideoArgs<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
 
-  let duration = req.duration
-      .map(|d| match d {
-        EnqueueSora2TextToVideoDurationSeconds::Four => 4,
-        EnqueueSora2TextToVideoDurationSeconds::Eight => 8,
-        EnqueueSora2TextToVideoDurationSeconds::Twelve => 12,
-      });
+  let duration = req.duration.map(|d| match d {
+    EnqueueSora2TextToVideoDurationSeconds::Four => 4,
+    EnqueueSora2TextToVideoDurationSeconds::Eight => 8,
+    EnqueueSora2TextToVideoDurationSeconds::Twelve => 12,
+  });
 
-  let resolution = req.resolution
-      .map(|r| match r {
-        EnqueueSora2TextToVideoResolution::SevenTwentyP => "720p",
-      })
-      .map(|r| r.to_string());
+  let resolution = req
+    .resolution
+    .map(|r| match r {
+      EnqueueSora2TextToVideoResolution::SevenTwentyP => "720p",
+    })
+    .map(|r| r.to_string());
 
-  let aspect_ratio = req.aspect_ratio
-      .map(|ar| match ar {
-        EnqueueSora2TextToVideoAspectRatio::NineBySixteen => "9:16",
-        EnqueueSora2TextToVideoAspectRatio::SixteenByNine => "16:9",
-      })
-      .map(|ar| ar.to_string());
+  let aspect_ratio = req
+    .aspect_ratio
+    .map(|ar| match ar {
+      EnqueueSora2TextToVideoAspectRatio::NineBySixteen => "9:16",
+      EnqueueSora2TextToVideoAspectRatio::SixteenByNine => "16:9",
+    })
+    .map(|ar| ar.to_string());
 
-  let request = Sora2TextToVideoInput {
-    prompt: req.prompt,
-    duration,
-    resolution,
-    aspect_ratio,
-    delete_video: Some(false),
-  };
+  let request = Sora2TextToVideoInput { prompt: req.prompt, duration, resolution, aspect_ratio, delete_video: Some(false) };
 
-  let result = sora_2_text_to_video(request)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await;
+  let result = sora_2_text_to_video(request).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await;
 
   result.map_err(|err| classify_fal_error(err))
 }
@@ -134,12 +123,7 @@ mod tests {
     for ar in EnqueueSora2TextToVideoAspectRatio::iter() {
       println!("--- aspect ratio: {:?} ---", ar);
       let args = EnqueueSora2TextToVideoArgs {
-        request: EnqueueSora2TextToVideoRequest {
-          prompt: "a snowy mountain cabin at sunrise".to_string(),
-          duration: Some(EnqueueSora2TextToVideoDurationSeconds::Four),
-          aspect_ratio: Some(ar),
-          resolution: None,
-        },
+        request: EnqueueSora2TextToVideoRequest { prompt: "a snowy mountain cabin at sunrise".to_string(), duration: Some(EnqueueSora2TextToVideoDurationSeconds::Four), aspect_ratio: Some(ar), resolution: None },
         api_key: &api_key,
         webhook_url: "https://example.com/webhook",
       };

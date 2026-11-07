@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::video::text::veo_3::raw_request::{
-  Veo3TextToVideoInput, Veo3TextToVideoOutput,
-};
+use crate::requests::api::video::text::veo_3::raw_request::{Veo3TextToVideoInput, Veo3TextToVideoOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 #[derive(Clone, Debug)]
@@ -226,28 +224,14 @@ mod tests {
 
   #[test]
   fn raw_request_omits_unset_optionals() {
-    let request = Veo3TextToVideoRequest {
-      prompt: "minimal".to_string(),
-      aspect_ratio: None,
-      duration: None,
-      resolution: None,
-      negative_prompt: None,
-      generate_audio: None,
-      seed: None,
-      auto_fix: None,
-      safety_tolerance: None,
-    };
+    let request = Veo3TextToVideoRequest { prompt: "minimal".to_string(), aspect_ratio: None, duration: None, resolution: None, negative_prompt: None, generate_audio: None, seed: None, auto_fix: None, safety_tolerance: None };
     let json = serde_json::to_value(request.to_raw_request().unwrap()).unwrap();
     assert_eq!(json, serde_json::json!({ "prompt": "minimal" }));
   }
 
   #[test]
   fn every_duration_maps_to_wire_string_and_seconds() {
-    for (variant, s, secs) in [
-      (Veo3TextToVideoDuration::FourSeconds, "4s", 4),
-      (Veo3TextToVideoDuration::SixSeconds, "6s", 6),
-      (Veo3TextToVideoDuration::EightSeconds, "8s", 8),
-    ] {
+    for (variant, s, secs) in [(Veo3TextToVideoDuration::FourSeconds, "4s", 4), (Veo3TextToVideoDuration::SixSeconds, "6s", 6), (Veo3TextToVideoDuration::EightSeconds, "8s", 8)] {
       assert_eq!(variant.to_str(), s);
       assert_eq!(variant.to_seconds(), secs);
     }

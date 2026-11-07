@@ -11,17 +11,17 @@ use strum::EnumIter;
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ArtcraftCreditsPackSlug {
-  #[serde(rename= "artcraft_1000")]
+  #[serde(rename = "artcraft_1000")]
   Artcraft1000,
-  #[serde(rename= "artcraft_2500")]
+  #[serde(rename = "artcraft_2500")]
   Artcraft2500,
-  #[serde(rename= "artcraft_5000")]
+  #[serde(rename = "artcraft_5000")]
   Artcraft5000,
-  #[serde(rename= "artcraft_10000")]
+  #[serde(rename = "artcraft_10000")]
   Artcraft10000,
-  #[serde(rename= "artcraft_25000")]
+  #[serde(rename = "artcraft_25000")]
   Artcraft25000,
-  #[serde(rename= "artcraft_50000")]
+  #[serde(rename = "artcraft_50000")]
   Artcraft50000,
 }
 
@@ -56,14 +56,7 @@ impl ArtcraftCreditsPackSlug {
   pub fn all_variants() -> BTreeSet<Self> {
     // NB: BTreeSet is sorted
     // NB: BTreeSet::from() isn't const, but not worth using LazyStatic, etc.
-    BTreeSet::from([
-      Self::Artcraft1000,
-      Self::Artcraft2500,
-      Self::Artcraft5000,
-      Self::Artcraft10000,
-      Self::Artcraft25000,
-      Self::Artcraft50000,
-    ])
+    BTreeSet::from([Self::Artcraft1000, Self::Artcraft2500, Self::Artcraft5000, Self::Artcraft10000, Self::Artcraft25000, Self::Artcraft50000])
   }
 }
 
@@ -103,7 +96,6 @@ mod tests {
       assert_eq!(ArtcraftCreditsPackSlug::from_str("artcraft_10000").unwrap(), ArtcraftCreditsPackSlug::Artcraft10000);
       assert_eq!(ArtcraftCreditsPackSlug::from_str("artcraft_25000").unwrap(), ArtcraftCreditsPackSlug::Artcraft25000);
       assert_eq!(ArtcraftCreditsPackSlug::from_str("artcraft_50000").unwrap(), ArtcraftCreditsPackSlug::Artcraft50000);
-
     }
 
     #[test]
@@ -141,7 +133,7 @@ mod tests {
 
     #[test]
     fn serialized_length_ok_for_database() {
-      const MAX_LENGTH : usize = 16;
+      const MAX_LENGTH: usize = 16;
       for variant in ArtcraftCreditsPackSlug::all_variants() {
         let serialized = variant.to_str();
         assert!(serialized.len() > 0, "variant {:?} is too short", variant);

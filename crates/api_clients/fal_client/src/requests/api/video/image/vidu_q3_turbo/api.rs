@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::video::image::vidu_q3_turbo::raw_request::{
-  ViduQ3TurboImageToVideoInput, ViduQ3TurboImageToVideoOutput,
-};
+use crate::requests::api::video::image::vidu_q3_turbo::raw_request::{ViduQ3TurboImageToVideoInput, ViduQ3TurboImageToVideoOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 #[derive(Clone, Debug)]
@@ -154,43 +152,21 @@ mod tests {
 
   #[test]
   fn raw_request_omits_unset_optionals() {
-    let request = ViduQ3TurboImageToVideoRequest {
-      prompt: "p".to_string(),
-      image_url: "https://example.com/start.png".to_string(),
-      end_image_url: None,
-      duration: None,
-      seed: None,
-      resolution: None,
-      audio: None,
-    };
+    let request = ViduQ3TurboImageToVideoRequest { prompt: "p".to_string(), image_url: "https://example.com/start.png".to_string(), end_image_url: None, duration: None, seed: None, resolution: None, audio: None };
     let json = serde_json::to_value(request.to_raw_request().unwrap()).unwrap();
-    assert_eq!(
-      json,
-      serde_json::json!({ "prompt": "p", "image_url": "https://example.com/start.png" }),
-    );
+    assert_eq!(json, serde_json::json!({ "prompt": "p", "image_url": "https://example.com/start.png" }),);
   }
 
   #[test]
   fn seed_serializes_when_set() {
-    let request = ViduQ3TurboImageToVideoRequest {
-      prompt: "p".to_string(),
-      image_url: "https://example.com/start.png".to_string(),
-      end_image_url: None,
-      duration: None,
-      seed: Some(777),
-      resolution: None,
-      audio: None,
-    };
+    let request = ViduQ3TurboImageToVideoRequest { prompt: "p".to_string(), image_url: "https://example.com/start.png".to_string(), end_image_url: None, duration: None, seed: Some(777), resolution: None, audio: None };
     let json = serde_json::to_value(request.to_raw_request().unwrap()).unwrap();
     assert_eq!(json.get("seed").and_then(|s| s.as_i64()), Some(777));
   }
 
   #[test]
   fn endpoint_path_is_canonical() {
-    assert_eq!(
-      ViduQ3TurboImageToVideoRequest::ENDPOINT,
-      "fal-ai/vidu/q3/image-to-video/turbo",
-    );
+    assert_eq!(ViduQ3TurboImageToVideoRequest::ENDPOINT, "fal-ai/vidu/q3/image-to-video/turbo",);
   }
 
   // NB: Pricing tests are in cost.rs

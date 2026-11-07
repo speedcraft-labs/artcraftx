@@ -105,7 +105,7 @@ pub struct ClientMessageItem {
 #[derive(Serialize)]
 pub struct ClientMessageItemContent {
   /// UUID
-  #[serde(rename="requestId")]
+  #[serde(rename = "requestId")]
   pub request_id: String,
 
   /// Type of item content
@@ -159,11 +159,7 @@ impl WebsocketClientMessage {
   /// The generated `requestId` of this prompt. Grok tags every progress /
   /// image / error frame for the prompt with it, so callers key results on it.
   pub fn request_id(&self) -> RequestId {
-    RequestId(
-      self.item.content.first()
-          .map(|content| content.request_id.clone())
-          .unwrap_or_default(),
-    )
+    RequestId(self.item.content.first().map(|content| content.request_id.clone()).unwrap_or_default())
   }
 
   fn new_image_prompt(prompt: &str, aspect_ratio: &str, enable_pro: bool, flags: &PromptFlags) -> Self {
@@ -172,25 +168,23 @@ impl WebsocketClientMessage {
       timestamp: Utc::now().timestamp_millis() as u64,
       item: ClientMessageItem {
         r#type: "message".to_string(),
-        content: vec![
-          ClientMessageItemContent {
-            request_id: Uuid::new_v4().to_string(),
-            r#type: "input_text".to_string(),
-            text: flags.apply_to(prompt),
-            properties: ClientMessageItemContentProperties {
-              section_count: 0,
-              is_kids_mode: false,
-              enable_nsfw: true,
-              skip_upsampler: false,
-              enable_side_by_side: DEFAULT_ENABLE_SIDE_BY_SIDE,
-              is_initial: false,
-              aspect_ratio: aspect_ratio.to_string(),
-              enable_pro,
-              num_generations: DEFAULT_NUM_GENERATIONS,
-              enable_watermark: DEFAULT_ENABLE_WATERMARK,
-            },
-          }
-        ],
+        content: vec![ClientMessageItemContent {
+          request_id: Uuid::new_v4().to_string(),
+          r#type: "input_text".to_string(),
+          text: flags.apply_to(prompt),
+          properties: ClientMessageItemContentProperties {
+            section_count: 0,
+            is_kids_mode: false,
+            enable_nsfw: true,
+            skip_upsampler: false,
+            enable_side_by_side: DEFAULT_ENABLE_SIDE_BY_SIDE,
+            is_initial: false,
+            aspect_ratio: aspect_ratio.to_string(),
+            enable_pro,
+            num_generations: DEFAULT_NUM_GENERATIONS,
+            enable_watermark: DEFAULT_ENABLE_WATERMARK,
+          },
+        }],
       },
     }
   }
@@ -202,9 +196,7 @@ mod tests {
 
   // Cargo runs tests with the crate root as the working directory.
   fn load_send_frame(file_name: &str) -> serde_json::Value {
-    serde_json::from_str(
-      &std::fs::read_to_string(format!("test_data/websocket_messages/{file_name}")).unwrap(),
-    ).unwrap()
+    serde_json::from_str(&std::fs::read_to_string(format!("test_data/websocket_messages/{file_name}")).unwrap()).unwrap()
   }
 
   /// Assert our serialized message matches a captured send frame property for
@@ -231,17 +223,8 @@ mod tests {
   #[test]
   fn mode_flag_appended_to_image_prompt() {
     use crate::prompt_flags::GenerationMode;
-    let value = serde_json::to_value(
-      WebsocketClientMessage::new_fast_image_prompt(
-        "woman on beach",
-        FastAspectRatio::WideSixteenByNine,
-        &PromptFlags::with_mode(GenerationMode::Spicy),
-      ),
-    ).unwrap();
-    assert_eq!(
-      value["item"]["content"][0]["text"],
-      "woman on beach --mode=extremely-spicy-or-crazy",
-    );
+    let value = serde_json::to_value(WebsocketClientMessage::new_fast_image_prompt("woman on beach", FastAspectRatio::WideSixteenByNine, &PromptFlags::with_mode(GenerationMode::Spicy))).unwrap();
+    assert_eq!(value["item"]["content"][0]["text"], "woman on beach --mode=extremely-spicy-or-crazy",);
   }
 
   mod fast_mode_tests {
@@ -249,9 +232,7 @@ mod tests {
 
     #[test]
     fn wire_format() {
-      let value = serde_json::to_value(
-        WebsocketClientMessage::new_fast_image_prompt("a cat", FastAspectRatio::TallTwoByThree, &PromptFlags::default()),
-      ).unwrap();
+      let value = serde_json::to_value(WebsocketClientMessage::new_fast_image_prompt("a cat", FastAspectRatio::TallTwoByThree, &PromptFlags::default())).unwrap();
       let properties = &value["item"]["content"][0]["properties"];
 
       assert_eq!(value["type"], "conversation.item.create");
@@ -266,9 +247,7 @@ mod tests {
     // Real fast send frame: "Race car", 3:2 (from capture 14).
     #[test]
     fn matches_real_captured_frame() {
-      let ours = serde_json::to_value(
-        WebsocketClientMessage::new_fast_image_prompt("Race car", FastAspectRatio::WideThreeByTwo, &PromptFlags::default()),
-      ).unwrap();
+      let ours = serde_json::to_value(WebsocketClientMessage::new_fast_image_prompt("Race car", FastAspectRatio::WideThreeByTwo, &PromptFlags::default())).unwrap();
       assert_matches_capture(&ours, &load_send_frame("real_fast_image_prompt_request.json"));
     }
 
@@ -287,9 +266,7 @@ mod tests {
 
     #[test]
     fn wire_format() {
-      let value = serde_json::to_value(
-        WebsocketClientMessage::new_quality_image_prompt("a cat", QualityAspectRatio::WideTwentyOneByNine, &PromptFlags::default()),
-      ).unwrap();
+      let value = serde_json::to_value(WebsocketClientMessage::new_quality_image_prompt("a cat", QualityAspectRatio::WideTwentyOneByNine, &PromptFlags::default())).unwrap();
       let properties = &value["item"]["content"][0]["properties"];
 
       assert_eq!(properties["aspect_ratio"], "21:9");
@@ -301,9 +278,7 @@ mod tests {
     // Real quality send frame: "luxury car", 21:9 (from capture 13).
     #[test]
     fn matches_real_captured_frame() {
-      let ours = serde_json::to_value(
-        WebsocketClientMessage::new_quality_image_prompt("luxury car", QualityAspectRatio::WideTwentyOneByNine, &PromptFlags::default()),
-      ).unwrap();
+      let ours = serde_json::to_value(WebsocketClientMessage::new_quality_image_prompt("luxury car", QualityAspectRatio::WideTwentyOneByNine, &PromptFlags::default())).unwrap();
       assert_matches_capture(&ours, &load_send_frame("real_quality_image_prompt_request.json"));
     }
 

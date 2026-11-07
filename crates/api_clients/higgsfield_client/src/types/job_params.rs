@@ -50,7 +50,6 @@ pub struct JobParams {
   pub thinking: Option<ThinkingLevel>,
 
   // ── Video ──
-
   /// Clip length in whole seconds.
   #[serde(default)]
   pub duration: Option<u32>,
@@ -72,7 +71,6 @@ pub struct JobParams {
   pub model: Option<String>,
 
   // ── References ──
-
   /// Reference media with roles (most models). Empty for text-only jobs.
   #[serde(default)]
   pub medias: Vec<MediaReference>,

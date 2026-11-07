@@ -1,6 +1,4 @@
-use crate::requests::api::mesh::image::tripo3d_h3p1_image_to_mesh::api::{
-  Tripo3dH3p1ImageGeometryQuality, Tripo3dH3p1ImageTextureQuality, Tripo3dH3p1ImageToMeshRequest,
-};
+use crate::requests::api::mesh::image::tripo3d_h3p1_image_to_mesh::api::{Tripo3dH3p1ImageGeometryQuality, Tripo3dH3p1ImageTextureQuality, Tripo3dH3p1ImageToMeshRequest};
 use crate::requests::traits::fal_request_cost_calculator_trait::{FalRequestCostCalculator, UsdCents};
 
 impl FalRequestCostCalculator for Tripo3dH3p1ImageToMeshRequest {

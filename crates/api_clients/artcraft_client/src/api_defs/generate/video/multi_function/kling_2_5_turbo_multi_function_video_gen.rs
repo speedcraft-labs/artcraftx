@@ -55,7 +55,6 @@ pub enum Kling2p5TurboProMultiFunctionVideoGenAspectRatio {
   NineBySixteen,
 }
 
-
 #[derive(Serialize, Deserialize)]
 pub struct Kling2p5TurboProMultiFunctionVideoGenResponse {
   pub success: bool,

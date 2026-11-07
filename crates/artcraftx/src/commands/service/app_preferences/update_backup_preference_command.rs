@@ -26,12 +26,7 @@ pub struct UpdateBackupPreferenceResponse {
 }
 
 #[tauri::command]
-pub async fn update_backup_preference_command(
-  request: UpdateBackupPreferenceRequest,
-  app: AppHandle,
-  app_data_root: State<'_, AppDataRoot>,
-  app_prefs: State<'_, AppPreferencesManager>,
-) -> Result<UpdateBackupPreferenceResponse, String> {
+pub async fn update_backup_preference_command(request: UpdateBackupPreferenceRequest, app: AppHandle, app_data_root: State<'_, AppDataRoot>, app_prefs: State<'_, AppPreferencesManager>) -> Result<UpdateBackupPreferenceResponse, String> {
   info!("update_backup_preference_command called: {:?}", request);
 
   if let UpdateBackupPreferenceRequest::ArtcraftCredentialId(Some(credential_id)) = &request {
@@ -39,16 +34,16 @@ pub async fn update_backup_preference_command(
   }
 
   let prefs = app_prefs
-      .update(|prefs| match request {
-        UpdateBackupPreferenceRequest::Enabled(enabled) => prefs.backup.enabled = enabled,
-        UpdateBackupPreferenceRequest::ArtcraftCredentialId(maybe_id) => {
-          prefs.backup.maybe_artcraft_credential_id = maybe_id.filter(|id| !id.trim().is_empty());
-        }
-      })
-      .map_err(|err| {
-        error!("Error updating backup preference: {:?}", err);
-        format!("Error updating backup preference: {:?}", err)
-      })?;
+    .update(|prefs| match request {
+      UpdateBackupPreferenceRequest::Enabled(enabled) => prefs.backup.enabled = enabled,
+      UpdateBackupPreferenceRequest::ArtcraftCredentialId(maybe_id) => {
+        prefs.backup.maybe_artcraft_credential_id = maybe_id.filter(|id| !id.trim().is_empty());
+      },
+    })
+    .map_err(|err| {
+      error!("Error updating backup preference: {:?}", err);
+      format!("Error updating backup preference: {:?}", err)
+    })?;
 
   notify_app_preferences_changed(&app);
 
@@ -56,16 +51,9 @@ pub async fn update_backup_preference_command(
 }
 
 fn validate_backup_credential(app_data_root: &AppDataRoot, credential_id: &str) -> Result<(), String> {
-  let credential = app_data_root
-      .credentials_dir()
-      .find_credential_by_id(credential_id)
-      .map_err(|err| format!("Error looking up credential {}: {}", credential_id, err))?
-      .ok_or_else(|| format!("No credential found for id {}", credential_id))?;
+  let credential = app_data_root.credentials_dir().find_credential_by_id(credential_id).map_err(|err| format!("Error looking up credential {}: {}", credential_id, err))?.ok_or_else(|| format!("No credential found for id {}", credential_id))?;
   if !is_backup_eligible(&credential) {
-    return Err(format!(
-      "Credential {} ({}) can't receive backups; pick an ArtCraft account",
-      credential_id, credential.service,
-    ));
+    return Err(format!("Credential {} ({}) can't receive backups; pick an ArtCraft account", credential_id, credential.service,));
   }
   Ok(())
 }
@@ -77,18 +65,12 @@ mod tests {
   /// Pin the wire format the frontend sends (`UpdateBackupPreference.ts`).
   #[test]
   fn decodes_requests() {
-    assert!(matches!(
-      serde_json::from_str::<UpdateBackupPreferenceRequest>(r#"{"preference":"enabled","value":true}"#).unwrap(),
-      UpdateBackupPreferenceRequest::Enabled(true),
-    ));
+    assert!(matches!(serde_json::from_str::<UpdateBackupPreferenceRequest>(r#"{"preference":"enabled","value":true}"#).unwrap(), UpdateBackupPreferenceRequest::Enabled(true),));
     assert!(matches!(
       serde_json::from_str::<UpdateBackupPreferenceRequest>(r#"{"preference":"artcraft_credential_id","value":"credential_abc"}"#).unwrap(),
       UpdateBackupPreferenceRequest::ArtcraftCredentialId(Some(id)) if id == "credential_abc",
     ));
-    assert!(matches!(
-      serde_json::from_str::<UpdateBackupPreferenceRequest>(r#"{"preference":"artcraft_credential_id","value":null}"#).unwrap(),
-      UpdateBackupPreferenceRequest::ArtcraftCredentialId(None),
-    ));
+    assert!(matches!(serde_json::from_str::<UpdateBackupPreferenceRequest>(r#"{"preference":"artcraft_credential_id","value":null}"#).unwrap(), UpdateBackupPreferenceRequest::ArtcraftCredentialId(None),));
     assert!(serde_json::from_str::<UpdateBackupPreferenceRequest>(r#"{"preference":"enabled","value":"yes"}"#).is_err());
   }
 }

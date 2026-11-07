@@ -100,15 +100,7 @@ pub struct NanoBananaProRequest {
 impl NanoBananaProRequest {
   /// A text-to-image request with the web app's defaults (1 image, credits).
   pub fn text_to_image(prompt: impl Into<String>, aspect_ratio: NanoBananaProAspectRatio, resolution: NanoBananaProResolution) -> Self {
-    Self {
-      prompt: prompt.into(),
-      aspect_ratio,
-      resolution,
-      batch_size: ImageBatchSize::One,
-      reference_images: Vec::new(),
-      use_unlim: false,
-      maybe_dimensions: None,
-    }
+    Self { prompt: prompt.into(), aspect_ratio, resolution, batch_size: ImageBatchSize::One, reference_images: Vec::new(), use_unlim: false, maybe_dimensions: None }
   }
 
   /// Add reference images (image-to-image).
@@ -129,10 +121,7 @@ impl NanoBananaProRequest {
       return Ok(dimensions);
     }
     ImageDimensions::for_aspect_ratio(&self.aspect_ratio.to_image_aspect_ratio(), &self.resolution.to_image_resolution())
-        .ok_or_else(|| HiggsfieldClientError::InvalidRequest(format!(
-          "can't derive dimensions for aspect ratio {} at {}; pass maybe_dimensions",
-          self.aspect_ratio.as_str(), self.resolution.as_str(),
-        )))
+      .ok_or_else(|| HiggsfieldClientError::InvalidRequest(format!("can't derive dimensions for aspect ratio {} at {}; pass maybe_dimensions", self.aspect_ratio.as_str(), self.resolution.as_str(),)))
   }
 
   fn to_body(&self) -> Result<NanoBananaProRequestBody, HiggsfieldClientError> {
@@ -213,7 +202,10 @@ mod tests {
     // Captured from the web app: 3:4 at 1k, one image.
     let request = NanoBananaProRequest::text_to_image("a dinosaur on a skateboard", NanoBananaProAspectRatio::Portrait3x4, NanoBananaProResolution::OneK);
     let actual: Value = serde_json::to_value(request.to_body().unwrap()).unwrap();
-    let expected: Value = serde_json::from_str(r#"{"params":{"prompt":"a dinosaur on a skateboard","aspect_ratio":"3:4","resolution":"1k","batch_size":1,"is_storyboard":false,"is_zoom_control":false,"use_unlim":false,"width":896,"height":1200,"input_images":[]},"use_unlim":false}"#).unwrap();
+    let expected: Value = serde_json::from_str(
+      r#"{"params":{"prompt":"a dinosaur on a skateboard","aspect_ratio":"3:4","resolution":"1k","batch_size":1,"is_storyboard":false,"is_zoom_control":false,"use_unlim":false,"width":896,"height":1200,"input_images":[]},"use_unlim":false}"#,
+    )
+    .unwrap();
     assert_eq!(actual, expected);
   }
 
@@ -223,11 +215,10 @@ mod tests {
     // reference goes out as a bare descriptor in `input_images`. The web app
     // sent 1376x768 for 16:9@1k; this client's derivation is asserted.
     let request = NanoBananaProRequest::text_to_image("a corgi on a bike", NanoBananaProAspectRatio::Landscape16x9, NanoBananaProResolution::OneK)
-        .with_reference_images(vec![MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png")]);
+      .with_reference_images(vec![MediaInput::uploaded("00000000-0000-4000-8000-0000000000aa", "https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png")]);
     let actual: Value = serde_json::to_value(request.to_body().unwrap()).unwrap();
     let dimensions = request.dimensions().unwrap();
-    let expected_json = r#"{"params":{"prompt":"a corgi on a bike","input_images":[{"id":"00000000-0000-4000-8000-0000000000aa","type":"media_input","url":"https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png"}],"aspect_ratio":"16:9","resolution":"1k","batch_size":1,"is_storyboard":false,"is_zoom_control":false,"use_unlim":false,"width":W,"height":H},"use_unlim":false}"#
-        .replace("\"width\":W", &format!("\"width\":{}", dimensions.width)).replace("\"height\":H", &format!("\"height\":{}", dimensions.height));
+    let expected_json = r#"{"params":{"prompt":"a corgi on a bike","input_images":[{"id":"00000000-0000-4000-8000-0000000000aa","type":"media_input","url":"https://cdn.example.com/user_TESTUSER0000000000000000000/00000000-0000-4000-8000-0000000000aa.png"}],"aspect_ratio":"16:9","resolution":"1k","batch_size":1,"is_storyboard":false,"is_zoom_control":false,"use_unlim":false,"width":W,"height":H},"use_unlim":false}"#.replace("\"width\":W", &format!("\"width\":{}", dimensions.width)).replace("\"height\":H", &format!("\"height\":{}", dimensions.height));
     let expected: Value = serde_json::from_str(&expected_json).unwrap();
     assert_eq!(actual, expected);
   }
@@ -304,11 +295,9 @@ mod tests {
     setup_test_logging();
 
     let auth = load_higgsfield_test_auth().await?;
-    let response = nano_banana_pro(NanoBananaProArgs {
-      request: NanoBananaProRequest::text_to_image("a dinosaur on a skateboard", NanoBananaProAspectRatio::Portrait3x4, NanoBananaProResolution::OneK),
-      auth: &auth,
-      host: &HiggsfieldHost::Higgsfield,
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let response = nano_banana_pro(NanoBananaProArgs { request: NanoBananaProRequest::text_to_image("a dinosaur on a skateboard", NanoBananaProAspectRatio::Portrait3x4, NanoBananaProResolution::OneK), auth: &auth, host: &HiggsfieldHost::Higgsfield })
+      .await
+      .map_err(|err| anyhow::anyhow!("{err}"))?;
 
     println!("Enqueued job ids: {:?}", response.job_ids());
     println!("Wallet: {:?}", response.wallet);
@@ -334,11 +323,7 @@ mod tests {
     let request = NanoBananaProRequest::text_to_image("a dinosaur on a skateboard", NanoBananaProAspectRatio::Portrait3x4, NanoBananaProResolution::OneK);
     println!("\n===== request =====\n{:#?}", request);
 
-    let response = nano_banana_pro(NanoBananaProArgs {
-      request,
-      auth: &auth,
-      host: &HiggsfieldHost::Higgsfield,
-    }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
+    let response = nano_banana_pro(NanoBananaProArgs { request, auth: &auth, host: &HiggsfieldHost::Higgsfield }).await.map_err(|err| anyhow::anyhow!("{err}"))?;
 
     println!("\n===== POST /fnf/jobs/nano-banana-2 =====\n{:#?}", response);
     let job_ids = response.job_ids();

@@ -60,26 +60,16 @@ pub fn higgsfield_credential_toml_path() -> AnyhowResult<PathBuf> {
 /// higgsfield.ai, and the session needs Clerk's `__client`).
 pub fn load_higgsfield_cookies_from_app_credential() -> AnyhowResult<HiggsfieldCookies> {
   let path = higgsfield_credential_toml_path()?;
-  let raw = read_to_string(&path)
-      .map_err(|err| anyhow::anyhow!("Could not read Higgsfield credential {:?}: {} (log in via the app first)", path, err))?;
-  let parsed: CredentialToml = toml::from_str(&raw)
-      .map_err(|err| anyhow::anyhow!("Could not parse Higgsfield credential {:?}: {}", path, err))?;
+  let raw = read_to_string(&path).map_err(|err| anyhow::anyhow!("Could not read Higgsfield credential {:?}: {} (log in via the app first)", path, err))?;
+  let parsed: CredentialToml = toml::from_str(&raw).map_err(|err| anyhow::anyhow!("Could not parse Higgsfield credential {:?}: {}", path, err))?;
 
   if parsed.service != "higgsfield_cookies" {
     anyhow::bail!("{:?} is a {:?} credential, not higgsfield_cookies", path, parsed.service);
   }
 
-  let header = parsed.cookie.cookies.iter()
-      .map(|cookie| format!("{}={}", cookie.name, cookie.value))
-      .collect::<Vec<_>>()
-      .join("; ");
+  let header = parsed.cookie.cookies.iter().map(|cookie| format!("{}={}", cookie.name, cookie.value)).collect::<Vec<_>>().join("; ");
 
-  println!(
-    "Loaded Higgsfield credential {:?}: {} cookies, email={:?}",
-    path,
-    parsed.cookie.cookies.len(),
-    parsed.user_info.and_then(|info| info.email),
-  );
+  println!("Loaded Higgsfield credential {:?}: {} cookies, email={:?}", path, parsed.cookie.cookies.len(), parsed.user_info.and_then(|info| info.email),);
 
   Ok(HiggsfieldCookies::from_cookie_header(header))
 }

@@ -22,36 +22,20 @@ pub struct ArtcraftSeedream5p0ProUltraCostState {
 
 impl ArtcraftSeedream5p0ProUltraCostState {
   pub fn from_request(request: &ArtcraftSeedream5p0ProUltraRequestState) -> Self {
-    Self {
-      resolution: request.request.resolution,
-      num_images: request.request.image_batch_count.unwrap_or(1),
-    }
+    Self { resolution: request.request.resolution, num_images: request.request.image_batch_count.unwrap_or(1) }
   }
 
   pub fn estimate_cost(&self) -> ImageGenerationCostEstimate {
     let cost_per_image: u64 = cost_per_image_in_cents(self.resolution);
     let cost_in_usd_cents = cost_per_image * self.num_images as u64;
-    ImageGenerationCostEstimate {
-      cost_in_credits: Some(cost_in_usd_cents),
-      cost_in_usd_cents: Some(cost_in_usd_cents),
-      is_free: false,
-      is_unlimited: false,
-      is_rate_limited: false,
-      has_watermark: false,
-      failures_are_refunded: None,
-    }
+    ImageGenerationCostEstimate { cost_in_credits: Some(cost_in_usd_cents), cost_in_usd_cents: Some(cost_in_usd_cents), is_free: false, is_unlimited: false, is_rate_limited: false, has_watermark: false, failures_are_refunded: None }
   }
 }
 
 fn cost_per_image_in_cents(resolution: Option<CommonResolutionEnum>) -> u64 {
   use CommonResolutionEnum as R;
   match resolution {
-    None
-    | Some(R::HalfK)
-    | Some(R::OneK)
-    | Some(R::FourEightyP)
-    | Some(R::SevenTwentyP)
-    | Some(R::TenEightyP) => USD_CENTS_PER_IMAGE_1K,
+    None | Some(R::HalfK) | Some(R::OneK) | Some(R::FourEightyP) | Some(R::SevenTwentyP) | Some(R::TenEightyP) => USD_CENTS_PER_IMAGE_1K,
     Some(R::TwoK) | Some(R::ThreeK) | Some(R::FourK) => USD_CENTS_PER_IMAGE_2K,
   }
 }
@@ -92,44 +76,42 @@ mod tests {
   // ── Default / 1K (18¢) ──
 
   #[test]
-  fn default_resolution_one_image_is_18c() { assert_eq!(cost_cents(None, 1), 18); }
+  fn default_resolution_one_image_is_18c() {
+    assert_eq!(cost_cents(None, 1), 18);
+  }
 
   #[test]
-  fn one_k_one_image_is_18c() { assert_eq!(cost_cents(Some(RouterResolution::OneK), 1), 18); }
+  fn one_k_one_image_is_18c() {
+    assert_eq!(cost_cents(Some(RouterResolution::OneK), 1), 18);
+  }
 
   #[test]
-  fn one_k_four_images_is_72c() { assert_eq!(cost_cents(Some(RouterResolution::OneK), 4), 72); }
+  fn one_k_four_images_is_72c() {
+    assert_eq!(cost_cents(Some(RouterResolution::OneK), 4), 72);
+  }
 
   // ── 2K (30¢) ──
 
   #[test]
-  fn two_k_one_image_is_30c() { assert_eq!(cost_cents(Some(RouterResolution::TwoK), 1), 30); }
+  fn two_k_one_image_is_30c() {
+    assert_eq!(cost_cents(Some(RouterResolution::TwoK), 1), 30);
+  }
 
   #[test]
-  fn two_k_four_images_is_120c() { assert_eq!(cost_cents(Some(RouterResolution::TwoK), 4), 120); }
+  fn two_k_four_images_is_120c() {
+    assert_eq!(cost_cents(Some(RouterResolution::TwoK), 4), 120);
+  }
 
   // ── Fallbacks ──
 
   #[test]
   fn four_k_falls_back_to_two_k_pricing() {
-    assert_eq!(
-      ArtcraftSeedream5p0ProUltraCostState {
-        resolution: Some(CommonResolutionEnum::FourK),
-        num_images: 1,
-      }.estimate_cost().cost_in_usd_cents,
-      Some(30),
-    );
+    assert_eq!(ArtcraftSeedream5p0ProUltraCostState { resolution: Some(CommonResolutionEnum::FourK), num_images: 1 }.estimate_cost().cost_in_usd_cents, Some(30),);
   }
 
   #[test]
   fn half_k_falls_back_to_one_k_pricing() {
-    assert_eq!(
-      ArtcraftSeedream5p0ProUltraCostState {
-        resolution: Some(CommonResolutionEnum::HalfK),
-        num_images: 1,
-      }.estimate_cost().cost_in_usd_cents,
-      Some(18),
-    );
+    assert_eq!(ArtcraftSeedream5p0ProUltraCostState { resolution: Some(CommonResolutionEnum::HalfK), num_images: 1 }.estimate_cost().cost_in_usd_cents, Some(18),);
   }
 
   // ── Credits track USD cents exactly (1 credit = 1 cent) ──
@@ -152,15 +134,9 @@ mod tests {
 
     for resolution in [None, Some(CommonResolutionEnum::OneK), Some(CommonResolutionEnum::TwoK)] {
       for num_images in [1u16, 4] {
-        let ultra_cents = ArtcraftSeedream5p0ProUltraCostState { resolution, num_images }
-          .estimate_cost().cost_in_usd_cents.unwrap();
-        let base_cents = ArtcraftSeedream5p0ProCostState { resolution, num_images }
-          .estimate_cost().cost_in_usd_cents.unwrap();
-        assert!(
-          ultra_cents > base_cents,
-          "ultra price {}¢ must exceed base price {}¢ ({:?} batch {})",
-          ultra_cents, base_cents, resolution, num_images,
-        );
+        let ultra_cents = ArtcraftSeedream5p0ProUltraCostState { resolution, num_images }.estimate_cost().cost_in_usd_cents.unwrap();
+        let base_cents = ArtcraftSeedream5p0ProCostState { resolution, num_images }.estimate_cost().cost_in_usd_cents.unwrap();
+        assert!(ultra_cents > base_cents, "ultra price {}¢ must exceed base price {}¢ ({:?} batch {})", ultra_cents, base_cents, resolution, num_images,);
       }
     }
   }
@@ -169,9 +145,7 @@ mod tests {
 
   #[test]
   fn price_covers_kinovi_cost() {
-    use seedance2pro_client::generate::image::generate_seedream_5p0_pro::{
-      KinoviSeedream5p0ProBatchCount, KinoviSeedream5p0ProResolution,
-    };
+    use seedance2pro_client::generate::image::generate_seedream_5p0_pro::{KinoviSeedream5p0ProBatchCount, KinoviSeedream5p0ProResolution};
     use crate::generate::generate_image::providers::kinovi::seedream_5p0_pro::cost::KinoviSeedream5p0ProCostState;
 
     let cases = [
@@ -182,15 +156,8 @@ mod tests {
     ];
     for (router_res, kinovi_res, batch, kinovi_batch) in cases {
       let artcraft_cents = cost_cents(Some(router_res), batch);
-      let kinovi_cents = KinoviSeedream5p0ProCostState {
-        resolution: kinovi_res,
-        batch_count: kinovi_batch,
-      }.estimate_cost().cost_in_usd_cents.unwrap();
-      assert!(
-        artcraft_cents > kinovi_cents,
-        "artcraft price {}¢ must exceed kinovi cost {}¢ ({:?} batch {})",
-        artcraft_cents, kinovi_cents, router_res, batch,
-      );
+      let kinovi_cents = KinoviSeedream5p0ProCostState { resolution: kinovi_res, batch_count: kinovi_batch }.estimate_cost().cost_in_usd_cents.unwrap();
+      assert!(artcraft_cents > kinovi_cents, "artcraft price {}¢ must exceed kinovi cost {}¢ ({:?} batch {})", artcraft_cents, kinovi_cents, router_res, batch,);
     }
   }
 

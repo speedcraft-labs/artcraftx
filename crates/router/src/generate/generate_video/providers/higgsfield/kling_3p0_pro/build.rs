@@ -12,10 +12,7 @@ use crate::generate::generate_video::video_generation_draft_or_request::VideoGen
 
 const MODEL: &str = "Kling 3.0 Pro";
 
-const RESOLUTION_TIERS: &[(RouterResolution, Kling3p0Resolution)] = &[
-  (RouterResolution::TenEightyP, Kling3p0Resolution::P1080),
-  (RouterResolution::FourK, Kling3p0Resolution::FourK),
-];
+const RESOLUTION_TIERS: &[(RouterResolution, Kling3p0Resolution)] = &[(RouterResolution::TenEightyP, Kling3p0Resolution::P1080), (RouterResolution::FourK, Kling3p0Resolution::FourK)];
 
 pub fn build_higgsfield_kling_3p0_pro(builder: GenerateVideoRequestBuilder) -> Result<VideoGenerationDraftOrRequest, ArtcraftRouterError> {
   build_kling_3p0(builder, MODEL, RESOLUTION_TIERS, Kling3p0Resolution::P1080)

@@ -66,7 +66,6 @@ pub struct TauriGenerateAudioRequest {
   pub pitch: Option<f64>,
 
   // ── Frontend metadata ──
-
   /// Name of the frontend caller.
   pub frontend_caller: Option<TauriCommandCaller>,
 
@@ -108,8 +107,7 @@ pub enum TauriAudioModel {
 // ── Response ──
 
 #[derive(Serialize)]
-pub struct TauriGenerateAudioResponse {
-}
+pub struct TauriGenerateAudioResponse {}
 
 impl SerializeMarker for TauriGenerateAudioResponse {}
 

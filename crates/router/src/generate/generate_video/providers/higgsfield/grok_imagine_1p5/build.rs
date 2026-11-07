@@ -7,9 +7,7 @@ use higgsfield_client::endpoints::generate::video::grok_imagine_1p5::{GrokImagin
 use crate::api::router_resolution::RouterResolution;
 use crate::errors::artcraft_router_error::ArtcraftRouterError;
 use crate::generate::generate_video::generate_video_request_builder::GenerateVideoRequestBuilder;
-use crate::generate::generate_video::providers::higgsfield::common::{
-  finish, plan_duration, plan_single_video, require_prompt, snap_resolution, warn_ignored, HiggsfieldVideoReferences,
-};
+use crate::generate::generate_video::providers::higgsfield::common::{finish, plan_duration, plan_single_video, require_prompt, snap_resolution, warn_ignored, HiggsfieldVideoReferences};
 use crate::generate::generate_video::providers::higgsfield::draft::HiggsfieldVideoPlan;
 use crate::generate::generate_video::providers::higgsfield::video_request::HiggsfieldVideoRequest;
 use crate::generate::generate_video::video_generation_draft_or_request::VideoGenerationDraftOrRequest;
@@ -18,11 +16,8 @@ const MODEL: &str = "Grok Imagine 1.5";
 pub const MAX_REFERENCE_IMAGES: usize = 4;
 const DEFAULT_DURATION_SECONDS: u32 = 6;
 
-const RESOLUTION_TIERS: &[(RouterResolution, GrokImagine1p5Resolution)] = &[
-  (RouterResolution::FourEightyP, GrokImagine1p5Resolution::P480),
-  (RouterResolution::SevenTwentyP, GrokImagine1p5Resolution::P720),
-  (RouterResolution::TenEightyP, GrokImagine1p5Resolution::P1080),
-];
+const RESOLUTION_TIERS: &[(RouterResolution, GrokImagine1p5Resolution)] =
+  &[(RouterResolution::FourEightyP, GrokImagine1p5Resolution::P480), (RouterResolution::SevenTwentyP, GrokImagine1p5Resolution::P720), (RouterResolution::TenEightyP, GrokImagine1p5Resolution::P1080)];
 
 pub fn build_higgsfield_grok_imagine_1p5(mut builder: GenerateVideoRequestBuilder) -> Result<VideoGenerationDraftOrRequest, ArtcraftRouterError> {
   let strategy = builder.request_mismatch_mitigation_strategy;

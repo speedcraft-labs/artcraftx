@@ -114,10 +114,7 @@ impl std::fmt::Debug for KinoviGenerateImageRequest {
 
 impl std::fmt::Debug for GenerateImageArgs<'_> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.debug_struct("GenerateImageArgs")
-      .field("request", &self.request)
-      .field("host_override", &self.host_override)
-      .finish()
+    f.debug_struct("GenerateImageArgs").field("request", &self.request).field("host_override", &self.host_override).finish()
   }
 }
 
@@ -251,14 +248,12 @@ pub async fn generate_image(args: GenerateImageArgs<'_>) -> Result<GenerateImage
 
   let cookie = args.session.cookies.as_str();
 
-  let client = Client::builder()
-    .emulation(Emulation::Firefox143)
-    .build()
-    .map_err(|err| Seedance2ProClientError::WreqClientError(err))?;
+  let client = Client::builder().emulation(Emulation::Firefox143).build().map_err(|err| Seedance2ProClientError::WreqClientError(err))?;
 
   let referer = format!("{}/", base_url);
 
-  let response = client.post(&run_task_url)
+  let response = client
+    .post(&run_task_url)
     .header("User-Agent", FIREFOX_USER_AGENT)
     .header("Accept", "*/*")
     .header("Accept-Language", "en-US,en;q=0.9")
@@ -280,9 +275,7 @@ pub async fn generate_image(args: GenerateImageArgs<'_>) -> Result<GenerateImage
     .map_err(|err| Seedance2ProGenericApiError::WreqError(err))?;
 
   let status = response.status();
-  let response_body = response.text()
-    .await
-    .map_err(|err| Seedance2ProGenericApiError::WreqError(err))?;
+  let response_body = response.text().await.map_err(|err| Seedance2ProGenericApiError::WreqError(err))?;
 
   info!("Response status: {}, body: {}", status, response_body);
 
@@ -290,30 +283,15 @@ pub async fn generate_image(args: GenerateImageArgs<'_>) -> Result<GenerateImage
     return Err(categorize_seedance2pro_error(status, response_body));
   }
 
-  let batch_response: Vec<BatchResponseItem> = serde_json::from_str(&response_body)
-    .map_err(|err| Seedance2ProGenericApiError::SerdeResponseParseErrorWithBody(err, response_body.clone()))?;
+  let batch_response: Vec<BatchResponseItem> = serde_json::from_str(&response_body).map_err(|err| Seedance2ProGenericApiError::SerdeResponseParseErrorWithBody(err, response_body.clone()))?;
 
-  let task_data = batch_response
-    .into_iter()
-    .next()
-    .ok_or_else(|| Seedance2ProGenericApiError::UnexpectedResponseShape {
-      explanation: "Empty batch response array".to_string(),
-      raw_body: response_body.clone(),
-    })?
-    .result
-    .data
-    .json;
+  let task_data = batch_response.into_iter().next().ok_or_else(|| Seedance2ProGenericApiError::UnexpectedResponseShape { explanation: "Empty batch response array".to_string(), raw_body: response_body.clone() })?.result.data.json;
 
   if task_data.violation_warning {
     return Err(Seedance2ProBadRequestApiError::VideoGenerationViolation { raw_body: response_body }.into());
   }
 
-  Ok(GenerateImageResponse {
-    task_id: task_data.task_id,
-    order_id: task_data.order_id,
-    task_ids: task_data.task_ids,
-    order_ids: task_data.order_ids,
-  })
+  Ok(GenerateImageResponse { task_id: task_data.task_id, order_id: task_data.order_id, task_ids: task_data.task_ids, order_ids: task_data.order_ids })
 }
 
 /// The wire format for `quality` is a JSON number, but the public API
@@ -323,11 +301,7 @@ pub async fn generate_image(args: GenerateImageArgs<'_>) -> Result<GenerateImage
 /// callers might not, so we surface a structured client error instead of
 /// panicking.
 fn parse_quality(raw: &str) -> Result<f32, Seedance2ProClientError> {
-  raw.parse::<f32>().map_err(|err| Seedance2ProClientError::InvalidRequestField {
-    field: "quality",
-    raw_value: raw.to_string(),
-    reason: format!("not a valid f32: {}", err),
-  })
+  raw.parse::<f32>().map_err(|err| Seedance2ProClientError::InvalidRequestField { field: "quality", raw_value: raw.to_string(), reason: format!("not a valid f32: {}", err) })
 }
 
 #[cfg(test)]
@@ -381,11 +355,7 @@ mod tests {
     #[test]
     fn pricing_is_model_agnostic() {
       let baseline = make_request(KinoviMidjourneyBatchCount::One).calculate_costs().kinovi_credits;
-      for model in [
-        KinoviMidjourneyModel::V7,
-        KinoviMidjourneyModel::V7Niji,
-        KinoviMidjourneyModel::V8,
-      ] {
+      for model in [KinoviMidjourneyModel::V7, KinoviMidjourneyModel::V7Niji, KinoviMidjourneyModel::V8] {
         let req = KinoviGenerateImageRequest { model, ..make_request(KinoviMidjourneyBatchCount::One) };
         assert_eq!(req.calculate_costs().kinovi_credits, baseline, "model={:?}", model);
       }
@@ -396,10 +366,7 @@ mod tests {
     fn pricing_is_aspect_ratio_agnostic() {
       let baseline = make_request(KinoviMidjourneyBatchCount::One).calculate_costs().kinovi_credits;
       for ar in ["1:1", "16:9", "9:16", "21:9", "9:21", "4:3", "3:4", "5:4", "4:5", "3:2", "2:3"] {
-        let req = KinoviGenerateImageRequest {
-          aspect_ratio: ar.to_string(),
-          ..make_request(KinoviMidjourneyBatchCount::One)
-        };
+        let req = KinoviGenerateImageRequest { aspect_ratio: ar.to_string(), ..make_request(KinoviMidjourneyBatchCount::One) };
         assert_eq!(req.calculate_costs().kinovi_credits, baseline, "aspect_ratio={:?}", ar);
       }
     }
@@ -408,15 +375,7 @@ mod tests {
     #[test]
     fn pricing_is_independent_of_style_knobs() {
       let baseline = make_request(KinoviMidjourneyBatchCount::One).calculate_costs().kinovi_credits;
-      let req = KinoviGenerateImageRequest {
-        stylize: Some(1000),
-        weird: Some(3000),
-        chaos: Some(100),
-        quality: Some("1".to_string()),
-        raw_mode: true,
-        negative_prompt: Some("ugly, blurry".to_string()),
-        ..make_request(KinoviMidjourneyBatchCount::One)
-      };
+      let req = KinoviGenerateImageRequest { stylize: Some(1000), weird: Some(3000), chaos: Some(100), quality: Some("1".to_string()), raw_mode: true, negative_prompt: Some("ugly, blurry".to_string()), ..make_request(KinoviMidjourneyBatchCount::One) };
       assert_eq!(req.calculate_costs().kinovi_credits, baseline);
     }
 
@@ -461,8 +420,7 @@ mod tests {
       let one_cents = one.calculate_costs().usd_cents_rounded_up;
       let four_cents = four.calculate_costs().usd_cents_rounded_up;
       let four_singles = one_cents * 4;
-      assert!(four_cents <= four_singles && four_cents + 4 > four_singles,
-        "expected within 4¢ under {}¢, got {}¢", four_singles, four_cents);
+      assert!(four_cents <= four_singles && four_cents + 4 > four_singles, "expected within 4¢ under {}¢, got {}¢", four_singles, four_cents);
     }
   }
 
@@ -541,10 +499,7 @@ mod tests {
       assert_eq!(params["model"], "midjourney-v7");
 
       let obj = params.as_object().unwrap();
-      let unexpected: Vec<&str> = obj.keys()
-        .filter(|k| !["prompt", "aspectRatio", "resolution", "model"].contains(&k.as_str()))
-        .map(|s| s.as_str())
-        .collect();
+      let unexpected: Vec<&str> = obj.keys().filter(|k| !["prompt", "aspectRatio", "resolution", "model"].contains(&k.as_str())).map(|s| s.as_str()).collect();
       assert!(unexpected.is_empty(), "minimal request should omit optional fields, found: {:?}", unexpected);
     }
 
@@ -575,10 +530,7 @@ mod tests {
       // The base API is stringly-typed for aspect_ratio — whatever the caller
       // (typically a per-model wrapper) hands in must appear on the wire as-is.
       for input in ["1:1", "16:9", "9:16", "21:9", "9:21", "4:3", "3:4", "5:4", "4:5", "3:2", "2:3"] {
-        let req = KinoviGenerateImageRequest {
-          aspect_ratio: input.to_string(),
-          ..minimal_request(KinoviMidjourneyModel::V7, "p")
-        };
+        let req = KinoviGenerateImageRequest { aspect_ratio: input.to_string(), ..minimal_request(KinoviMidjourneyModel::V7, "p") };
         let p = api_params(req);
         assert_eq!(p["aspectRatio"], input, "aspect_ratio={:?}", input);
       }
@@ -618,12 +570,7 @@ mod tests {
     #[test]
     fn stylize_zero_is_explicitly_sent_not_omitted() {
       // Captured sample #9 sends explicit zeros — `None` ≠ `Some(0)` on the wire.
-      let req = KinoviGenerateImageRequest {
-        stylize: Some(0),
-        chaos: Some(0),
-        weird: Some(0),
-        ..minimal_request(KinoviMidjourneyModel::V7, "p")
-      };
+      let req = KinoviGenerateImageRequest { stylize: Some(0), chaos: Some(0), weird: Some(0), ..minimal_request(KinoviMidjourneyModel::V7, "p") };
       let p = api_params(req);
       assert_eq!(p["stylize"], 0);
       assert_eq!(p["chaos"], 0);
@@ -656,16 +603,13 @@ mod tests {
       // The base function accepts strings; malformed input surfaces as a
       // structured `Seedance2ProClientError::InvalidRequestField` rather
       // than panicking.
-      let req = KinoviGenerateImageRequest {
-        quality: Some("not-a-number".to_string()),
-        ..minimal_request(KinoviMidjourneyModel::V7, "p")
-      };
+      let req = KinoviGenerateImageRequest { quality: Some("not-a-number".to_string()), ..minimal_request(KinoviMidjourneyModel::V7, "p") };
       let err = try_build_wire_json(req).expect_err("expected an error");
       match err {
         Seedance2ProClientError::InvalidRequestField { field, raw_value, .. } => {
           assert_eq!(field, "quality");
           assert_eq!(raw_value, "not-a-number");
-        }
+        },
         other => panic!("expected InvalidRequestField, got {:?}", other),
       }
     }
@@ -688,10 +632,7 @@ mod tests {
 
     #[test]
     fn negative_prompt_serializes_as_no_field() {
-      let req = KinoviGenerateImageRequest {
-        negative_prompt: Some("dark, gloomy, night".to_string()),
-        ..minimal_request(KinoviMidjourneyModel::V7, "p")
-      };
+      let req = KinoviGenerateImageRequest { negative_prompt: Some("dark, gloomy, night".to_string()), ..minimal_request(KinoviMidjourneyModel::V7, "p") };
       let p = api_params(req);
       assert_eq!(p["no"], "dark, gloomy, night");
       assert!(p.as_object().unwrap().get("negative_prompt").is_none(), "must not leak field name");
@@ -758,9 +699,8 @@ mod tests {
         reference_image_urls: None,
       };
       let got = api_params(req);
-      let expected: Value = serde_json::from_str(
-        r#"{"prompt":"abandoned skyscrapers","aspectRatio":"1:1","resolution":"2k","model":"midjourney-v7","stylize":1000,"chaos":100,"weird":3000,"quality":0.5,"style":"raw","no":"dark, gloomy, night"}"#,
-      ).unwrap();
+      let expected: Value =
+        serde_json::from_str(r#"{"prompt":"abandoned skyscrapers","aspectRatio":"1:1","resolution":"2k","model":"midjourney-v7","stylize":1000,"chaos":100,"weird":3000,"quality":0.5,"style":"raw","no":"dark, gloomy, night"}"#).unwrap();
       assert_eq!(got, expected);
     }
 
@@ -781,9 +721,7 @@ mod tests {
         reference_image_urls: None,
       };
       let got = api_params(req);
-      let expected: Value = serde_json::from_str(
-        r#"{"prompt":"desolate cliff overlooking the ocean","aspectRatio":"9:16","resolution":"2k","model":"midjourney-v8","batchCount":4,"quality":1.0}"#,
-      ).unwrap();
+      let expected: Value = serde_json::from_str(r#"{"prompt":"desolate cliff overlooking the ocean","aspectRatio":"9:16","resolution":"2k","model":"midjourney-v8","batchCount":4,"quality":1.0}"#).unwrap();
       assert_eq!(got, expected);
     }
 
@@ -806,9 +744,8 @@ mod tests {
         reference_image_urls: None,
       };
       let got = api_params(req);
-      let expected: Value = serde_json::from_str(
-        r#"{"prompt":"A shiba walking in the park","aspectRatio":"16:9","resolution":"2k","model":"midjourney-v7-niji","batchCount":3,"stylize":80,"chaos":15,"weird":700,"quality":0.25,"no":"bad quality, green"}"#,
-      ).unwrap();
+      let expected: Value =
+        serde_json::from_str(r#"{"prompt":"A shiba walking in the park","aspectRatio":"16:9","resolution":"2k","model":"midjourney-v7-niji","batchCount":3,"stylize":80,"chaos":15,"weird":700,"quality":0.25,"no":"bad quality, green"}"#).unwrap();
       assert_eq!(got, expected);
     }
   }

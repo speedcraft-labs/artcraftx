@@ -9,16 +9,8 @@ use crate::utils::basic_json_get_request::basic_json_get_request;
 
 /// Get the status of a single job by its token.
 /// Publicly exposed; credentials are optional.
-pub async fn get_job_status(
-  api_host: &ApiHost,
-  maybe_creds: Option<&StorytellerCredentialSet>,
-  job_token: &InferenceJobToken,
-) -> Result<GetJobStatusSuccessResponse, StorytellerError> {
-  basic_json_get_request(
-    api_host,
-    &get_job_status_url_path(job_token),
-    maybe_creds,
-  ).await
+pub async fn get_job_status(api_host: &ApiHost, maybe_creds: Option<&StorytellerCredentialSet>, job_token: &InferenceJobToken) -> Result<GetJobStatusSuccessResponse, StorytellerError> {
+  basic_json_get_request(api_host, &get_job_status_url_path(job_token), maybe_creds).await
 }
 
 #[cfg(test)]

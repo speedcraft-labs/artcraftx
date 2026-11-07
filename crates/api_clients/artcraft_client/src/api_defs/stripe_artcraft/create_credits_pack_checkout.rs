@@ -13,4 +13,3 @@ pub struct StripeArtcraftCreateCreditsPackCheckoutResponse {
   pub success: bool,
   pub stripe_checkout_redirect_url: String,
 }
-

@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::video::images::veo_3p1_fast::raw_request::{
-  Veo3p1FastFirstLastFrameToVideoInput, Veo3p1FastFirstLastFrameToVideoOutput,
-};
+use crate::requests::api::video::images::veo_3p1_fast::raw_request::{Veo3p1FastFirstLastFrameToVideoInput, Veo3p1FastFirstLastFrameToVideoOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 #[derive(Clone, Debug)]
@@ -276,10 +274,7 @@ mod tests {
 
   #[test]
   fn endpoint_path_is_canonical() {
-    assert_eq!(
-      Veo3p1FastFirstLastFrameToVideoRequest::ENDPOINT,
-      "fal-ai/veo3.1/fast/first-last-frame-to-video",
-    );
+    assert_eq!(Veo3p1FastFirstLastFrameToVideoRequest::ENDPOINT, "fal-ai/veo3.1/fast/first-last-frame-to-video",);
   }
 
   // NB: Pricing tests are in cost.rs

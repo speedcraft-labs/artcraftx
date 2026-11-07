@@ -58,7 +58,6 @@ pub enum EnqueueNanoBananaProTextToImageAspectRatio {
   NineBySixteen, // NB: No NineByTwentyOne ?
 }
 
-
 impl FalRequestCostCalculator for EnqueueNanoBananaProTextToImageRequest {
   fn calculate_cost_in_cents(&self) -> UsdCents {
     // Your request will cost $0.15 per image.
@@ -82,11 +81,7 @@ impl FalRequestCostCalculator for EnqueueNanoBananaProTextToImageRequest {
   }
 }
 
-
-pub async fn enqueue_nano_banana_pro_text_to_image_webhook<R: IntoUrl>(
-  args: EnqueueNanoBananaProTextToImageArgs<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
-
+pub async fn enqueue_nano_banana_pro_text_to_image_webhook<R: IntoUrl>(args: EnqueueNanoBananaProTextToImageArgs<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
 
   let num_images = match req.num_images {
@@ -96,31 +91,33 @@ pub async fn enqueue_nano_banana_pro_text_to_image_webhook<R: IntoUrl>(
     EnqueueNanoBananaProTextToImageNumImages::Four => 4,
   };
 
-  let resolution = req.resolution
-      .map(|resolution| match resolution {
-        EnqueueNanoBananaProTextToImageResolution::OneK => "1K",
-        EnqueueNanoBananaProTextToImageResolution::TwoK => "2K",
-        EnqueueNanoBananaProTextToImageResolution::FourK => "4K",
-      })
-      .map(|resolution| resolution.to_string());
+  let resolution = req
+    .resolution
+    .map(|resolution| match resolution {
+      EnqueueNanoBananaProTextToImageResolution::OneK => "1K",
+      EnqueueNanoBananaProTextToImageResolution::TwoK => "2K",
+      EnqueueNanoBananaProTextToImageResolution::FourK => "4K",
+    })
+    .map(|resolution| resolution.to_string());
 
-  let aspect_ratio = req.aspect_ratio
-      .map(|aspect_ratio| match aspect_ratio {
-        // Square
-        EnqueueNanoBananaProTextToImageAspectRatio::OneByOne => "1:1",
-        // Wide
-        EnqueueNanoBananaProTextToImageAspectRatio::FiveByFour => "5:4",
-        EnqueueNanoBananaProTextToImageAspectRatio::FourByThree => "4:3",
-        EnqueueNanoBananaProTextToImageAspectRatio::ThreeByTwo => "3:2",
-        EnqueueNanoBananaProTextToImageAspectRatio::SixteenByNine => "16:9",
-        EnqueueNanoBananaProTextToImageAspectRatio::TwentyOneByNine => "21:9",
-        // Tall
-        EnqueueNanoBananaProTextToImageAspectRatio::FourByFive => "4:5",
-        EnqueueNanoBananaProTextToImageAspectRatio::ThreeByFour => "3:4",
-        EnqueueNanoBananaProTextToImageAspectRatio::TwoByThree => "2:3",
-        EnqueueNanoBananaProTextToImageAspectRatio::NineBySixteen => "9:16",
-      })
-      .map(|aspect_ratio| aspect_ratio.to_string());
+  let aspect_ratio = req
+    .aspect_ratio
+    .map(|aspect_ratio| match aspect_ratio {
+      // Square
+      EnqueueNanoBananaProTextToImageAspectRatio::OneByOne => "1:1",
+      // Wide
+      EnqueueNanoBananaProTextToImageAspectRatio::FiveByFour => "5:4",
+      EnqueueNanoBananaProTextToImageAspectRatio::FourByThree => "4:3",
+      EnqueueNanoBananaProTextToImageAspectRatio::ThreeByTwo => "3:2",
+      EnqueueNanoBananaProTextToImageAspectRatio::SixteenByNine => "16:9",
+      EnqueueNanoBananaProTextToImageAspectRatio::TwentyOneByNine => "21:9",
+      // Tall
+      EnqueueNanoBananaProTextToImageAspectRatio::FourByFive => "4:5",
+      EnqueueNanoBananaProTextToImageAspectRatio::ThreeByFour => "3:4",
+      EnqueueNanoBananaProTextToImageAspectRatio::TwoByThree => "2:3",
+      EnqueueNanoBananaProTextToImageAspectRatio::NineBySixteen => "9:16",
+    })
+    .map(|aspect_ratio| aspect_ratio.to_string());
 
   let request = NanoBananaProTextToImageInput {
     prompt: req.prompt,
@@ -132,10 +129,7 @@ pub async fn enqueue_nano_banana_pro_text_to_image_webhook<R: IntoUrl>(
     output_format: Some("png".to_string()),
   };
 
-  let result = nano_banana_pro_text_to_image(request)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await;
+  let result = nano_banana_pro_text_to_image(request).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await;
 
   result.map_err(|err| classify_fal_error(err))
 }
@@ -143,7 +137,10 @@ pub async fn enqueue_nano_banana_pro_text_to_image_webhook<R: IntoUrl>(
 #[cfg(test)]
 mod tests {
   use crate::creds::fal_api_key::FalApiKey;
-  use crate::requests_old::webhook::image::text::enqueue_nano_banana_pro_text_to_image_webhook::{enqueue_nano_banana_pro_text_to_image_webhook, EnqueueNanoBananaProTextToImageArgs, EnqueueNanoBananaProTextToImageAspectRatio, EnqueueNanoBananaProTextToImageNumImages, EnqueueNanoBananaProTextToImageRequest, EnqueueNanoBananaProTextToImageResolution};
+  use crate::requests_old::webhook::image::text::enqueue_nano_banana_pro_text_to_image_webhook::{
+    enqueue_nano_banana_pro_text_to_image_webhook, EnqueueNanoBananaProTextToImageArgs, EnqueueNanoBananaProTextToImageAspectRatio, EnqueueNanoBananaProTextToImageNumImages, EnqueueNanoBananaProTextToImageRequest,
+    EnqueueNanoBananaProTextToImageResolution,
+  };
   use errors::AnyhowResult;
   use std::fs::read_to_string;
 

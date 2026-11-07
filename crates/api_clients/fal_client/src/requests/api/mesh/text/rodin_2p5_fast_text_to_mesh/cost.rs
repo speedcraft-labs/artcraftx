@@ -12,9 +12,7 @@ impl FalRequestCostCalculator for Rodin2p5FastTextToMeshRequest {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::requests::api::mesh::text::rodin_2p5_fast_text_to_mesh::api::{
-    Rodin2p5FastMaterial, Rodin2p5FastTier,
-  };
+  use crate::requests::api::mesh::text::rodin_2p5_fast_text_to_mesh::api::{Rodin2p5FastMaterial, Rodin2p5FastTier};
 
   #[test]
   fn flat_cost_regardless_of_options() {

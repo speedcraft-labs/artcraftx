@@ -37,20 +37,14 @@ pub(crate) fn image_input_count(image_inputs: Option<&ImageListRef>) -> usize {
 /// Reject over-limit reference lists before anything is uploaded.
 pub(crate) fn check_reference_limit(count: usize, max: usize, model: &str) -> Result<(), ArtcraftRouterError> {
   if count > max {
-    return Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption {
-      field: "image_inputs",
-      value: format!("{count} reference images ({model} on Higgsfield takes at most {max})"),
-    }));
+    return Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "image_inputs", value: format!("{count} reference images ({model} on Higgsfield takes at most {max})") }));
   }
   Ok(())
 }
 
 /// Every Higgsfield image model renders 1–4 images per request. Larger
 /// batches clamp to 4 (or error out under `ErrorOut`).
-pub(crate) fn plan_batch_size(
-  image_batch_count: Option<u16>,
-  strategy: RequestMismatchMitigationStrategy,
-) -> Result<ImageBatchSize, ArtcraftRouterError> {
+pub(crate) fn plan_batch_size(image_batch_count: Option<u16>, strategy: RequestMismatchMitigationStrategy) -> Result<ImageBatchSize, ArtcraftRouterError> {
   let count = image_batch_count.unwrap_or(1);
   if count == 0 {
     return Err(ArtcraftRouterError::Client(ClientError::UserRequestedZeroGenerations));
@@ -59,14 +53,11 @@ pub(crate) fn plan_batch_size(
     return Ok(batch_size);
   }
   match strategy {
-    RequestMismatchMitigationStrategy::ErrorOut => Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption {
-      field: "image_batch_count",
-      value: format!("{count} (Higgsfield renders at most {} per request)", ImageBatchSize::MAX),
-    })),
+    RequestMismatchMitigationStrategy::ErrorOut => Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "image_batch_count", value: format!("{count} (Higgsfield renders at most {} per request)", ImageBatchSize::MAX) })),
     _ => {
       warn!("Higgsfield renders at most {} images per request; clamping {}", ImageBatchSize::MAX, count);
       Ok(ImageBatchSize::Four)
-    }
+    },
   }
 }
 
@@ -89,12 +80,7 @@ pub(crate) fn resolution_rank(resolution: RouterResolution) -> u8 {
 /// `tiers` (ascending). An exact match wins; otherwise `PayMoreUpgrade`
 /// takes the next tier up (or the top one), `PayLessDowngrade` the next tier
 /// down (or the bottom one), and `ErrorOut` refuses. `None` picks `default`.
-pub(crate) fn snap_resolution<T: Copy>(
-  requested: Option<RouterResolution>,
-  tiers: &[(RouterResolution, T)],
-  default: T,
-  strategy: RequestMismatchMitigationStrategy,
-) -> Result<T, ArtcraftRouterError> {
+pub(crate) fn snap_resolution<T: Copy>(requested: Option<RouterResolution>, tiers: &[(RouterResolution, T)], default: T, strategy: RequestMismatchMitigationStrategy) -> Result<T, ArtcraftRouterError> {
   debug_assert!(tiers.windows(2).all(|pair| resolution_rank(pair[0].0) < resolution_rank(pair[1].0)), "tiers must ascend");
   let Some(requested) = requested else {
     return Ok(default);
@@ -105,18 +91,10 @@ pub(crate) fn snap_resolution<T: Copy>(
   }
   let snapped = match strategy {
     RequestMismatchMitigationStrategy::ErrorOut => {
-      return Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption {
-        field: "resolution",
-        value: format!("{requested:?}"),
-      }));
-    }
-    RequestMismatchMitigationStrategy::PayMoreUpgrade => tiers.iter()
-        .find(|(supported, _)| resolution_rank(*supported) > rank)
-        .or_else(|| tiers.last()),
-    RequestMismatchMitigationStrategy::PayLessDowngrade => tiers.iter()
-        .rev()
-        .find(|(supported, _)| resolution_rank(*supported) < rank)
-        .or_else(|| tiers.first()),
+      return Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "resolution", value: format!("{requested:?}") }));
+    },
+    RequestMismatchMitigationStrategy::PayMoreUpgrade => tiers.iter().find(|(supported, _)| resolution_rank(*supported) > rank).or_else(|| tiers.last()),
+    RequestMismatchMitigationStrategy::PayLessDowngrade => tiers.iter().rev().find(|(supported, _)| resolution_rank(*supported) < rank).or_else(|| tiers.first()),
   };
   let (snapped_resolution, tier) = snapped.expect("a model offers at least one resolution tier");
   warn!("Higgsfield does not offer {:?} for this model; using {:?} ({:?})", requested, snapped_resolution, strategy);
@@ -127,10 +105,7 @@ pub(crate) fn snap_resolution<T: Copy>(
 /// the loose `Wide` / `Tall` read as 16:9 / 9:16.
 pub(crate) fn aspect_ratio_value(aspect_ratio: RouterAspectRatio) -> Option<f64> {
   let value = match aspect_ratio {
-    RouterAspectRatio::Auto
-    | RouterAspectRatio::Auto2k
-    | RouterAspectRatio::Auto3k
-    | RouterAspectRatio::Auto4k => return None,
+    RouterAspectRatio::Auto | RouterAspectRatio::Auto2k | RouterAspectRatio::Auto3k | RouterAspectRatio::Auto4k => return None,
     RouterAspectRatio::Square | RouterAspectRatio::SquareHd => 1.0,
     RouterAspectRatio::WideThreeByTwo => 3.0 / 2.0,
     RouterAspectRatio::WideFourByThree => 4.0 / 3.0,
@@ -188,16 +163,8 @@ pub(crate) fn plan_nano_banana_aspect_ratio(requested: Option<RouterAspectRatio>
 /// GPT Image 2's aspect menu: like Nano Banana's but without 5:4 / 4:5.
 pub(crate) fn plan_gpt_image_2_aspect_ratio(requested: Option<RouterAspectRatio>, editing: bool) -> GptImage2AspectRatio {
   use GptImage2AspectRatio as Ar;
-  const CANDIDATES: &[(f64, Ar)] = &[
-    (1.0, Ar::Square1x1),
-    (3.0 / 2.0, Ar::Landscape3x2),
-    (2.0 / 3.0, Ar::Portrait2x3),
-    (16.0 / 9.0, Ar::Landscape16x9),
-    (9.0 / 16.0, Ar::Portrait9x16),
-    (4.0 / 3.0, Ar::Landscape4x3),
-    (3.0 / 4.0, Ar::Portrait3x4),
-    (21.0 / 9.0, Ar::Landscape21x9),
-  ];
+  const CANDIDATES: &[(f64, Ar)] =
+    &[(1.0, Ar::Square1x1), (3.0 / 2.0, Ar::Landscape3x2), (2.0 / 3.0, Ar::Portrait2x3), (16.0 / 9.0, Ar::Landscape16x9), (9.0 / 16.0, Ar::Portrait9x16), (4.0 / 3.0, Ar::Landscape4x3), (3.0 / 4.0, Ar::Portrait3x4), (21.0 / 9.0, Ar::Landscape21x9)];
   match requested {
     None if editing => Ar::Auto,
     None => Ar::Landscape16x9,
@@ -212,16 +179,8 @@ pub(crate) fn plan_gpt_image_2_aspect_ratio(requested: Option<RouterAspectRatio>
 /// `default`, everything else snaps to the nearest of its eight ratios.
 pub(crate) fn plan_seedream_aspect_ratio(requested: Option<RouterAspectRatio>, default: SeedreamAspectRatio) -> SeedreamAspectRatio {
   use SeedreamAspectRatio as Ar;
-  const CANDIDATES: &[(f64, Ar)] = &[
-    (1.0, Ar::Square1x1),
-    (4.0 / 3.0, Ar::Landscape4x3),
-    (3.0 / 4.0, Ar::Portrait3x4),
-    (16.0 / 9.0, Ar::Landscape16x9),
-    (21.0 / 9.0, Ar::Landscape21x9),
-    (9.0 / 16.0, Ar::Portrait9x16),
-    (2.0 / 3.0, Ar::Portrait2x3),
-    (3.0 / 2.0, Ar::Landscape3x2),
-  ];
+  const CANDIDATES: &[(f64, Ar)] =
+    &[(1.0, Ar::Square1x1), (4.0 / 3.0, Ar::Landscape4x3), (3.0 / 4.0, Ar::Portrait3x4), (16.0 / 9.0, Ar::Landscape16x9), (21.0 / 9.0, Ar::Landscape21x9), (9.0 / 16.0, Ar::Portrait9x16), (2.0 / 3.0, Ar::Portrait2x3), (3.0 / 2.0, Ar::Landscape3x2)];
   match requested.and_then(aspect_ratio_value) {
     None => default,
     Some(value) => nearest_aspect_ratio(value, CANDIDATES),
@@ -244,14 +203,9 @@ pub(crate) fn seedream_auto_resolution_hint(requested: Option<RouterAspectRatio>
 /// have to be uploaded), otherwise it's ready to send.
 pub(crate) fn finish(request: HiggsfieldImageRequest, image_inputs: Option<ImageListRef>) -> ImageGenerationDraftOrRequest {
   if image_input_count(image_inputs.as_ref()) == 0 {
-    return ImageGenerationDraftOrRequest::Request(
-      ImageGenerationRequest::HiggsfieldImage(HiggsfieldImageRequestState { request }),
-    );
+    return ImageGenerationDraftOrRequest::Request(ImageGenerationRequest::HiggsfieldImage(HiggsfieldImageRequestState { request }));
   }
-  ImageGenerationDraftOrRequest::Draft(ImageGenerationDraftRequest::HiggsfieldImage(HiggsfieldImageDraftState {
-    request,
-    unhandled_request_state: Some(HiggsfieldImageRemainingItems { reference_images: image_inputs }),
-  }))
+  ImageGenerationDraftOrRequest::Draft(ImageGenerationDraftRequest::HiggsfieldImage(HiggsfieldImageDraftState { request, unhandled_request_state: Some(HiggsfieldImageRemainingItems { reference_images: image_inputs }) }))
 }
 
 #[cfg(test)]
@@ -259,11 +213,7 @@ mod tests {
   use super::*;
   use higgsfield_client::endpoints::generate::image::nano_banana_pro::NanoBananaProResolution;
 
-  const NANO_BANANA_PRO_TIERS: &[(RouterResolution, NanoBananaProResolution)] = &[
-    (RouterResolution::OneK, NanoBananaProResolution::OneK),
-    (RouterResolution::TwoK, NanoBananaProResolution::TwoK),
-    (RouterResolution::FourK, NanoBananaProResolution::FourK),
-  ];
+  const NANO_BANANA_PRO_TIERS: &[(RouterResolution, NanoBananaProResolution)] = &[(RouterResolution::OneK, NanoBananaProResolution::OneK), (RouterResolution::TwoK, NanoBananaProResolution::TwoK), (RouterResolution::FourK, NanoBananaProResolution::FourK)];
 
   mod prompts_and_batches {
     use super::*;
@@ -281,23 +231,14 @@ mod tests {
       assert_eq!(plan_batch_size(Some(3), RequestMismatchMitigationStrategy::ErrorOut).unwrap(), ImageBatchSize::Three);
       assert_eq!(plan_batch_size(Some(8), RequestMismatchMitigationStrategy::PayMoreUpgrade).unwrap(), ImageBatchSize::Four);
       assert_eq!(plan_batch_size(Some(8), RequestMismatchMitigationStrategy::PayLessDowngrade).unwrap(), ImageBatchSize::Four);
-      assert!(matches!(
-        plan_batch_size(Some(8), RequestMismatchMitigationStrategy::ErrorOut),
-        Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "image_batch_count", .. })),
-      ));
-      assert!(matches!(
-        plan_batch_size(Some(0), RequestMismatchMitigationStrategy::PayMoreUpgrade),
-        Err(ArtcraftRouterError::Client(ClientError::UserRequestedZeroGenerations)),
-      ));
+      assert!(matches!(plan_batch_size(Some(8), RequestMismatchMitigationStrategy::ErrorOut), Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "image_batch_count", .. })),));
+      assert!(matches!(plan_batch_size(Some(0), RequestMismatchMitigationStrategy::PayMoreUpgrade), Err(ArtcraftRouterError::Client(ClientError::UserRequestedZeroGenerations)),));
     }
 
     #[test]
     fn reference_limits() {
       assert!(check_reference_limit(4, 4, "x").is_ok());
-      assert!(matches!(
-        check_reference_limit(5, 4, "x"),
-        Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "image_inputs", .. })),
-      ));
+      assert!(matches!(check_reference_limit(5, 4, "x"), Err(ArtcraftRouterError::Client(ClientError::ModelDoesNotSupportOption { field: "image_inputs", .. })),));
     }
   }
 
@@ -344,10 +285,7 @@ mod tests {
 
     #[test]
     fn ranks_interleave_image_and_video_tiers() {
-      let ordered = [
-        RouterResolution::HalfK, RouterResolution::FourEightyP, RouterResolution::SevenTwentyP, RouterResolution::OneK,
-        RouterResolution::TenEightyP, RouterResolution::TwoK, RouterResolution::ThreeK, RouterResolution::FourK,
-      ];
+      let ordered = [RouterResolution::HalfK, RouterResolution::FourEightyP, RouterResolution::SevenTwentyP, RouterResolution::OneK, RouterResolution::TenEightyP, RouterResolution::TwoK, RouterResolution::ThreeK, RouterResolution::FourK];
       assert!(ordered.windows(2).all(|pair| resolution_rank(pair[0]) < resolution_rank(pair[1])));
     }
   }

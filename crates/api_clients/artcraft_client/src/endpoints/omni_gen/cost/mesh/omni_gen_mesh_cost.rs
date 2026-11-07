@@ -15,13 +15,6 @@ pub struct OmniGenMeshCostArgs<'a> {
 
 /// Estimate the cost of a mesh generation. Anonymous calls are allowed;
 /// credentials personalize the estimate (free/unlimited plans).
-pub async fn omni_gen_mesh_cost(
-  args: OmniGenMeshCostArgs<'_>,
-) -> Result<OmniGenMeshCostResponse, StorytellerError> {
-  Ok(api_or_web_json_post_request(
-    args.api_host,
-    OMNI_GEN_MESH_COST_PATH,
-    args.api_or_web_creds,
-    args.request,
-  ).await?)
+pub async fn omni_gen_mesh_cost(args: OmniGenMeshCostArgs<'_>) -> Result<OmniGenMeshCostResponse, StorytellerError> {
+  Ok(api_or_web_json_post_request(args.api_host, OMNI_GEN_MESH_COST_PATH, args.api_or_web_creds, args.request).await?)
 }

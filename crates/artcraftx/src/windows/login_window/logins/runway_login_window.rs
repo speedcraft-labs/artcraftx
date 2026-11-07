@@ -11,9 +11,7 @@ const DESTINATION_HOSTNAMES: &[&str] = &["app.runwayml.com"];
 /// than hardcode it.
 const LOGIN_LINK_SELECTOR: &str = r#"a[href*="app.runwayml.com/login"]"#;
 
-static WEBSITE_ENTRY_URL: Lazy<Url> = Lazy::new(|| {
-  Url::parse("https://runwayml.com/").expect("URL should parse")
-});
+static WEBSITE_ENTRY_URL: Lazy<Url> = Lazy::new(|| Url::parse("https://runwayml.com/").expect("URL should parse"));
 
 pub struct RunwayLoginWindow;
 
@@ -27,9 +25,7 @@ impl LoginWindowSite for RunwayLoginWindow {
   }
 
   fn journey(&self) -> LoginJourney {
-    LoginJourney::with_default_pre_navigation()
-        .website_entry(WEBSITE_ENTRY_URL.clone())
-        .login_page_via_link(LOGIN_LINK_SELECTOR)
+    LoginJourney::with_default_pre_navigation().website_entry(WEBSITE_ENTRY_URL.clone()).login_page_via_link(LOGIN_LINK_SELECTOR)
   }
 
   fn destination_hostnames(&self) -> &[&str] {

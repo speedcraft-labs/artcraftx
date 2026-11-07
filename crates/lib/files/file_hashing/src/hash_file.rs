@@ -40,10 +40,7 @@ mod tests {
   #[test]
   fn known_answers() {
     assert_eq!(hash_bytes_blake3(b""), EMPTY_BLAKE3);
-    assert_eq!(
-      hash_bytes_blake3(b"hello world"),
-      "d74981efa70a0c880b8d8c1985d075dbcbf679b99a5f9914e5aaf96b831a9e24",
-    );
+    assert_eq!(hash_bytes_blake3(b"hello world"), "d74981efa70a0c880b8d8c1985d075dbcbf679b99a5f9914e5aaf96b831a9e24",);
   }
 
   #[test]

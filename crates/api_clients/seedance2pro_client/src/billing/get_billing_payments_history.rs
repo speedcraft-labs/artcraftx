@@ -112,9 +112,7 @@ impl BillingPaymentType {
 
 // --- Implementation ---
 
-pub async fn get_billing_payments_history(
-  args: GetBillingPaymentsHistoryArgs<'_>,
-) -> Result<BillingPaymentsHistoryPage, Seedance2ProError> {
+pub async fn get_billing_payments_history(args: GetBillingPaymentsHistoryArgs<'_>) -> Result<BillingPaymentsHistoryPage, Seedance2ProError> {
   let host = resolve_host(args.host_override.as_ref());
   let base_url = host.api_base_url();
   let url = format!("{}/api/trpc/billing.getPayments", base_url);
@@ -123,15 +121,13 @@ pub async fn get_billing_payments_history(
 
   let input_json = build_input_json(args.limit, args.offset);
 
-  let client = Client::builder()
-    .emulation(Emulation::Firefox143)
-    .build()
-    .map_err(|err| Seedance2ProClientError::WreqClientError(err))?;
+  let client = Client::builder().emulation(Emulation::Firefox143).build().map_err(|err| Seedance2ProClientError::WreqClientError(err))?;
 
   let cookie = args.session.cookies.as_str();
   let referer = format!("{}/app/dashboard/billing", base_url);
 
-  let request = client.get(&url)
+  let request = client
+    .get(&url)
     .query(&[("batch", "1"), ("input", input_json.as_str())])
     .header("User-Agent", FIREFOX_USER_AGENT)
     .header("Accept", "*/*")
@@ -150,48 +146,30 @@ pub async fn get_billing_payments_history(
     .build()
     .map_err(|err| Seedance2ProClientError::WreqClientError(err))?;
 
-  let response = client.execute(request)
-    .await
-    .map_err(|err| Seedance2ProGenericApiError::WreqError(err))?;
+  let response = client.execute(request).await.map_err(|err| Seedance2ProGenericApiError::WreqError(err))?;
 
   let status = response.status();
-  let response_body = response.text()
-    .await
-    .map_err(|err| Seedance2ProGenericApiError::WreqError(err))?;
+  let response_body = response.text().await.map_err(|err| Seedance2ProGenericApiError::WreqError(err))?;
 
   info!("Billing payments response status: {}", status);
 
   if !status.is_success() {
-    return Err(Seedance2ProGenericApiError::UncategorizedBadResponseWithStatusAndBody {
-      status_code: status,
-      body: response_body,
-    }.into());
+    return Err(Seedance2ProGenericApiError::UncategorizedBadResponseWithStatusAndBody { status_code: status, body: response_body }.into());
   }
 
   parse_response_body(&response_body)
 }
 
 fn parse_response_body(response_body: &str) -> Result<BillingPaymentsHistoryPage, Seedance2ProError> {
-  let batch_response: Vec<BatchResponseItem> = serde_json::from_str(response_body)
-    .map_err(|err| Seedance2ProGenericApiError::SerdeResponseParseErrorWithBody(err, response_body.to_string()))?;
+  let batch_response: Vec<BatchResponseItem> = serde_json::from_str(response_body).map_err(|err| Seedance2ProGenericApiError::SerdeResponseParseErrorWithBody(err, response_body.to_string()))?;
 
-  let json = batch_response
-    .into_iter()
-    .next()
-    .ok_or_else(|| Seedance2ProGenericApiError::UnexpectedResponseShape {
-      explanation: "Empty batch response array".to_string(),
-      raw_body: response_body.to_string(),
-    })?
-    .result
-    .data
-    .json;
+  let json = batch_response.into_iter().next().ok_or_else(|| Seedance2ProGenericApiError::UnexpectedResponseShape { explanation: "Empty batch response array".to_string(), raw_body: response_body.to_string() })?.result.data.json;
 
-  let payments = json.payments
+  let payments = json
+    .payments
     .into_iter()
     .map(|p| {
-      let created_at_utc = DateTime::parse_from_rfc3339(&p.created_at)
-        .map(|dt| dt.with_timezone(&Utc))
-        .ok();
+      let created_at_utc = DateTime::parse_from_rfc3339(&p.created_at).map(|dt| dt.with_timezone(&Utc)).ok();
       BillingPayment {
         id: p.id,
         amount_usd: p.amount,
@@ -209,11 +187,7 @@ fn parse_response_body(response_body: &str) -> Result<BillingPaymentsHistoryPage
     })
     .collect();
 
-  Ok(BillingPaymentsHistoryPage {
-    payments,
-    maybe_next_cursor: json.next_cursor,
-    total: json.total,
-  })
+  Ok(BillingPaymentsHistoryPage { payments, maybe_next_cursor: json.next_cursor, total: json.total })
 }
 
 /// Builds the tRPC `input` JSON for the billing.getPayments endpoint.
@@ -338,19 +312,11 @@ mod tests {
       setup_test_logging(LevelFilter::Info);
       let session = test_session()?;
 
-      let page = get_billing_payments_history(GetBillingPaymentsHistoryArgs {
-        session: &session,
-        limit: DEFAULT_BILLING_PAGE_LIMIT,
-        offset: 0,
-        host_override: None,
-      }).await?;
+      let page = get_billing_payments_history(GetBillingPaymentsHistoryArgs { session: &session, limit: DEFAULT_BILLING_PAGE_LIMIT, offset: 0, host_override: None }).await?;
 
-      println!("payments: {}, total: {}, next_cursor: {:?}",
-        page.payments.len(), page.total, page.maybe_next_cursor);
+      println!("payments: {}, total: {}, next_cursor: {:?}", page.payments.len(), page.total, page.maybe_next_cursor);
       for payment in &page.payments {
-        println!("  {} | {} | ${:.2} | {} credits | {:?} | {:?}",
-          payment.id, payment.created_at, payment.amount_usd,
-          payment.credits_earned, payment.status, payment.payment_type);
+        println!("  {} | {} | ${:.2} | {} credits | {:?} | {:?}", payment.id, payment.created_at, payment.amount_usd, payment.credits_earned, payment.status, payment.payment_type);
       }
       assert!(!page.payments.is_empty());
       Ok(())
@@ -376,12 +342,7 @@ mod tests {
       let mut last_reported_total = 0u64;
 
       for _ in 0..MAX_PAGES {
-        let page = get_billing_payments_history(GetBillingPaymentsHistoryArgs {
-          session: &session,
-          limit: DEFAULT_BILLING_PAGE_LIMIT,
-          offset,
-          host_override: None,
-        }).await?;
+        let page = get_billing_payments_history(GetBillingPaymentsHistoryArgs { session: &session, limit: DEFAULT_BILLING_PAGE_LIMIT, offset, host_override: None }).await?;
 
         pages += 1;
         last_reported_total = page.total;
@@ -395,8 +356,7 @@ mod tests {
           total_credits += payment.credits_earned;
         }
 
-        println!("page {} (offset {}): {} payments, running total ${:.2}",
-          pages, offset, page.payments.len(), total_amount_usd);
+        println!("page {} (offset {}): {} payments, running total ${:.2}", pages, offset, page.payments.len(), total_amount_usd);
 
         // Advance by what was actually returned so a server-side limit cap
         // can never skip rows.

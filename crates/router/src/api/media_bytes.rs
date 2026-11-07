@@ -23,9 +23,6 @@ impl MediaBytes {
 // Manual impl: requests carrying these are logged; never dump the bytes.
 impl Debug for MediaBytes {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-    f.debug_struct("MediaBytes")
-        .field("bytes", &format_args!("<{} bytes>", self.bytes.len()))
-        .field("maybe_file_name", &self.maybe_file_name)
-        .finish()
+    f.debug_struct("MediaBytes").field("bytes", &format_args!("<{} bytes>", self.bytes.len())).field("maybe_file_name", &self.maybe_file_name).finish()
   }
 }

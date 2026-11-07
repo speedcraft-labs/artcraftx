@@ -23,7 +23,7 @@ pub struct TaskEnqueueSuccess {
   pub maybe_prompt_token: Option<PromptToken>,
 }
 
-impl TaskEnqueueSuccess{
+impl TaskEnqueueSuccess {
   pub fn to_frontend_event_action(&self) -> GenerationAction {
     match self.task_type {
       TaskType::ImageGeneration => GenerationAction::GenerateImage,
@@ -33,18 +33,13 @@ impl TaskEnqueueSuccess{
       TaskType::MeshGeneration => GenerationAction::ImageTo3d,
     }
   }
-  
+
   pub fn to_frontend_event_service(&self) -> GenerationServiceProvider {
     to_generation_service_provider(self.provider)
   }
-  
+
   pub async fn insert_into_task_database(&self, task_database: &TaskDatabase) -> Result<TaskId, SqliteTasksError> {
-    self.insert_into_task_database_with_frontend_payload(
-      task_database,
-      None,
-      None,
-      None,
-    ).await
+    self.insert_into_task_database_with_frontend_payload(task_database, None, None, None).await
   }
 
   // TODO: This belongs somewhere else, not as a method of an event struct.
@@ -140,7 +135,7 @@ impl TaskEnqueueSuccess{
 
       // TODO: These seem wrong -
       Some(GenerationModel::Kling1_6) => Some(TaskModelType::Kling16Pro), // NB: `VideoModel::Kling16Pro`.
-      Some(GenerationModel::Kling2_0) => None, // TODO: unused elsewhere?
+      Some(GenerationModel::Kling2_0) => None,                            // TODO: unused elsewhere?
     };
 
     create_task(CreateTaskArgs {
@@ -157,6 +152,7 @@ impl TaskEnqueueSuccess{
       frontend_caller,
       frontend_subscriber_id,
       frontend_subscriber_payload,
-    }).await
+    })
+    .await
   }
 }

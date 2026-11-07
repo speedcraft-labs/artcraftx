@@ -86,17 +86,18 @@ impl QuotaInfoArgs<'_> {
     let domain = self.domain_override.unwrap_or(&GrokDomain::DefaultDomain);
     let client = create_firefox_client()?;
 
-    let mut request_builder = client.post(request_url(domain))
-        .header(USER_AGENT, FIREFOX_143_MAC_USER_AGENT)
-        .header(ACCEPT, "*/*")
-        .header(ACCEPT_LANGUAGE, "en-US,en;q=0.5")
-        .header(CONTENT_TYPE, "application/json")
-        .header(ORIGIN, "https://grok.com")
-        .header(REFERER, "https://grok.com/imagine/saved")
-        .header(COOKIE, self.credentials.to_string())
-        .header("sec-fetch-dest", "empty")
-        .header("sec-fetch-mode", "cors")
-        .header("sec-fetch-site", "same-origin");
+    let mut request_builder = client
+      .post(request_url(domain))
+      .header(USER_AGENT, FIREFOX_143_MAC_USER_AGENT)
+      .header(ACCEPT, "*/*")
+      .header(ACCEPT_LANGUAGE, "en-US,en;q=0.5")
+      .header(CONTENT_TYPE, "application/json")
+      .header(ORIGIN, "https://grok.com")
+      .header(REFERER, "https://grok.com/imagine/saved")
+      .header(COOKIE, self.credentials.to_string())
+      .header("sec-fetch-dest", "empty")
+      .header("sec-fetch-mode", "cors")
+      .header("sec-fetch-site", "same-origin");
 
     if let Some(headers) = self.request_headers {
       request_builder = headers.apply(request_builder);
@@ -106,29 +107,23 @@ impl QuotaInfoArgs<'_> {
       request_builder = request_builder.timeout(timeout);
     }
 
-    let http_request = request_builder.json(&QuotaInfoRawRequest {})
-        .build()
-        .map_err(|err| {
-          error!("Error building quota_info request: {:?}", err);
-          GrokGenericApiError::WreqError(err)
-        })?;
+    let http_request = request_builder.json(&QuotaInfoRawRequest {}).build().map_err(|err| {
+      error!("Error building quota_info request: {:?}", err);
+      GrokGenericApiError::WreqError(err)
+    })?;
 
-    let response = client.execute(http_request)
-        .await
-        .map_err(|err| {
-          error!("Error sending quota_info request: {:?}", err);
-          GrokGenericApiError::WreqError(err)
-        })?;
+    let response = client.execute(http_request).await.map_err(|err| {
+      error!("Error sending quota_info request: {:?}", err);
+      GrokGenericApiError::WreqError(err)
+    })?;
 
     let status = response.status();
     let headers = response.headers().clone();
 
-    let body = response.text()
-        .await
-        .map_err(|err| {
-          error!("Error reading quota_info response body: {:?}", err);
-          GrokGenericApiError::WreqError(err)
-        })?;
+    let body = response.text().await.map_err(|err| {
+      error!("Error reading quota_info response body: {:?}", err);
+      GrokGenericApiError::WreqError(err)
+    })?;
 
     Ok(RawQuotaInfoResponse { status, headers, body })
   }
@@ -139,10 +134,7 @@ fn request_url(domain: &GrokDomain) -> String {
 }
 
 fn parse_response(body: &str) -> Result<QuotaInfoResponse, GrokError> {
-  serde_json::from_str(body)
-      .map_err(|err| {
-        GrokGenericApiError::SerdeResponseParseErrorWithBody(err, body.to_string()).into()
-      })
+  serde_json::from_str(body).map_err(|err| GrokGenericApiError::SerdeResponseParseErrorWithBody(err, body.to_string()).into())
 }
 
 #[cfg(test)]
@@ -159,19 +151,13 @@ mod tests {
 
     #[test]
     fn url_uses_the_default_domain() {
-      assert_eq!(
-        request_url(&GrokDomain::DefaultDomain),
-        "https://grok.com/rest/media/imagine/quota_info",
-      );
+      assert_eq!(request_url(&GrokDomain::DefaultDomain), "https://grok.com/rest/media/imagine/quota_info",);
     }
 
     #[test]
     fn url_respects_a_domain_override() {
       let domain = GrokDomain::Custom("http://localhost:8080".to_string());
-      assert_eq!(
-        request_url(&domain),
-        "http://localhost:8080/rest/media/imagine/quota_info",
-      );
+      assert_eq!(request_url(&domain), "http://localhost:8080/rest/media/imagine/quota_info",);
     }
 
     #[test]
@@ -201,19 +187,13 @@ mod tests {
       let video_720p = response.video_720p.unwrap();
       assert!(video_720p.available);
       assert_eq!(video_720p.remaining_queries, 0);
-      assert_eq!(
-        video_720p.next_available_at.as_deref(),
-        Some("2026-08-24T21:00:41.230702760Z"),
-      );
+      assert_eq!(video_720p.next_available_at.as_deref(), Some("2026-08-24T21:00:41.230702760Z"),);
     }
 
     #[test]
     fn malformed_json_is_an_error() {
       let result = parse_response("{ this is not json");
-      assert!(matches!(
-        result,
-        Err(GrokError::ApiGeneric(GrokGenericApiError::SerdeResponseParseErrorWithBody(_, _))),
-      ));
+      assert!(matches!(result, Err(GrokError::ApiGeneric(GrokGenericApiError::SerdeResponseParseErrorWithBody(_, _))),));
     }
   }
 
@@ -232,13 +212,7 @@ mod tests {
       setup_test_logging(LevelFilter::Info);
       let secrets = load_grok_test_secrets()?;
 
-      let args = QuotaInfoArgs {
-        request: QuotaInfoRequest::default(),
-        credentials: &secrets.cookies,
-        domain_override: None,
-        request_headers: Some(&secrets.headers),
-        request_timeout: None,
-      };
+      let args = QuotaInfoArgs { request: QuotaInfoRequest::default(), credentials: &secrets.cookies, domain_override: None, request_headers: Some(&secrets.headers), request_timeout: None };
 
       let response = args.send().await?;
       println!("[test] quota_info: {:?}", response);
@@ -283,7 +257,7 @@ mod tests {
         Err(err) => {
           dump();
           panic!("quota_info (cookies only) failed to parse body: {err}");
-        }
+        },
       };
       println!("[test] quota_info (cookies only): {:?}", response);
 
@@ -298,25 +272,15 @@ mod tests {
     // bucket has a positive rolling window. (No PII / account id.)
     fn quota_info_assertions_pass(response: &QuotaInfoResponse) -> bool {
       let buckets = quota_buckets(response);
-      buckets.iter().any(|bucket| bucket.is_some())
-          && buckets.into_iter().flatten().all(|bucket| bucket.window_size_seconds > 0)
+      buckets.iter().any(|bucket| bucket.is_some()) && buckets.into_iter().flatten().all(|bucket| bucket.window_size_seconds > 0)
     }
 
     fn assert_quota_info(response: &QuotaInfoResponse) {
-      assert!(
-        quota_info_assertions_pass(response),
-        "expected at least one quota bucket with a positive window",
-      );
+      assert!(quota_info_assertions_pass(response), "expected at least one quota bucket with a positive window",);
     }
 
     fn quota_buckets(response: &QuotaInfoResponse) -> [&Option<QuotaInfoBucket>; 5] {
-      [
-        &response.image,
-        &response.image_pro,
-        &response.image_edit,
-        &response.video,
-        &response.video_720p,
-      ]
+      [&response.image, &response.image_pro, &response.image_edit, &response.video, &response.video_720p]
     }
   }
 }

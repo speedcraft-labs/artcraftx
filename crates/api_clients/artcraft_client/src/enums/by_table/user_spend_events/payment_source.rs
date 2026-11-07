@@ -46,10 +46,7 @@ impl PaymentSource {
   pub fn all_variants() -> BTreeSet<Self> {
     // NB: BTreeSet is sorted
     // NB: BTreeSet::from() isn't const, but not worth using LazyStatic, etc.
-    BTreeSet::from([
-      Self::Stripe,
-      Self::Manual,
-    ])
+    BTreeSet::from([Self::Stripe, Self::Manual])
   }
 }
 

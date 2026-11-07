@@ -172,7 +172,6 @@ impl Default for GenerateVideoRequestBuilder {
 }
 
 impl GenerateVideoRequestBuilder {
-
   pub fn build2(self) -> Result<VideoGenerationDraftOrRequest, ArtcraftRouterError> {
     match (self.provider, self.model) {
       // Artcraft
@@ -258,13 +257,10 @@ impl GenerateVideoRequestBuilder {
   }
 
   fn unsupported_provider_and_model(&self) -> Result<VideoGenerationDraftOrRequest, ArtcraftRouterError> {
-    Err(ArtcraftRouterError::UnsupportedProviderAndModelForNewApi(
-      format!("Video generation for model `{:?}` is not supported for provider {:?}", self.model, self.provider)
-    ))
+    Err(ArtcraftRouterError::UnsupportedProviderAndModelForNewApi(format!("Video generation for model `{:?}` is not supported for provider {:?}", self.model, self.provider)))
   }
 
   pub fn get_or_generate_idempotency_token(&self) -> String {
-    self.idempotency_token.clone()
-        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string())
+    self.idempotency_token.clone().unwrap_or_else(|| uuid::Uuid::new_v4().to_string())
   }
 }

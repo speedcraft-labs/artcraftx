@@ -10,23 +10,13 @@ pub struct ListCredentialsResponse {
 }
 
 #[tauri::command]
-pub async fn list_credentials_command(
-  app_data_root: State<'_, AppDataRoot>,
-) -> Result<ListCredentialsResponse, String> {
+pub async fn list_credentials_command(app_data_root: State<'_, AppDataRoot>) -> Result<ListCredentialsResponse, String> {
   info!("list_credentials_command called");
 
-  let credentials = app_data_root
-      .credentials_dir()
-      .load_credentials()
-      .map_err(|err| {
-        error!("Error listing credentials: {}", err);
-        format!("Error listing credentials: {}", err)
-      })?;
+  let credentials = app_data_root.credentials_dir().load_credentials().map_err(|err| {
+    error!("Error listing credentials: {}", err);
+    format!("Error listing credentials: {}", err)
+  })?;
 
-  Ok(ListCredentialsResponse {
-    credentials: credentials
-        .iter()
-        .map(CredentialPayload::from_auth_credential)
-        .collect(),
-  })
+  Ok(ListCredentialsResponse { credentials: credentials.iter().map(CredentialPayload::from_auth_credential).collect() })
 }

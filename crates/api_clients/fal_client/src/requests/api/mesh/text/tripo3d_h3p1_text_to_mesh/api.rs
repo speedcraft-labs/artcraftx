@@ -1,7 +1,5 @@
 use crate::error::fal_error_plus::FalErrorPlus;
-use crate::requests::api::mesh::text::tripo3d_h3p1_text_to_mesh::raw_request::{
-  Tripo3dH3p1TextToMeshInput, Tripo3dH3p1TextToMeshOutput,
-};
+use crate::requests::api::mesh::text::tripo3d_h3p1_text_to_mesh::raw_request::{Tripo3dH3p1TextToMeshInput, Tripo3dH3p1TextToMeshOutput};
 use crate::requests::traits::fal_endpoint_trait::FalEndpoint;
 
 /// Tripo3D H3.1 text-to-3D.

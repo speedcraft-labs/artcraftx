@@ -13,12 +13,7 @@ use higgsfield_client::session::higgsfield_session::HiggsfieldSession;
 /// fails with `needs_browser_reauth()`, send the user back through the
 /// Higgsfield login window.
 pub fn higgsfield_session_from_credential(credential: &AuthCredential) -> Result<HiggsfieldSession, ArtcraftXError> {
-  let cookie = credential.cookies().ok_or_else(|| {
-    ArtcraftXError::AnyhowError(anyhow!(
-      "Credential {} ({}) is not a cookie credential; Higgsfield needs a website login",
-      credential.id, credential.service,
-    ))
-  })?;
+  let cookie = credential.cookies().ok_or_else(|| ArtcraftXError::AnyhowError(anyhow!("Credential {} ({}) is not a cookie credential; Higgsfield needs a website login", credential.id, credential.service,)))?;
 
   let mut session = HiggsfieldSession::from_cookie_header(cookie.cookie_header());
 
@@ -45,14 +40,7 @@ mod tests {
     let cookies = CookieStore::from_cookie_header("__client=abc; datadome=dd-client-id; __session=x.y.z", &origin);
     let mut cookie = CookieCredential::new(cookies);
     cookie.user_agent = user_agent.map(str::to_string);
-    AuthCredential {
-      id: CredentialId::generate(),
-      service: GenerationSource::HiggsfieldCookies,
-      name: None,
-      secret: CredentialSecret::Cookies(cookie),
-      user_info: None,
-      source_path: PathBuf::from("/tmp/higgsfield_cookies.toml"),
-    }
+    AuthCredential { id: CredentialId::generate(), service: GenerationSource::HiggsfieldCookies, name: None, secret: CredentialSecret::Cookies(cookie), user_info: None, source_path: PathBuf::from("/tmp/higgsfield_cookies.toml") }
   }
 
   #[test]

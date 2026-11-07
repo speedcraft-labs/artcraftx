@@ -18,8 +18,7 @@ pub struct DownloadUrlRequest {
 }
 
 #[derive(Serialize)]
-pub struct DownloadUrlSuccessResponse {
-}
+pub struct DownloadUrlSuccessResponse {}
 
 impl SerializeMarker for DownloadUrlSuccessResponse {}
 
@@ -31,25 +30,13 @@ pub enum DownloadUrlErrorType {
   UnknownError,
 }
 
-
 #[tauri::command]
-pub async fn download_url_command(
-  request: DownloadUrlRequest,
-  app: AppHandle,
-  app_prefs: State<'_, AppPreferencesManager>,
-  app_data_root: State<'_, AppDataRoot>,
-) -> ResponseOrErrorType<DownloadUrlSuccessResponse, DownloadUrlErrorType> {
-
+pub async fn download_url_command(request: DownloadUrlRequest, app: AppHandle, app_prefs: State<'_, AppPreferencesManager>, app_data_root: State<'_, AppDataRoot>) -> ResponseOrErrorType<DownloadUrlSuccessResponse, DownloadUrlErrorType> {
   info!("download_url_command called");
 
   info!("request: {:?}", request);
 
-  let result = handle_request(
-    request,
-    &app,
-    &app_prefs,
-    &app_data_root,
-  ).await;
+  let result = handle_request(request, &app, &app_prefs, &app_data_root).await;
 
   if let Err(err) = result {
     // Already on disk = success. Download filenames derive from the content
@@ -70,40 +57,20 @@ pub async fn download_url_command(
     let flash_filename = None;
     let flash_message = Some("Failed to download file".to_string());
 
-    let event = FlashFileDownloadErrorEvent {
-      filename: flash_filename,
-      message: flash_message,
-      error_type: flash_error_type,
-    };
+    let event = FlashFileDownloadErrorEvent { filename: flash_filename, message: flash_message, error_type: flash_error_type };
 
     event.send_infallible(&app);
 
-    return Err(CommandErrorResponseWrapper {
-      status: CommandErrorStatus::ServerError,
-      error_message: Some(endpoint_message.to_string()),
-      error_type: Some(error_type),
-      error_details: None,
-    });
+    return Err(CommandErrorResponseWrapper { status: CommandErrorStatus::ServerError, error_message: Some(endpoint_message.to_string()), error_type: Some(error_type), error_details: None });
   }
 
   Ok(DownloadUrlSuccessResponse {}.into())
 }
 
-
-pub async fn handle_request(
-  request: DownloadUrlRequest,
-  _app: &AppHandle,
-  app_prefs: &AppPreferencesManager,
-  app_data_root: &AppDataRoot
-) -> Result<(), ArtcraftXError> {
-
+pub async fn handle_request(request: DownloadUrlRequest, _app: &AppHandle, app_prefs: &AppPreferencesManager, app_data_root: &AppDataRoot) -> Result<(), ArtcraftXError> {
   let app_prefs = app_prefs.get()?;
 
-  let download_path = download_url_to_user_download_dir(
-    &request.url,
-    app_data_root,
-    &app_prefs
-  ).await?;
+  let download_path = download_url_to_user_download_dir(&request.url, app_data_root, &app_prefs).await?;
 
   info!("downloaded to: {:?}", download_path);
 

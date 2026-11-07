@@ -26,15 +26,8 @@ pub enum LoginError {
 
 /// Log in with a username (or email) and password. On success the returned
 /// `signed_session` can be sent back as a `session=<value>` cookie.
-pub async fn login(
-  args: LoginArgs<'_>,
-) -> Result<LoginSuccessResponse, LoginError> {
-  api_or_web_json_post_request(
-    args.api_host,
-    LOGIN_PATH,
-    None,
-    args.request,
-  ).await.map_err(classify_error)
+pub async fn login(args: LoginArgs<'_>) -> Result<LoginSuccessResponse, LoginError> {
+  api_or_web_json_post_request(args.api_host, LOGIN_PATH, None, args.request).await.map_err(classify_error)
 }
 
 /// The login endpoint returns its structured error body on 401/500; surface
@@ -47,8 +40,7 @@ fn classify_error(error: StorytellerError) -> LoginError {
     _ => None,
   };
 
-  let maybe_response = maybe_body
-      .and_then(|body| serde_json::from_str::<LoginErrorResponse>(body).ok());
+  let maybe_response = maybe_body.and_then(|body| serde_json::from_str::<LoginErrorResponse>(body).ok());
 
   match maybe_response {
     Some(response) => LoginError::Login(response),
@@ -63,7 +55,7 @@ impl Display for LoginError {
     match self {
       LoginError::Login(response) => {
         write!(f, "Login error ({:?}): {}", response.error_type, response.error_message)
-      }
+      },
       LoginError::Storyteller(error) => write!(f, "{}", error),
     }
   }
@@ -88,7 +80,7 @@ mod tests {
         LoginError::Login(response) => {
           assert_eq!(response.error_type, LoginErrorType::InvalidCredentials);
           assert_eq!(response.error_message, "invalid credentials");
-        }
+        },
         other => panic!("expected typed login error, got {:?}", other),
       }
     }
@@ -96,15 +88,12 @@ mod tests {
     #[test]
     fn server_error_with_login_body_is_typed() {
       let body = r#"{"success":false,"error_type":"ServerError","error_message":"server error"}"#;
-      let error = StorytellerError::Api(ApiError::InternalServerError {
-        body: body.to_string(),
-        backend_hostname: None,
-      });
+      let error = StorytellerError::Api(ApiError::InternalServerError { body: body.to_string(), backend_hostname: None });
 
       match classify_error(error) {
         LoginError::Login(response) => {
           assert_eq!(response.error_type, LoginErrorType::ServerError);
-        }
+        },
         other => panic!("expected typed login error, got {:?}", other),
       }
     }
@@ -114,7 +103,7 @@ mod tests {
       let error = StorytellerError::Api(ApiError::Unauthorized("<html>gateway</html>".to_string()));
 
       match classify_error(error) {
-        LoginError::Storyteller(_) => {}
+        LoginError::Storyteller(_) => {},
         other => panic!("expected transport error, got {:?}", other),
       }
     }

@@ -27,11 +27,7 @@ impl GrokImageCollector {
 
   /// Start tracking a request id (no-op if already tracked).
   pub fn track(&mut self, request_id: &str) {
-    self.pending.entry(request_id.to_string()).or_insert_with(|| PendingGrokImages {
-      images: Vec::new(),
-      first_seen: Instant::now(),
-      maybe_last_image_at: None,
-    });
+    self.pending.entry(request_id.to_string()).or_insert_with(|| PendingGrokImages { images: Vec::new(), first_seen: Instant::now(), maybe_last_image_at: None });
   }
 
   /// Record a finished image for its request id (deduped by URL). Returns

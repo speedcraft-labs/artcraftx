@@ -17,9 +17,6 @@ pub struct AppDownloadPreferences {
 
 impl Default for AppDownloadPreferences {
   fn default() -> Self {
-    Self {
-      preferred_download_directory: PreferredDownloadDirectory::System(SystemDownloadDirectory::Downloads),
-      preferred_download_filename: PreferredDownloadFilename::ArtcraftConvention,
-    }
+    Self { preferred_download_directory: PreferredDownloadDirectory::System(SystemDownloadDirectory::Downloads), preferred_download_filename: PreferredDownloadFilename::ArtcraftConvention }
   }
 }

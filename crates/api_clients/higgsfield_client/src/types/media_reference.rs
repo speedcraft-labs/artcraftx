@@ -49,10 +49,7 @@ pub fn validate_media_roles(medias: &[MediaReference], allowed: &[MediaRole], mo
   for reference in medias {
     if !allowed.contains(&reference.role) {
       let allowed_list: Vec<&str> = allowed.iter().map(|role| role.as_str()).collect();
-      return Err(HiggsfieldClientError::InvalidRequest(format!(
-        "{model} does not take `{}` media; it accepts: {}",
-        reference.role, allowed_list.join(", "),
-      )));
+      return Err(HiggsfieldClientError::InvalidRequest(format!("{model} does not take `{}` media; it accepts: {}", reference.role, allowed_list.join(", "),)));
     }
   }
 

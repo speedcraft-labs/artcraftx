@@ -98,9 +98,7 @@ impl FalRequestCostCalculator for EnqueueKling3p0ProTextToVideoRequest {
     //   Audio off: $0.224/second
     //   Audio on:  $0.336/second
     let generate_audio = self.generate_audio.unwrap_or(true);
-    let duration_secs = self.duration
-        .unwrap_or(EnqueueKling3p0ProTextToVideoDuration::FiveSeconds)
-        .to_seconds();
+    let duration_secs = self.duration.unwrap_or(EnqueueKling3p0ProTextToVideoDuration::FiveSeconds).to_seconds();
 
     let rate = if generate_audio { 336u64 } else { 224u64 };
     (rate * duration_secs + 9) / 10
@@ -109,44 +107,31 @@ impl FalRequestCostCalculator for EnqueueKling3p0ProTextToVideoRequest {
 
 /// Kling 3.0 Pro Text-to-Video
 /// https://fal.ai/models/fal-ai/kling-video/v3/pro/text-to-video
-pub async fn enqueue_kling_3p0_pro_text_to_video_webhook<R: IntoUrl>(
-  args: EnqueueKling3p0ProTextToVideoArgs<'_, R>
-) -> Result<WebhookResponse, FalErrorPlus> {
-
+pub async fn enqueue_kling_3p0_pro_text_to_video_webhook<R: IntoUrl>(args: EnqueueKling3p0ProTextToVideoArgs<'_, R>) -> Result<WebhookResponse, FalErrorPlus> {
   let req = args.request;
 
-  let duration = req.duration
-      .map(|d| d.to_str().to_string());
+  let duration = req.duration.map(|d| d.to_str().to_string());
 
-  let aspect_ratio = req.aspect_ratio
-      .map(|aspect| match aspect {
-        EnqueueKling3p0ProTextToVideoAspectRatio::Square => "1:1",
-        EnqueueKling3p0ProTextToVideoAspectRatio::SixteenByNine => "16:9",
-        EnqueueKling3p0ProTextToVideoAspectRatio::NineBySixteen => "9:16",
-      })
-      .map(|s| s.to_string());
+  let aspect_ratio = req
+    .aspect_ratio
+    .map(|aspect| match aspect {
+      EnqueueKling3p0ProTextToVideoAspectRatio::Square => "1:1",
+      EnqueueKling3p0ProTextToVideoAspectRatio::SixteenByNine => "16:9",
+      EnqueueKling3p0ProTextToVideoAspectRatio::NineBySixteen => "9:16",
+    })
+    .map(|s| s.to_string());
 
-  let shot_type = req.shot_type
-      .map(|st| match st {
-        EnqueueKling3p0ProTextToVideoShotType::Customize => "customize",
-        EnqueueKling3p0ProTextToVideoShotType::Intelligent => "intelligent",
-      })
-      .map(|s| s.to_string());
+  let shot_type = req
+    .shot_type
+    .map(|st| match st {
+      EnqueueKling3p0ProTextToVideoShotType::Customize => "customize",
+      EnqueueKling3p0ProTextToVideoShotType::Intelligent => "intelligent",
+    })
+    .map(|s| s.to_string());
 
-  let request = Kling3p0ProTextToVideoInput {
-    prompt: req.prompt,
-    generate_audio: req.generate_audio,
-    duration,
-    aspect_ratio,
-    negative_prompt: req.negative_prompt,
-    shot_type,
-    cfg_scale: None,
-  };
+  let request = Kling3p0ProTextToVideoInput { prompt: req.prompt, generate_audio: req.generate_audio, duration, aspect_ratio, negative_prompt: req.negative_prompt, shot_type, cfg_scale: None };
 
-  let result = kling_3p0_pro_text_to_video(request)
-      .with_api_key(&args.api_key.0)
-      .queue_webhook(args.webhook_url)
-      .await;
+  let result = kling_3p0_pro_text_to_video(request).with_api_key(&args.api_key.0).queue_webhook(args.webhook_url).await;
 
   result.map_err(|err| classify_fal_error(err))
 }

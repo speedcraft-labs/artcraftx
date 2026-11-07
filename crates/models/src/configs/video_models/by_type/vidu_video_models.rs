@@ -5,13 +5,7 @@ use crate::enums::common_resolution::CommonResolution;
 use crate::enums::model_creator::ModelCreator;
 use crate::enums::video_model::VideoModel;
 
-const VIDU_ASPECT_RATIOS: &[CommonAspectRatio] = &[
-  CommonAspectRatio::WideSixteenByNine,
-  CommonAspectRatio::TallNineBySixteen,
-  CommonAspectRatio::WideFourByThree,
-  CommonAspectRatio::TallThreeByFour,
-  CommonAspectRatio::Square,
-];
+const VIDU_ASPECT_RATIOS: &[CommonAspectRatio] = &[CommonAspectRatio::WideSixteenByNine, CommonAspectRatio::TallNineBySixteen, CommonAspectRatio::WideFourByThree, CommonAspectRatio::TallThreeByFour, CommonAspectRatio::Square];
 
 /// Vidu (Shengshu) video models.
 pub fn vidu_video_models() -> Vec<VideoModelConfig> {

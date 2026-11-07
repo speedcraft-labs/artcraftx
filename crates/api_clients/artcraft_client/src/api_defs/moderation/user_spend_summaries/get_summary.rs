@@ -2,8 +2,7 @@ use chrono::{DateTime, Utc};
 use serde_derive::{Deserialize, Serialize};
 use crate::tokens::users::UserToken;
 
-pub const MODERATOR_GET_USER_SPEND_SUMMARY_PATH: &str =
-  "/v1/moderation/user_spend_summaries/summary/{user_token}";
+pub const MODERATOR_GET_USER_SPEND_SUMMARY_PATH: &str = "/v1/moderation/user_spend_summaries/summary/{user_token}";
 
 #[derive(Deserialize)]
 pub struct ModeratorGetUserSpendSummaryQueryParams {

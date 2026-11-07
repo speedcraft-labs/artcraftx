@@ -52,28 +52,23 @@ impl HiggsfieldJobFailure {
 
   fn user_message(&self) -> String {
     match &self.kind {
-      HiggsfieldJobFailureKind::TerminalStatus(JobStatus::Nsfw) => {
-        "Higgsfield's content filter flagged this generation as NSFW. If your prompt and \
+      HiggsfieldJobFailureKind::TerminalStatus(JobStatus::Nsfw) => "Higgsfield's content filter flagged this generation as NSFW. If your prompt and \
          references are innocuous this can be a false positive — try rewording the prompt \
-         or swapping the reference media.".to_string()
-      }
-      HiggsfieldJobFailureKind::TerminalStatus(JobStatus::Failed) => {
-        match &self.maybe_server_reason {
-          Some(reason) => format!("Higgsfield reported an error: {}", reason),
-          None => "The generation failed on Higgsfield's side without a stated reason. \
-                   This is often transient — try again.".to_string(),
-        }
-      }
-      HiggsfieldJobFailureKind::TerminalStatus(JobStatus::Cancelled) => {
-        "The generation was cancelled on Higgsfield before it finished.".to_string()
-      }
+         or swapping the reference media."
+        .to_string(),
+      HiggsfieldJobFailureKind::TerminalStatus(JobStatus::Failed) => match &self.maybe_server_reason {
+        Some(reason) => format!("Higgsfield reported an error: {}", reason),
+        None => "The generation failed on Higgsfield's side without a stated reason. \
+                   This is often transient — try again."
+          .to_string(),
+      },
+      HiggsfieldJobFailureKind::TerminalStatus(JobStatus::Cancelled) => "The generation was cancelled on Higgsfield before it finished.".to_string(),
       HiggsfieldJobFailureKind::TerminalStatus(status) => {
         format!("The generation ended in an unexpected state on Higgsfield (\"{}\").", status)
-      }
-      HiggsfieldJobFailureKind::CompletedWithoutResult => {
-        "Higgsfield reported the generation as complete but returned no output file. \
-         Trying again usually works.".to_string()
-      }
+      },
+      HiggsfieldJobFailureKind::CompletedWithoutResult => "Higgsfield reported the generation as complete but returned no output file. \
+         Trying again usually works."
+        .to_string(),
     }
   }
 
@@ -105,31 +100,17 @@ pub fn build_failure_report(failures: &[HiggsfieldJobFailure], total_jobs: usize
   let Some(primary) = failures.iter().max_by_key(|failure| failure.priority()) else {
     // Shouldn't happen (callers only report with >= 1 failure), but never
     // leave the user message empty.
-    return HiggsfieldFailureReport {
-      failure_type: TaskFailureType::Unknown,
-      user_message: "The generation failed on Higgsfield for an unknown reason.".to_string(),
-      log_details: "no job outcomes recorded".to_string(),
-    };
+    return HiggsfieldFailureReport { failure_type: TaskFailureType::Unknown, user_message: "The generation failed on Higgsfield for an unknown reason.".to_string(), log_details: "no job outcomes recorded".to_string() };
   };
 
   let mut user_message = primary.user_message();
   if total_jobs > 1 {
-    user_message = format!(
-      "{} of {} generations in this batch failed. {}",
-      failures.len(), total_jobs, user_message,
-    );
+    user_message = format!("{} of {} generations in this batch failed. {}", failures.len(), total_jobs, user_message,);
   }
 
-  let log_details = failures.iter()
-      .map(HiggsfieldJobFailure::log_detail)
-      .collect::<Vec<_>>()
-      .join("; ");
+  let log_details = failures.iter().map(HiggsfieldJobFailure::log_detail).collect::<Vec<_>>().join("; ");
 
-  HiggsfieldFailureReport {
-    failure_type: primary.failure_type(),
-    user_message,
-    log_details,
-  }
+  HiggsfieldFailureReport { failure_type: primary.failure_type(), user_message, log_details }
 }
 
 #[cfg(test)]
@@ -137,19 +118,12 @@ mod tests {
   use super::*;
 
   fn failure(kind: HiggsfieldJobFailureKind, maybe_server_reason: Option<&str>) -> HiggsfieldJobFailure {
-    HiggsfieldJobFailure {
-      job_id: JobId::new("e82ac3d7-5282-4b71-be90-c7cfad846299"),
-      kind,
-      maybe_server_reason: maybe_server_reason.map(str::to_string),
-    }
+    HiggsfieldJobFailure { job_id: JobId::new("e82ac3d7-5282-4b71-be90-c7cfad846299"), kind, maybe_server_reason: maybe_server_reason.map(str::to_string) }
   }
 
   #[test]
   fn nsfw_maps_to_content_rule_with_actionable_copy() {
-    let report = build_failure_report(
-      &[failure(HiggsfieldJobFailureKind::TerminalStatus(JobStatus::Nsfw), None)],
-      1,
-    );
+    let report = build_failure_report(&[failure(HiggsfieldJobFailureKind::TerminalStatus(JobStatus::Nsfw), None)], 1);
     assert_eq!(report.failure_type, TaskFailureType::RuleBansGeneratedContent);
     assert!(report.user_message.contains("content filter"));
     assert!(report.user_message.contains("false positive"));
@@ -161,13 +135,7 @@ mod tests {
 
   #[test]
   fn server_fail_reason_is_surfaced_verbatim() {
-    let report = build_failure_report(
-      &[failure(
-        HiggsfieldJobFailureKind::TerminalStatus(JobStatus::Failed),
-        Some("Input audio duration is not supported. Please try a shorter audio."),
-      )],
-      1,
-    );
+    let report = build_failure_report(&[failure(HiggsfieldJobFailureKind::TerminalStatus(JobStatus::Failed), Some("Input audio duration is not supported. Please try a shorter audio."))], 1);
     assert_eq!(report.failure_type, TaskFailureType::GenerationFailed);
     assert!(report.user_message.contains("Input audio duration is not supported"));
     assert!(report.log_details.contains("fail_reason=\"Input audio duration"));
@@ -175,35 +143,20 @@ mod tests {
 
   #[test]
   fn failed_without_reason_reads_as_transient() {
-    let report = build_failure_report(
-      &[failure(HiggsfieldJobFailureKind::TerminalStatus(JobStatus::Failed), None)],
-      1,
-    );
+    let report = build_failure_report(&[failure(HiggsfieldJobFailureKind::TerminalStatus(JobStatus::Failed), None)], 1);
     assert!(report.user_message.contains("try again"));
   }
 
   #[test]
   fn unexpected_status_names_the_state() {
-    let report = build_failure_report(
-      &[failure(HiggsfieldJobFailureKind::TerminalStatus(JobStatus::Other("mystery".into())), None)],
-      1,
-    );
+    let report = build_failure_report(&[failure(HiggsfieldJobFailureKind::TerminalStatus(JobStatus::Other("mystery".into())), None)], 1);
     assert_eq!(report.failure_type, TaskFailureType::Unknown);
     assert!(report.user_message.contains("mystery"));
   }
 
   #[test]
   fn batch_failures_carry_counts_and_pick_the_most_specific_message() {
-    let report = build_failure_report(
-      &[
-        failure(HiggsfieldJobFailureKind::TerminalStatus(JobStatus::Cancelled), None),
-        failure(
-          HiggsfieldJobFailureKind::TerminalStatus(JobStatus::Failed),
-          Some("Resolution not supported."),
-        ),
-      ],
-      4,
-    );
+    let report = build_failure_report(&[failure(HiggsfieldJobFailureKind::TerminalStatus(JobStatus::Cancelled), None), failure(HiggsfieldJobFailureKind::TerminalStatus(JobStatus::Failed), Some("Resolution not supported."))], 4);
     assert!(report.user_message.starts_with("2 of 4 generations in this batch failed."));
     assert!(report.user_message.contains("Resolution not supported."));
     // Both jobs appear in the technical record.
@@ -212,10 +165,7 @@ mod tests {
 
   #[test]
   fn completed_without_result_is_its_own_story() {
-    let report = build_failure_report(
-      &[failure(HiggsfieldJobFailureKind::CompletedWithoutResult, None)],
-      1,
-    );
+    let report = build_failure_report(&[failure(HiggsfieldJobFailureKind::CompletedWithoutResult, None)], 1);
     assert_eq!(report.failure_type, TaskFailureType::GenerationFailed);
     assert!(report.user_message.contains("no output file"));
     assert!(report.log_details.contains("no result URL"));

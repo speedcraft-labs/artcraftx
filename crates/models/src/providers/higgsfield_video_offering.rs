@@ -19,22 +19,11 @@ use crate::providers::video_providers::VideoProviderOffering;
 pub const HIGGSFIELD_VIDEO_BATCH_MAX: u16 = 4;
 
 /// Every video model Higgsfield offers, in picker order.
-pub const HIGGSFIELD_VIDEO_MODELS: &[VideoModel] = &[
-  VideoModel::Seedance2p5,
-  VideoModel::Seedance2p5Edit,
-  VideoModel::Seedance2p0,
-  VideoModel::Seedance2p0Mini,
-  VideoModel::MinimaxH3,
-  VideoModel::Kling3p0Pro,
-  VideoModel::Kling3p0Standard,
-  VideoModel::GrokImagineVideo1p5,
-];
+pub const HIGGSFIELD_VIDEO_MODELS: &[VideoModel] =
+  &[VideoModel::Seedance2p5, VideoModel::Seedance2p5Edit, VideoModel::Seedance2p0, VideoModel::Seedance2p0Mini, VideoModel::MinimaxH3, VideoModel::Kling3p0Pro, VideoModel::Kling3p0Standard, VideoModel::GrokImagineVideo1p5];
 
 pub fn higgsfield_video_offering() -> VideoProviderOffering {
-  VideoProviderOffering {
-    provider: GenerationProvider::Higgsfield,
-    models: HIGGSFIELD_VIDEO_MODELS.iter().copied().map(offered).collect(),
-  }
+  VideoProviderOffering { provider: GenerationProvider::Higgsfield, models: HIGGSFIELD_VIDEO_MODELS.iter().copied().map(offered).collect() }
 }
 
 /// The base config, or a Higgsfield-specific replacement when the menus
@@ -46,32 +35,13 @@ fn offered(model: VideoModel) -> OfferedModel<VideoModel, VideoModelConfig> {
     VideoModel::Seedance2p5 | VideoModel::Seedance2p5Edit | VideoModel::MinimaxH3 => None,
     // Seedance 2.0: no character references; the web app defaults to the
     // high bitrate.
-    VideoModel::Seedance2p0 => Some(VideoModelConfig {
-      character_references_supported: false,
-      character_references_max: None,
-      bitrate_default: Some(CommonBitrate::High),
-      ..capped(base)
-    }),
+    VideoModel::Seedance2p0 => Some(VideoModelConfig { character_references_supported: false, character_references_max: None, bitrate_default: Some(CommonBitrate::High), ..capped(base) }),
     // Seedance 2.0 Mini: no character references and no bitrate menu.
-    VideoModel::Seedance2p0Mini => Some(VideoModelConfig {
-      character_references_supported: false,
-      character_references_max: None,
-      bitrate_options: Vec::new(),
-      bitrate_default: None,
-      ..capped(base)
-    }),
+    VideoModel::Seedance2p0Mini => Some(VideoModelConfig { character_references_supported: false, character_references_max: None, bitrate_options: Vec::new(), bitrate_default: None, ..capped(base) }),
     // Kling 3.0 Standard = the "std" mode: 720p only.
-    VideoModel::Kling3p0Standard => Some(VideoModelConfig {
-      resolution_options: vec![CommonResolution::SevenTwentyP],
-      resolution_default: Some(CommonResolution::SevenTwentyP),
-      ..capped(base)
-    }),
+    VideoModel::Kling3p0Standard => Some(VideoModelConfig { resolution_options: vec![CommonResolution::SevenTwentyP], resolution_default: Some(CommonResolution::SevenTwentyP), ..capped(base) }),
     // Kling 3.0 Pro = the "pro" and "4K" modes.
-    VideoModel::Kling3p0Pro => Some(VideoModelConfig {
-      resolution_options: vec![CommonResolution::TenEightyP, CommonResolution::FourK],
-      resolution_default: Some(CommonResolution::TenEightyP),
-      ..capped(base)
-    }),
+    VideoModel::Kling3p0Pro => Some(VideoModelConfig { resolution_options: vec![CommonResolution::TenEightyP, CommonResolution::FourK], resolution_default: Some(CommonResolution::TenEightyP), ..capped(base) }),
     // Grok Imagine 1.5: text-to-video works, a 1080p tier exists, and image
     // references are accepted alongside the start frame.
     VideoModel::GrokImagineVideo1p5 => Some(VideoModelConfig {
@@ -100,9 +70,7 @@ fn offered(model: VideoModel) -> OfferedModel<VideoModel, VideoModelConfig> {
 fn capped(base: VideoModelConfig) -> VideoModelConfig {
   VideoModelConfig {
     batch_size_max: base.batch_size_max.min(HIGGSFIELD_VIDEO_BATCH_MAX),
-    batch_size_options: base.batch_size_options.map(|options| {
-      options.into_iter().filter(|count| *count <= HIGGSFIELD_VIDEO_BATCH_MAX).collect()
-    }),
+    batch_size_options: base.batch_size_options.map(|options| options.into_iter().filter(|count| *count <= HIGGSFIELD_VIDEO_BATCH_MAX).collect()),
     batch_size_default: base.batch_size_default.min(HIGGSFIELD_VIDEO_BATCH_MAX),
     ..base
   }

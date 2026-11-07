@@ -62,7 +62,7 @@ fn legacy_sound(maybe_key: Option<String>, default: Option<AppSoundFile>) -> Opt
     Err(_) => {
       warn!("Dropping unknown legacy sound key `{}`; using the default.", key);
       default
-    }
+    },
   }
 }
 
@@ -72,14 +72,17 @@ mod tests {
 
   #[test]
   fn migrates_known_fields_and_drops_unknown_sounds() {
-    let legacy: LegacyJsonPreferences = serde_json::from_str(r#"{
+    let legacy: LegacyJsonPreferences = serde_json::from_str(
+      r#"{
       "version": "3",
       "preferred_download_directory": {"custom": "/tmp/out"},
       "play_sounds": false,
       "delete_file_sound": "ghost",
       "generation_enqueue_sound": "not_a_real_sound",
       "generation_failure_sound": "wrong"
-    }"#).unwrap();
+    }"#,
+    )
+    .unwrap();
 
     let prefs = legacy.into_preferences();
     assert_eq!(prefs.downloads.preferred_download_directory, PreferredDownloadDirectory::Custom("/tmp/out".into()));
@@ -88,6 +91,7 @@ mod tests {
     assert_eq!(prefs.sounds.delete_file, Some(AppSoundFile::Ghost));
     assert_eq!(prefs.sounds.enqueue_success, Some(AppSoundFile::Done)); // unknown key -> default
     assert_eq!(prefs.sounds.generation_failure, Some(AppSoundFile::Wrong));
-    assert_eq!(prefs.sounds.generation_success, Some(AppSoundFile::SpecialFlower)); // absent -> default
+    assert_eq!(prefs.sounds.generation_success, Some(AppSoundFile::SpecialFlower));
+    // absent -> default
   }
 }

@@ -17,16 +17,11 @@ use reqwest::Url;
 // studio app runs a GPU-detection step (detect-gpu) on load that can stall
 // inside the webview and never redirect off /login, starving the completion
 // heuristic. The classic login does a plain post-login redirect.
-const DESTINATION_HOSTNAMES: &[&str] =
-    &["storyteller.ai", "www.storyteller.ai", "studio.storyteller.ai"];
+const DESTINATION_HOSTNAMES: &[&str] = &["storyteller.ai", "www.storyteller.ai", "studio.storyteller.ai"];
 
-static WEBSITE_ENTRY_URL: Lazy<Url> = Lazy::new(|| {
-  Url::parse("https://storyteller.ai/").expect("URL should parse")
-});
+static WEBSITE_ENTRY_URL: Lazy<Url> = Lazy::new(|| Url::parse("https://storyteller.ai/").expect("URL should parse"));
 
-static LOGIN_PAGE_URL: Lazy<Url> = Lazy::new(|| {
-  Url::parse("https://storyteller.ai/login").expect("URL should parse")
-});
+static LOGIN_PAGE_URL: Lazy<Url> = Lazy::new(|| Url::parse("https://storyteller.ai/login").expect("URL should parse"));
 
 pub struct ArtCraftLoginWindow;
 
@@ -40,9 +35,7 @@ impl LoginWindowSite for ArtCraftLoginWindow {
   }
 
   fn journey(&self) -> LoginJourney {
-    LoginJourney::with_default_pre_navigation()
-        .website_entry(WEBSITE_ENTRY_URL.clone())
-        .login_page(LOGIN_PAGE_URL.clone())
+    LoginJourney::with_default_pre_navigation().website_entry(WEBSITE_ENTRY_URL.clone()).login_page(LOGIN_PAGE_URL.clone())
   }
 
   fn destination_hostnames(&self) -> &[&str] {

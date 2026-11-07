@@ -9,8 +9,7 @@ use browser_emulation::browser_profile::BrowserProfile;
 /// mainstream desktop Safari UA (rather than the default WKWebView UA) also
 /// makes Google's embedded-webview risk detection less likely to force a
 /// passkey step-up during sign-in.
-pub const MIDJOURNEY_USER_AGENT: &str =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15";
+pub const MIDJOURNEY_USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15";
 
 /// The browser profile used for ALL first-party Midjourney HTTP/websocket
 /// traffic (submit, imagine, index page, image downloads, websocket upgrade).

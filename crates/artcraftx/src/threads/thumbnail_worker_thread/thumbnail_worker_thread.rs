@@ -42,13 +42,7 @@ const MAX_LOCAL_FILE_ROWS_PER_SCAN: i64 = 50;
 /// Per scan, how far back through completed tasks to look.
 const RECENT_COMPLETED_TASKS_TO_SCAN: i64 = 200;
 
-pub async fn thumbnail_worker_thread(
-  app_handle: AppHandle,
-  app_data_root: AppDataRoot,
-  task_database: TaskDatabase,
-  local_files_database: LocalFilesDatabase,
-  queue: ThumbnailWorkQueue,
-) -> ! {
+pub async fn thumbnail_worker_thread(app_handle: AppHandle, app_data_root: AppDataRoot, task_database: TaskDatabase, local_files_database: LocalFilesDatabase, queue: ThumbnailWorkQueue) -> ! {
   info!("[ThumbnailWorker] Started");
   // Scan right away so history is covered as soon as the app is up.
   let mut next_scan = Instant::now();
@@ -67,7 +61,7 @@ pub async fn thumbnail_worker_thread(
             info!("[ThumbnailWorker] Scan found {} file(s) owed a thumbnail", paths.len());
           }
           process_all(&app_handle, &app_data_root, &local_files_database, paths).await;
-        }
+        },
         Err(err) => error!("[ThumbnailWorker] Scan failed: {}", err),
       }
       next_scan = Instant::now() + SCAN_INTERVAL;
@@ -81,12 +75,7 @@ pub async fn thumbnail_worker_thread(
   }
 }
 
-async fn process_all(
-  app_handle: &AppHandle,
-  app_data_root: &AppDataRoot,
-  local_files_database: &LocalFilesDatabase,
-  paths: Vec<PathBuf>,
-) {
+async fn process_all(app_handle: &AppHandle, app_data_root: &AppDataRoot, local_files_database: &LocalFilesDatabase, paths: Vec<PathBuf>) {
   for path in paths {
     let thumbnail = generate_thumbnail(local_files_database, app_data_root, &path).await;
     match thumbnail.status {
@@ -95,25 +84,18 @@ async fn process_all(
           warn!("[ThumbnailWorker] Ready without a thumbnail path for {}", path.display());
           continue;
         };
-        LocalThumbnailReadyEvent {
-          file_path: thumbnail.file_path,
-          thumbnail_path,
-          maybe_animated_preview_path: thumbnail.maybe_animated_preview_path,
-        }.send_infallible(app_handle);
-      }
+        LocalThumbnailReadyEvent { file_path: thumbnail.file_path, thumbnail_path, maybe_animated_preview_path: thumbnail.maybe_animated_preview_path }.send_infallible(app_handle);
+      },
       LocalThumbnailStatus::MissingFile => debug!("[ThumbnailWorker] File is gone, skipping: {}", path.display()),
       // Already logged (and recorded on the row) by the service.
-      LocalThumbnailStatus::Pending | LocalThumbnailStatus::Unsupported | LocalThumbnailStatus::Failed => {}
+      LocalThumbnailStatus::Pending | LocalThumbnailStatus::Unsupported | LocalThumbnailStatus::Failed => {},
     }
   }
 }
 
 /// Everything the databases say is owed a thumbnail, deduplicated, with the
 /// newest downloads first.
-async fn scan_for_work(
-  task_database: &TaskDatabase,
-  local_files_database: &LocalFilesDatabase,
-) -> anyhow::Result<Vec<PathBuf>> {
+async fn scan_for_work(task_database: &TaskDatabase, local_files_database: &LocalFilesDatabase) -> anyhow::Result<Vec<PathBuf>> {
   let mut seen: HashSet<String> = HashSet::new();
   let mut work: Vec<PathBuf> = Vec::new();
 

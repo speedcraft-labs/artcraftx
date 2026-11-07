@@ -53,45 +53,39 @@ pub struct RefreshTokenResponse {
   pub project_id: Option<String>,
 }
 
-pub async fn refresh_token(
-  args: RefreshTokenArgs<'_>,
-) -> Result<RefreshTokenResponse, MidjourneyError> {
-  let client = args.browser.clone().unwrap_or_default()
-      .build_client()
-      .map_err(MidjourneyClientError::WreqError)?;
+pub async fn refresh_token(args: RefreshTokenArgs<'_>) -> Result<RefreshTokenResponse, MidjourneyError> {
+  let client = args.browser.clone().unwrap_or_default().build_client().map_err(MidjourneyClientError::WreqError)?;
 
   let url = format!("{}?key={}", SECURE_TOKEN_URL, args.request.api_key);
 
-  let form = [
-    ("grant_type", "refresh_token"),
-    ("refresh_token", args.request.refresh_token),
-  ];
+  let form = [("grant_type", "refresh_token"), ("refresh_token", args.request.refresh_token)];
 
-  let http_request = client.post(url)
-      .header("Origin", "https://www.midjourney.com")
-      .header("Referer", "https://www.midjourney.com/")
-      .header("accept", "*/*")
-      .header("accept-language", "en-US,en;q=0.8")
-      .header("content-type", "application/x-www-form-urlencoded")
-      .form(&form)
-      .build()
-      .map_err(MidjourneyClientError::WreqError)?;
+  let http_request = client
+    .post(url)
+    .header("Origin", "https://www.midjourney.com")
+    .header("Referer", "https://www.midjourney.com/")
+    .header("accept", "*/*")
+    .header("accept-language", "en-US,en;q=0.8")
+    .header("content-type", "application/x-www-form-urlencoded")
+    .form(&form)
+    .build()
+    .map_err(MidjourneyClientError::WreqError)?;
 
-  let response = client.execute(http_request)
-      .await
-      .map_err(|e| MidjourneyApiError::NetworkError(e.to_string()))?;
+  let response = client.execute(http_request).await.map_err(|e| MidjourneyApiError::NetworkError(e.to_string()))?;
 
   let status = response.status();
-  let response_body = response.text().await
-      .map_err(|e| MidjourneyApiError::NetworkError(e.to_string()))?;
+  let response_body = response.text().await.map_err(|e| MidjourneyApiError::NetworkError(e.to_string()))?;
 
   if !status.is_success() {
-    return Err(match status.as_u16() {
-      400 => MidjourneyApiError::InvalidRequest(response_body),
-      401 => MidjourneyApiError::Unauthorized(response_body),
-      403 => MidjourneyApiError::Forbidden(response_body),
-      code => MidjourneyApiError::UnknownHttpFailure { status_code: code, body: response_body },
-    }.into());
+    return Err(
+      match status.as_u16() {
+        400 => MidjourneyApiError::InvalidRequest(response_body),
+        401 => MidjourneyApiError::Unauthorized(response_body),
+        403 => MidjourneyApiError::Forbidden(response_body),
+        code => MidjourneyApiError::UnknownHttpFailure { status_code: code, body: response_body },
+      }
+      .into(),
+    );
   }
 
   #[derive(Deserialize)]
@@ -105,8 +99,7 @@ pub async fn refresh_token(
     project_id: Option<String>,
   }
 
-  let response = serde_json::from_str::<RawResponse>(&response_body)
-      .map_err(|err| MidjourneyApiError::deserialization(err, response_body.as_str()))?;
+  let response = serde_json::from_str::<RawResponse>(&response_body).map_err(|err| MidjourneyApiError::deserialization(err, response_body.as_str()))?;
 
   Ok(RefreshTokenResponse {
     access_token: response.access_token,

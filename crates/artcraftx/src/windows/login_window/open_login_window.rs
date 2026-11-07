@@ -32,12 +32,7 @@ const SCRIPT_INJECTION_INTERVAL: Duration = Duration::from_secs(1);
 /// it. The site's [`crate::windows::login_window::login_journey::LoginJourney`]
 /// drives the webview to the login screen, then a background thread captures
 /// cookies once the user finishes. See [`login_window_thread`].
-pub async fn open_login_window(
-  app: &AppHandle,
-  app_data_root: &AppDataRoot,
-  website: LoginWebsite,
-  maybe_target_credential_id: Option<String>,
-) -> AnyhowResult<()> {
+pub async fn open_login_window(app: &AppHandle, app_data_root: &AppDataRoot, website: LoginWebsite, maybe_target_credential_id: Option<String>) -> AnyhowResult<()> {
   let window_name = login_window_name(website);
   if app.get_window(&window_name).is_some() {
     return Err(anyhow!("{} login window already open", website));
@@ -52,20 +47,12 @@ pub async fn open_login_window(
     Some(NavigationAction::Navigate(url)) => url.clone(),
     Some(NavigationAction::RunScript(_)) => {
       return Err(anyhow!("{} login journey must start with a navigation", website));
-    }
+    },
     None => return Err(anyhow!("{} login journey is empty", website)),
   };
 
   let start_url = WebviewUrl::External(first_url);
-  let mut builder = WebviewWindowBuilder::new(app, &window_name, start_url)
-      .title(site.window_title())
-      .center()
-      .resizable(true)
-      .visible(true)
-      .closable(true)
-      .min_inner_size(200.0, 800.0)
-      .focused(true)
-      .devtools(true);
+  let mut builder = WebviewWindowBuilder::new(app, &window_name, start_url).title(site.window_title()).center().resizable(true).visible(true).closable(true).min_inner_size(200.0, 800.0).focused(true).devtools(true);
 
   // Some sites (e.g. Midjourney, whose Google sign-in otherwise forces a
   // passkey step-up that the default WKWebView can't satisfy) need a
@@ -83,8 +70,7 @@ pub async fn open_login_window(
 
   let window = builder.build()?;
 
-  let webview = window.get_webview(&window_name)
-      .ok_or_else(|| anyhow!("no webview found"))?;
+  let webview = window.get_webview(&window_name).ok_or_else(|| anyhow!("no webview found"))?;
 
   // Start every login from a clean slate — no stale cookies/state.
   clear_all_webview_cookies(&webview)?;
@@ -107,10 +93,7 @@ pub fn login_window_name(website: LoginWebsite) -> String {
 }
 
 /// Execute the remainder of a journey plan against an open webview.
-async fn run_navigation_actions<R: Runtime>(
-  webview: &Webview<R>,
-  actions: &[NavigationAction],
-) -> AnyhowResult<()> {
+async fn run_navigation_actions<R: Runtime>(webview: &Webview<R>, actions: &[NavigationAction]) -> AnyhowResult<()> {
   // The most recent page we deliberately navigated to; discovery scripts run
   // against this page, so we wait for it to arrive before injecting.
   let mut current_page: Option<Url> = None;
@@ -121,13 +104,12 @@ async fn run_navigation_actions<R: Runtime>(
         tokio::time::sleep(NAVIGATION_DELAY).await;
         webview.navigate(url.clone())?;
         current_page = Some(url.clone());
-      }
+      },
       NavigationAction::RunScript(script) => {
-        let page = current_page.as_ref()
-            .ok_or_else(|| anyhow!("script action requires a preceding navigation"))?;
+        let page = current_page.as_ref().ok_or_else(|| anyhow!("script action requires a preceding navigation"))?;
         wait_for_page_arrival(webview, page).await;
         inject_script_until_navigation(webview, script).await?;
-      }
+      },
     }
   }
   Ok(())
@@ -153,10 +135,7 @@ async fn wait_for_page_arrival<R: Runtime>(webview: &Webview<R>, page: &Url) {
 /// Inject an idempotent discovery script, re-injecting a few times in case a
 /// document swap wiped it, and stopping early once the page navigates away
 /// (i.e. the script did its job or the user moved on).
-async fn inject_script_until_navigation<R: Runtime>(
-  webview: &Webview<R>,
-  script: &str,
-) -> AnyhowResult<()> {
+async fn inject_script_until_navigation<R: Runtime>(webview: &Webview<R>, script: &str) -> AnyhowResult<()> {
   let starting_url = webview.url()?;
 
   for _ in 0..SCRIPT_INJECTION_ATTEMPTS {
@@ -175,8 +154,5 @@ async fn inject_script_until_navigation<R: Runtime>(
 /// Hostname with any `www.` prefix stripped, so redirects between the bare
 /// and `www.` forms of a site still count as arrival.
 fn normalized_host(url: &Url) -> String {
-  url.host_str()
-      .unwrap_or_default()
-      .trim_start_matches("www.")
-      .to_string()
+  url.host_str().unwrap_or_default().trim_start_matches("www.").to_string()
 }

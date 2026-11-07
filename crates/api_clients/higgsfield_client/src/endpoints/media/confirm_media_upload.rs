@@ -57,12 +57,7 @@ impl ConfirmMediaUploadRequest {
   }
 
   fn to_body(&self) -> ConfirmMediaUploadBody<'_> {
-    ConfirmMediaUploadBody {
-      maybe_job_id: self.maybe_job_id.as_ref(),
-      filename: &self.filename,
-      force_nsfw_check: self.force_nsfw_check,
-      force_ip_check: self.force_ip_check,
-    }
+    ConfirmMediaUploadBody { maybe_job_id: self.maybe_job_id.as_ref(), filename: &self.filename, force_nsfw_check: self.force_nsfw_check, force_ip_check: self.force_ip_check }
   }
 }
 

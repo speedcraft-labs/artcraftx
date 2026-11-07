@@ -73,11 +73,7 @@ pub struct SerializedCookie {
 
 impl Serialize for CookieStore {
   fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-    serializer.collect_seq(
-      self.rfc_store()
-          .iter_unexpired()
-          .filter_map(serialized_cookie_from_rfc)
-    )
+    serializer.collect_seq(self.rfc_store().iter_unexpired().filter_map(serialized_cookie_from_rfc))
   }
 }
 
@@ -123,27 +119,18 @@ fn serialized_cookie_from_rfc(cookie: &CookieRfc<'static>) -> Option<SerializedC
     other => {
       warn!("Cannot serialize cookie {:?} with domain {:?}; skipping.", cookie.name(), other);
       return None;
-    }
+    },
   };
 
   let expires = match &cookie.expires {
     CookieExpiration::AtUtc(at_utc) => {
       let system_time = SystemTime::from(*at_utc);
       Some(DateTime::<Utc>::from(system_time).to_rfc3339_opts(SecondsFormat::Secs, false))
-    }
+    },
     CookieExpiration::SessionEnd => None,
   };
 
-  Some(SerializedCookie {
-    name: cookie.name().to_owned(),
-    value: cookie.value().to_owned(),
-    domain,
-    host_only,
-    path: (*cookie.path).to_owned(),
-    secure: cookie.secure().unwrap_or(false),
-    http_only: cookie.http_only().unwrap_or(false),
-    expires,
-  })
+  Some(SerializedCookie { name: cookie.name().to_owned(), value: cookie.value().to_owned(), domain, host_only, path: (*cookie.path).to_owned(), secure: cookie.secure().unwrap_or(false), http_only: cookie.http_only().unwrap_or(false), expires })
 }
 
 fn insert_serialized_cookie(store: &mut CookieStore, cookie: SerializedCookie) {
@@ -152,7 +139,7 @@ fn insert_serialized_cookie(store: &mut CookieStore, cookie: SerializedCookie) {
     Err(err) => {
       warn!("Cannot restore cookie {:?} with domain {:?}: {:?}", cookie.name, cookie.domain, err);
       return;
-    }
+    },
   };
 
   let mut raw = RawCookie::new(cookie.name, cookie.value);
@@ -167,11 +154,10 @@ fn insert_serialized_cookie(store: &mut CookieStore, cookie: SerializedCookie) {
       Ok(at) => {
         let system_time = SystemTime::from(at.with_timezone(&Utc));
         raw.set_expires(time::OffsetDateTime::from(system_time));
-      }
+      },
       Err(err) => {
-        warn!("Cookie {:?} has unparseable expires {:?} ({:?}); treating as session cookie.",
-            raw.name(), expires, err);
-      }
+        warn!("Cookie {:?} has unparseable expires {:?} ({:?}); treating as session cookie.", raw.name(), expires, err);
+      },
     }
   }
 
@@ -181,13 +167,8 @@ fn insert_serialized_cookie(store: &mut CookieStore, cookie: SerializedCookie) {
 }
 
 fn sorted_serialized_cookies(store: &CookieStore) -> Vec<SerializedCookie> {
-  let mut cookies = store.rfc_store()
-      .iter_unexpired()
-      .filter_map(serialized_cookie_from_rfc)
-      .collect::<Vec<SerializedCookie>>();
-  cookies.sort_by(|a, b| {
-    (&a.domain, &a.path, &a.name).cmp(&(&b.domain, &b.path, &b.name))
-  });
+  let mut cookies = store.rfc_store().iter_unexpired().filter_map(serialized_cookie_from_rfc).collect::<Vec<SerializedCookie>>();
+  cookies.sort_by(|a, b| (&a.domain, &a.path, &a.name).cmp(&(&b.domain, &b.path, &b.name)));
   cookies
 }
 
@@ -231,10 +212,7 @@ mod tests {
       cookies: CookieStore,
     }
 
-    let file = CredentialFile {
-      service: "midjourney_cookies".to_string(),
-      cookies: example_store(),
-    };
+    let file = CredentialFile { service: "midjourney_cookies".to_string(), cookies: example_store() };
 
     let serialized = toml::to_string(&file).unwrap();
     let restored: CredentialFile = toml::from_str(&serialized).unwrap();
@@ -288,10 +266,7 @@ http_only = true
 
     // Domain cookies (the default) match subdomains.
     let subdomain_url = Url::parse("https://api.example.com/").unwrap();
-    assert_eq!(
-      file.cookies.cookie_header_for_url(&subdomain_url),
-      Some("session=abc123".to_string()),
-    );
+    assert_eq!(file.cookies.cookie_header_for_url(&subdomain_url), Some("session=abc123".to_string()),);
   }
 
   #[test]
@@ -331,10 +306,7 @@ http_only = true
     let mut store = CookieStore::empty();
     store.insert_named("session", "abc123", &site_url);
     store.apply_set_cookie_header("pref=dark; Domain=example.com; Path=/", &site_url);
-    store.apply_set_cookie_header(
-      "keeper=forever; Path=/; Expires=Tue, 03 Aug 2100 00:38:37 GMT",
-      &site_url,
-    );
+    store.apply_set_cookie_header("keeper=forever; Path=/; Expires=Tue, 03 Aug 2100 00:38:37 GMT", &site_url);
     store
   }
 }

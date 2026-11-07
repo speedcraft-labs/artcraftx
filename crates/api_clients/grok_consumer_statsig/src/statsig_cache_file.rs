@@ -95,12 +95,7 @@ pub struct CapturedStatsig {
 impl StatsigCacheFile {
   /// A fresh document stamped at `harvested_at_unix`.
   pub fn new(harvested_at_unix: i64) -> Self {
-    Self {
-      salt: STATSIG_SALT.to_string(),
-      epoch_unix: STATSIG_EPOCH,
-      harvested_at_unix,
-      captured: Vec::new(),
-    }
+    Self { salt: STATSIG_SALT.to_string(), epoch_unix: STATSIG_EPOCH, harvested_at_unix, captured: Vec::new() }
   }
 
   /// Insert or replace the entry for a `(method, path)`, keeping whichever
@@ -108,7 +103,7 @@ impl StatsigCacheFile {
   pub fn upsert(&mut self, entry: CapturedStatsig) {
     match self.captured.iter_mut().find(|e| e.method == entry.method && e.path == entry.path) {
       Some(existing) if entry.captured_at_unix >= existing.captured_at_unix => *existing = entry,
-      Some(_) => {}
+      Some(_) => {},
       None => self.captured.push(entry),
     }
   }
@@ -132,12 +127,7 @@ impl StatsigCacheFile {
 /// The payload is base64 (standard alphabet, no padding); byte 0 is the key and
 /// every later region is XOR-masked by it:
 /// `[key][seed^key (48)][number_LE^key (4)][digest[..16]^key (16)][mark^key (1)]`.
-pub fn decode_statsig(
-  statsig_id: &str,
-  method: &str,
-  path: &str,
-  captured_at_unix: i64,
-) -> AnyhowResult<CapturedStatsig> {
+pub fn decode_statsig(statsig_id: &str, method: &str, path: &str, captured_at_unix: i64) -> AnyhowResult<CapturedStatsig> {
   let raw = BASE64_STANDARD_NO_PAD.decode(statsig_id.trim())?;
   if raw.len() != PAYLOAD_LEN {
     bail!("statsig payload is {} bytes, expected {PAYLOAD_LEN}", raw.len());
@@ -180,8 +170,7 @@ mod tests {
 
   // A known-good, browser-captured signature for POST /conversations/new
   // (external/requests/.../18_generate_video.txt) — it generated a real video.
-  const CAPTURE_18: &str =
-    "XbHvyYh7hmNc+8sVAGnrpcuHN/MK+mgN63cmnBljOJaoCKu6zTPVw6C7HVv1wculKCNmYVum+L1h0IjFmtyZD/C53M+ZXg";
+  const CAPTURE_18: &str = "XbHvyYh7hmNc+8sVAGnrpcuHN/MK+mgN63cmnBljOJaoCKu6zTPVw6C7HVv1wculKCNmYVum+L1h0IjFmtyZD/C53M+ZXg";
   const NEW_CONVERSATION: &str = "/rest/app-chat/conversations/new";
 
   #[test]

@@ -1,4 +1,3 @@
-
 /// Mesh (3D object) models available for generation.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -122,8 +121,7 @@ mod tests {
     assert_eq!(cases.len(), ALL_VARIANTS.len());
     for (json_str, expected) in cases {
       let json = format!("\"{}\"", json_str);
-      let deserialized: CommonMeshModel = serde_json::from_str(&json)
-        .unwrap_or_else(|e| panic!("Failed to deserialize {:?}: {}", json_str, e));
+      let deserialized: CommonMeshModel = serde_json::from_str(&json).unwrap_or_else(|e| panic!("Failed to deserialize {:?}: {}", json_str, e));
       assert_eq!(deserialized, expected, "Failed for {:?}", json_str);
     }
   }

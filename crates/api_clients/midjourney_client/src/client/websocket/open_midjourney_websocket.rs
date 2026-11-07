@@ -42,34 +42,17 @@ pub struct OpenMidjourneyWebSocketRequest<'a> {
 /// The returned handle is already bound to the user and ready for
 /// [`MidjourneyWebSocket::subscribe_to_job`] / [`MidjourneyWebSocket::stream_job`].
 /// No cookies are needed — the websocket authenticates via `websocket_token`.
-pub async fn open_midjourney_websocket(
-  req: OpenMidjourneyWebSocketRequest<'_>,
-) -> Result<MidjourneyWebSocket, MidjourneyError> {
-  let client = req.browser.clone().unwrap_or_default()
-      .build_client()
-      .map_err(MidjourneyClientError::WreqError)?;
+pub async fn open_midjourney_websocket(req: OpenMidjourneyWebSocketRequest<'_>) -> Result<MidjourneyWebSocket, MidjourneyError> {
+  let client = req.browser.clone().unwrap_or_default().build_client().map_err(MidjourneyClientError::WreqError)?;
 
   let default_hostname = MidjourneyHostname::Standard;
   let hostname = req.hostname.unwrap_or(&default_hostname);
   let origin = format!("https://{}", hostname.as_str());
-  let url = format!(
-    "{}?token={}&v={}",
-    WEBSOCKET_URL_BASE,
-    req.websocket_token,
-    WEBSOCKET_PROTOCOL_VERSION,
-  );
+  let url = format!("{}?token={}&v={}", WEBSOCKET_URL_BASE, req.websocket_token, WEBSOCKET_PROTOCOL_VERSION,);
 
-  let response = client
-      .websocket(url)
-      .header("Origin", origin)
-      .send()
-      .await
-      .map_err(|err| MidjourneyClientError::WebSocketUpgrade(err.to_string()))?;
+  let response = client.websocket(url).header("Origin", origin).send().await.map_err(|err| MidjourneyClientError::WebSocketUpgrade(err.to_string()))?;
 
-  let websocket = response
-      .into_websocket()
-      .await
-      .map_err(|err| MidjourneyClientError::WebSocketUpgrade(err.to_string()))?;
+  let websocket = response.into_websocket().await.map_err(|err| MidjourneyClientError::WebSocketUpgrade(err.to_string()))?;
 
   let handle = MidjourneyWebSocket::spawn(req.user_id, websocket);
 
@@ -84,20 +67,18 @@ pub async fn open_midjourney_websocket(
   }
 }
 
-async fn await_user_success(
-  events: &mut broadcast::Receiver<std::sync::Arc<MidjourneyWsEvent>>,
-) -> Result<(), MidjourneyClientError> {
+async fn await_user_success(events: &mut broadcast::Receiver<std::sync::Arc<MidjourneyWsEvent>>) -> Result<(), MidjourneyClientError> {
   loop {
     match events.recv().await {
       Ok(event) => {
         if matches!(event.as_ref(), MidjourneyWsEvent::UserSuccess { .. }) {
           return Ok(());
         }
-      }
+      },
       Err(broadcast::error::RecvError::Lagged(_)) => continue,
       Err(broadcast::error::RecvError::Closed) => {
         return Err(MidjourneyClientError::WebSocketClosed);
-      }
+      },
     }
   }
 }
@@ -105,9 +86,7 @@ async fn await_user_success(
 #[cfg(test)]
 mod tests {
   use crate::client::websocket::midjourney_ws_event::MidjourneyWsEvent;
-  use crate::client::websocket::open_midjourney_websocket::{
-    open_midjourney_websocket, OpenMidjourneyWebSocketRequest,
-  };
+  use crate::client::websocket::open_midjourney_websocket::{open_midjourney_websocket, OpenMidjourneyWebSocketRequest};
   use crate::endpoints::submit_job::{submit_job, SubmitJobArgs, SubmitJobRequest};
   use crate::recipes::channel_id::ChannelId;
   use crate::recipes::get_user_info::{get_user_info, GetUserInfoArgs};
@@ -123,34 +102,17 @@ mod tests {
     let cookie_header = read_to_trimmed_string("/Users/bt/secrets/midjourney/cookie.txt")?;
 
     // 1. Read user id + websocket token from the index page.
-    let user_info = get_user_info(GetUserInfoArgs {
-      cookie_header: &cookie_header,
-      hostname: None,
-      browser: None,
-    }).await?;
+    let user_info = get_user_info(GetUserInfoArgs { cookie_header: &cookie_header, hostname: None, browser: None }).await?;
 
     let user_id = user_info.user_id.expect("user id");
     let websocket_token = user_info.websocket_token.expect("websocket token");
 
     // 2. Open the websocket (does the subscribe_to_user handshake).
-    let ws = open_midjourney_websocket(OpenMidjourneyWebSocketRequest {
-      websocket_token: &websocket_token,
-      user_id: user_id.clone(),
-      hostname: None,
-      browser: None,
-    }).await?;
+    let ws = open_midjourney_websocket(OpenMidjourneyWebSocketRequest { websocket_token: &websocket_token, user_id: user_id.clone(), hostname: None, browser: None }).await?;
 
     // 3. Submit a job over HTTP.
     let channel_id = ChannelId::UserId(user_id.clone()).to_string();
-    let submit = submit_job(SubmitJobArgs {
-      request: SubmitJobRequest {
-        prompt: "pirate ship in the city --v 8.2",
-        channel_id: &channel_id,
-      },
-      cookie_header: &cookie_header,
-      hostname: None,
-      browser: None,
-    }).await?;
+    let submit = submit_job(SubmitJobArgs { request: SubmitJobRequest { prompt: "pirate ship in the city --v 8.2", channel_id: &channel_id }, cookie_header: &cookie_header, hostname: None, browser: None }).await?;
     let job_id = submit.maybe_job_id.expect("job id");
 
     // 4. Stream previews until completion.
@@ -161,7 +123,8 @@ mod tests {
           preview_frames += 1;
         }
       }
-    }).await?;
+    })
+    .await?;
 
     assert!(preview_frames > 0, "expected at least one preview frame");
     Ok(())

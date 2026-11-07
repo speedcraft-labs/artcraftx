@@ -1,9 +1,5 @@
-use fal_client::requests::api::image::edit::gpt_image_1p5_edit_image::api::{
-  GptImage1p5EditImageNumImages, GptImage1p5EditImageQuality, GptImage1p5EditImageSize,
-};
-use fal_client::requests::api::image::text::gpt_image_1p5_text_to_image::api::{
-  GptImage1p5TextToImageNumImages, GptImage1p5TextToImageQuality, GptImage1p5TextToImageSize,
-};
+use fal_client::requests::api::image::edit::gpt_image_1p5_edit_image::api::{GptImage1p5EditImageNumImages, GptImage1p5EditImageQuality, GptImage1p5EditImageSize};
+use fal_client::requests::api::image::text::gpt_image_1p5_text_to_image::api::{GptImage1p5TextToImageNumImages, GptImage1p5TextToImageQuality, GptImage1p5TextToImageSize};
 
 use crate::generate::generate_image::image_generation_cost_estimate::ImageGenerationCostEstimate;
 use crate::generate::generate_image::providers::fal::gpt_image_1p5::request::FalGptImage1p5RequestState;
@@ -33,12 +29,8 @@ impl FalGptImage1p5CostState {
 
   pub fn estimate_cost(&self) -> ImageGenerationCostEstimate {
     let cost_in_usd_cents = match &self.request {
-      FalGptImage1p5RequestState::TextToImage(req) => {
-        cost_t2i(req.quality, req.image_size, req.num_images)
-      }
-      FalGptImage1p5RequestState::EditImage(req) => {
-        cost_edit(req.quality, req.image_size, req.num_images)
-      }
+      FalGptImage1p5RequestState::TextToImage(req) => cost_t2i(req.quality, req.image_size, req.num_images),
+      FalGptImage1p5RequestState::EditImage(req) => cost_edit(req.quality, req.image_size, req.num_images),
     };
 
     ImageGenerationCostEstimate {
@@ -55,13 +47,13 @@ impl FalGptImage1p5CostState {
 }
 
 #[derive(Copy, Clone)]
-enum SizeBucket { Square, Wide, Tall }
+enum SizeBucket {
+  Square,
+  Wide,
+  Tall,
+}
 
-fn cost_t2i(
-  quality: Option<GptImage1p5TextToImageQuality>,
-  image_size: Option<GptImage1p5TextToImageSize>,
-  num_images: GptImage1p5TextToImageNumImages,
-) -> u64 {
+fn cost_t2i(quality: Option<GptImage1p5TextToImageQuality>, image_size: Option<GptImage1p5TextToImageSize>, num_images: GptImage1p5TextToImageNumImages) -> u64 {
   use GptImage1p5TextToImageQuality as Q;
   use GptImage1p5TextToImageSize as S;
   let q = quality.unwrap_or(Q::High);
@@ -74,11 +66,7 @@ fn cost_t2i(
   per_image * t2i_num_images(num_images)
 }
 
-fn cost_edit(
-  quality: Option<GptImage1p5EditImageQuality>,
-  image_size: Option<GptImage1p5EditImageSize>,
-  num_images: GptImage1p5EditImageNumImages,
-) -> u64 {
+fn cost_edit(quality: Option<GptImage1p5EditImageQuality>, image_size: Option<GptImage1p5EditImageSize>, num_images: GptImage1p5EditImageNumImages) -> u64 {
   use GptImage1p5EditImageQuality as Q;
   use GptImage1p5EditImageSize as S;
   let q = quality.unwrap_or(Q::High);
@@ -93,7 +81,10 @@ fn cost_edit(
 
 fn output_cost(is_low: bool, is_medium: bool, bucket: SizeBucket) -> u64 {
   if is_low {
-    match bucket { SizeBucket::Square => 1, _ => 2 }
+    match bucket {
+      SizeBucket::Square => 1,
+      _ => 2,
+    }
   } else if is_medium {
     match bucket {
       SizeBucket::Square => 4,
@@ -102,7 +93,10 @@ fn output_cost(is_low: bool, is_medium: bool, bucket: SizeBucket) -> u64 {
     }
   } else {
     // High (default)
-    match bucket { SizeBucket::Square => 14, _ => 20 }
+    match bucket {
+      SizeBucket::Square => 14,
+      _ => 20,
+    }
   }
 }
 
@@ -146,7 +140,17 @@ mod tests {
   fn edit_image_cost_table_covers_quality_size_and_count() {
     for (quality, image_size, expected_by_count) in edit_image_price_cases() {
       for (num_images, expected) in edit_image_num_image_cases(expected_by_count) {
-        let request = FalGptImage1p5RequestState::EditImage(GptImage1p5EditImageRequest { prompt: "test".to_string(), image_urls: vec!["https://example.com/image.png".to_string()], num_images, mask_image_url: None, image_size, background: None, quality, input_fidelity: None, output_format: None });
+        let request = FalGptImage1p5RequestState::EditImage(GptImage1p5EditImageRequest {
+          prompt: "test".to_string(),
+          image_urls: vec!["https://example.com/image.png".to_string()],
+          num_images,
+          mask_image_url: None,
+          image_size,
+          background: None,
+          quality,
+          input_fidelity: None,
+          output_format: None,
+        });
         let cost = FalGptImage1p5CostState::from_request(&request).estimate_cost();
         assert_standard_cost_estimate(cost, expected);
       }

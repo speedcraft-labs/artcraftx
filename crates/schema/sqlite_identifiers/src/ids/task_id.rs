@@ -3,7 +3,6 @@ use std::fmt::Debug;
 use serde::Deserialize;
 use serde::Serialize;
 
-
 /// The primary key for tasks (Tauri / Sqlite)
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct TaskId(pub String);

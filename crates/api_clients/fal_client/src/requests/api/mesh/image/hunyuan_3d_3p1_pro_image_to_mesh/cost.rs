@@ -52,10 +52,7 @@ mod tests {
 
   #[test]
   fn generate_type_does_not_change_cost() {
-    for t in [
-      Hunyuan3d3p1ProImageToMeshGenerateType::Normal,
-      Hunyuan3d3p1ProImageToMeshGenerateType::Geometry,
-    ] {
+    for t in [Hunyuan3d3p1ProImageToMeshGenerateType::Normal, Hunyuan3d3p1ProImageToMeshGenerateType::Geometry] {
       let mut req = base_request();
       req.generate_type = Some(t);
       assert_eq!(req.calculate_cost_in_cents(), 38);

@@ -26,11 +26,7 @@ impl SerializeMarker for OpenLocalFileSuccessResponse {}
 /// `on_complete_first_file_location`) natively, either in its default viewer
 /// or revealed in the file manager. The file must exist.
 #[tauri::command]
-pub async fn open_local_file_command(
-  app: AppHandle,
-  path: String,
-  mode: OpenLocalFileMode,
-) -> ResponseOrErrorMessage<OpenLocalFileSuccessResponse> {
+pub async fn open_local_file_command(app: AppHandle, path: String, mode: OpenLocalFileMode) -> ResponseOrErrorMessage<OpenLocalFileSuccessResponse> {
   info!("open_local_file_command called: mode={:?} path={:?}", mode, path);
 
   let file = Path::new(&path);

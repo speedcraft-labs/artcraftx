@@ -55,31 +55,31 @@ impl Display for CloudflareError {
     match self {
       Self::MovedPermanently301 => {
         write!(f, "Cloudflare Moved Permanently (301)")
-      }
+      },
       Self::ChallengeInterstitial403 => {
         write!(f, "Cloudflare Challenge Interstitial (403); Cloudflare wants to verify the request with a CAPTCHA challenge.")
-      }
+      },
       Self::AccessDenied1020 => {
         write!(f, "Cloudflare Access Denied (error 1020); the site's firewall rules blocked this client.")
-      }
+      },
       Self::RateLimited429 => {
         write!(f, "Cloudflare Rate Limited (429 / error 1015); slow down before retrying.")
-      }
+      },
       Self::BadGateway502 => {
         write!(f, "Cloudflare Bad Gateway (502); This is likely a backend server issue.")
-      }
+      },
       Self::ServiceUnavailable503 => {
         write!(f, "Cloudflare Service Unavailable (503); the origin is overloaded or in Under Attack mode.")
-      }
+      },
       Self::GatewayTimeout504 => {
         write!(f, "Cloudflare Gateway Timeout (504); This is likely a backend server issue.")
-      }
+      },
       Self::OriginError5xx(status) => {
         write!(f, "Cloudflare origin error ({}); Cloudflare could not get a usable response from the backend server.", status)
-      }
+      },
       Self::TimeoutOccurred524 => {
         write!(f, "Cloudflare Timeout (524); This is likely a backend server issue. Cloudflare connected, but did not receive a response from the server in time.")
-      }
+      },
     }
   }
 }
@@ -88,10 +88,7 @@ impl CloudflareError {
   /// Cloudflare refused this client (challenge, block, rate limit). Retrying
   /// unchanged won't help; see `cloudflare_mitigation` for what will.
   pub fn is_access_denied(&self) -> bool {
-    matches!(
-      self,
-      Self::ChallengeInterstitial403 | Self::AccessDenied1020 | Self::RateLimited429,
-    )
+    matches!(self, Self::ChallengeInterstitial403 | Self::AccessDenied1020 | Self::RateLimited429,)
   }
 
   /// A bot-management challenge specifically — passable only by a browser.
@@ -101,14 +98,7 @@ impl CloudflareError {
 
   /// The origin behind Cloudflare is failing; the request itself was fine.
   pub fn is_origin_failure(&self) -> bool {
-    matches!(
-      self,
-      Self::BadGateway502
-        | Self::ServiceUnavailable503
-        | Self::GatewayTimeout504
-        | Self::OriginError5xx(_)
-        | Self::TimeoutOccurred524,
-    )
+    matches!(self, Self::BadGateway502 | Self::ServiceUnavailable503 | Self::GatewayTimeout504 | Self::OriginError5xx(_) | Self::TimeoutOccurred524,)
   }
 
   /// Whether waiting and retrying the same request is reasonable.

@@ -8,27 +8,16 @@ use crate::generate::generate_image::providers::grok::grok_imagine_image::reques
 
 /// Build a first-party Grok Imagine image request. `enable_pro` selects quality
 /// ("pro") mode over fast ("speed"); the two `RouterImageModel`s map here.
-pub fn build_grok_imagine_image(
-  builder: GenerateImageRequestBuilder,
-  enable_pro: bool,
-) -> Result<ImageGenerationDraftOrRequest, ArtcraftRouterError> {
+pub fn build_grok_imagine_image(builder: GenerateImageRequestBuilder, enable_pro: bool) -> Result<ImageGenerationDraftOrRequest, ArtcraftRouterError> {
   // The imagine websocket path is text-to-image only for now.
   if has_image_inputs(builder.image_inputs.as_ref()) {
-    return Err(ArtcraftRouterError::UnsupportedProviderAndModelForNewApi(
-      "Grok Imagine does not support image references yet".to_string(),
-    ));
+    return Err(ArtcraftRouterError::UnsupportedProviderAndModelForNewApi("Grok Imagine does not support image references yet".to_string()));
   }
 
   let prompt = builder.prompt.unwrap_or_default().trim().to_string();
   let aspect_ratio = builder.aspect_ratio.unwrap_or(RouterAspectRatio::Square);
 
-  Ok(ImageGenerationDraftOrRequest::Request(
-    ImageGenerationRequest::GrokImagineImage(GrokImagineImageRequestState {
-      prompt,
-      aspect_ratio,
-      enable_pro,
-    }),
-  ))
+  Ok(ImageGenerationDraftOrRequest::Request(ImageGenerationRequest::GrokImagineImage(GrokImagineImageRequestState { prompt, aspect_ratio, enable_pro })))
 }
 
 fn has_image_inputs(image_inputs: Option<&ImageListRef>) -> bool {
@@ -85,10 +74,7 @@ mod tests {
 
   #[test]
   fn image_inputs_are_rejected() {
-    let builder = GenerateImageRequestBuilder {
-      image_inputs: Some(ImageListRef::Urls(vec!["https://example.com/x.png".to_string()])),
-      ..base_builder()
-    };
+    let builder = GenerateImageRequestBuilder { image_inputs: Some(ImageListRef::Urls(vec!["https://example.com/x.png".to_string()])), ..base_builder() };
     assert!(build_grok_imagine_image(builder, false).is_err());
   }
 }

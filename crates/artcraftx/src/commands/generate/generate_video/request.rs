@@ -6,9 +6,7 @@ use serde_derive::{Deserialize, Serialize};
 use artcraft_client::tokens::characters::CharacterToken;
 use sqlite_identifiers::ids::media_file_token::MediaFileToken;
 
-use crate::commands::generate::common::tauri_media_source::{
-  merge_source_with_legacy_token, merge_sources_with_legacy_tokens, TauriMediaSource,
-};
+use crate::commands::generate::common::tauri_media_source::{merge_source_with_legacy_token, merge_sources_with_legacy_tokens, TauriMediaSource};
 use crate::commands::utils::response::success_response_wrapper::SerializeMarker;
 
 /// This is used in the Tauri command bridge.
@@ -172,26 +170,11 @@ pub struct VideoRequestMediaSources {
 impl TauriGenerateVideoRequest {
   pub fn media_sources(&self) -> VideoRequestMediaSources {
     VideoRequestMediaSources {
-      start_frame: merge_source_with_legacy_token(
-        self.start_frame_image_source.clone(),
-        self.start_frame_image_media_token.clone(),
-      ),
-      end_frame: merge_source_with_legacy_token(
-        self.end_frame_image_source.clone(),
-        self.end_frame_image_media_token.clone(),
-      ),
-      reference_images: merge_sources_with_legacy_tokens(
-        self.reference_image_sources.clone(),
-        self.reference_image_media_tokens.clone(),
-      ),
-      reference_videos: merge_sources_with_legacy_tokens(
-        self.reference_video_sources.clone(),
-        self.reference_video_media_tokens.clone(),
-      ),
-      reference_audios: merge_sources_with_legacy_tokens(
-        self.reference_audio_sources.clone(),
-        self.reference_audio_media_tokens.clone(),
-      ),
+      start_frame: merge_source_with_legacy_token(self.start_frame_image_source.clone(), self.start_frame_image_media_token.clone()),
+      end_frame: merge_source_with_legacy_token(self.end_frame_image_source.clone(), self.end_frame_image_media_token.clone()),
+      reference_images: merge_sources_with_legacy_tokens(self.reference_image_sources.clone(), self.reference_image_media_tokens.clone()),
+      reference_videos: merge_sources_with_legacy_tokens(self.reference_video_sources.clone(), self.reference_video_media_tokens.clone()),
+      reference_audios: merge_sources_with_legacy_tokens(self.reference_audio_sources.clone(), self.reference_audio_media_tokens.clone()),
     }
   }
 }
@@ -200,11 +183,7 @@ impl VideoRequestMediaSources {
   /// Every source the request carries, for up-front validation and for
   /// collecting the tokens that need CDN resolution.
   pub fn iter(&self) -> impl Iterator<Item = &TauriMediaSource> {
-    self.start_frame.iter()
-        .chain(self.end_frame.iter())
-        .chain(self.reference_images.iter().flatten())
-        .chain(self.reference_videos.iter().flatten())
-        .chain(self.reference_audios.iter().flatten())
+    self.start_frame.iter().chain(self.end_frame.iter()).chain(self.reference_images.iter().flatten()).chain(self.reference_videos.iter().flatten()).chain(self.reference_audios.iter().flatten())
   }
 }
 
@@ -224,8 +203,7 @@ pub enum GrokAspectRatio {
 }
 
 #[derive(Serialize)]
-pub struct TauriGenerateVideoResponse {
-}
+pub struct TauriGenerateVideoResponse {}
 
 impl SerializeMarker for TauriGenerateVideoResponse {}
 

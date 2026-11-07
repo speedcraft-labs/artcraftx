@@ -91,7 +91,6 @@ pub fn run() {
   let app_preferences = AppPreferencesManager::load_or_default(&app_data_root);
   let promptbox_state = PromptboxStateManager::load_or_default(&app_data_root);
   let app_preferences_2 = app_preferences.clone();
-  
 
   // NB: tauri-plugin-http stores the credentials on disk, so we can defer to that for now.
   // println!("Attempting to read existing artcraft credentials...");
@@ -99,7 +98,7 @@ pub fn run() {
   let storyteller_creds_manager = StorytellerCredentialManager::initialize_empty(&app_data_root);
   let storyteller_creds_manager_2 = storyteller_creds_manager.clone();
   let storyteller_creds_manager_3 = storyteller_creds_manager.clone();
-  
+
   let midjourney_creds_manager = MidjourneyCredentialManager::initialize_from_disk_infallible(&app_data_root);
 
   // In-memory, process-lifetime Midjourney session (user_id, websocket token,
@@ -145,17 +144,7 @@ pub fn run() {
       tauri::async_runtime::block_on(async move {
         let _result = setup_main_window(&app).await;
 
-        let result = handle_tauri_startup(
-          handle,
-          root,
-          app_preferences_2,
-          artcraft_platform_info_2,
-          artcraft_usage_tracker_2,
-          storyteller_creds,
-          midjourney_live_session_2,
-          grok_creds_manager_2,
-          grok_websockets_2,
-        ).await;
+        let result = handle_tauri_startup(handle, root, app_preferences_2, artcraft_platform_info_2, artcraft_usage_tracker_2, storyteller_creds, midjourney_live_session_2, grok_creds_manager_2, grok_websockets_2).await;
 
         if let Err(err) = result {
           error!("Failed to handle Tauri startup: {:?}", err);
@@ -224,6 +213,5 @@ pub fn run() {
     update_sound_preference_command,
   ]);
 
-  builder.run(tauri::generate_context!("tauri.conf.json"))
-    .expect("error while running tauri application");
+  builder.run(tauri::generate_context!("tauri.conf.json")).expect("error while running tauri application");
 }

@@ -104,15 +104,16 @@ impl ListAssetsArgs<'_> {
     let domain = self.domain_override.unwrap_or(&GrokDomain::DefaultDomain);
     let client = create_firefox_client()?;
 
-    let mut request_builder = client.get(request_url(domain, &self.request))
-        .header(USER_AGENT, FIREFOX_143_MAC_USER_AGENT)
-        .header(ACCEPT, "*/*")
-        .header(ACCEPT_LANGUAGE, "en-US,en;q=0.5")
-        .header(REFERER, "https://grok.com/imagine/saved")
-        .header(COOKIE, self.credentials.to_string())
-        .header("sec-fetch-dest", "empty")
-        .header("sec-fetch-mode", "cors")
-        .header("sec-fetch-site", "same-origin");
+    let mut request_builder = client
+      .get(request_url(domain, &self.request))
+      .header(USER_AGENT, FIREFOX_143_MAC_USER_AGENT)
+      .header(ACCEPT, "*/*")
+      .header(ACCEPT_LANGUAGE, "en-US,en;q=0.5")
+      .header(REFERER, "https://grok.com/imagine/saved")
+      .header(COOKIE, self.credentials.to_string())
+      .header("sec-fetch-dest", "empty")
+      .header("sec-fetch-mode", "cors")
+      .header("sec-fetch-site", "same-origin");
 
     if let Some(headers) = self.request_headers {
       request_builder = headers.apply(request_builder);
@@ -122,29 +123,23 @@ impl ListAssetsArgs<'_> {
       request_builder = request_builder.timeout(timeout);
     }
 
-    let http_request = request_builder
-        .build()
-        .map_err(|err| {
-          error!("Error building list_assets request: {:?}", err);
-          GrokGenericApiError::WreqError(err)
-        })?;
+    let http_request = request_builder.build().map_err(|err| {
+      error!("Error building list_assets request: {:?}", err);
+      GrokGenericApiError::WreqError(err)
+    })?;
 
-    let response = client.execute(http_request)
-        .await
-        .map_err(|err| {
-          error!("Error sending list_assets request: {:?}", err);
-          GrokGenericApiError::WreqError(err)
-        })?;
+    let response = client.execute(http_request).await.map_err(|err| {
+      error!("Error sending list_assets request: {:?}", err);
+      GrokGenericApiError::WreqError(err)
+    })?;
 
     let status = response.status();
     let headers = response.headers().clone();
 
-    let body = response.text()
-        .await
-        .map_err(|err| {
-          error!("Error reading list_assets response body: {:?}", err);
-          GrokGenericApiError::WreqError(err)
-        })?;
+    let body = response.text().await.map_err(|err| {
+      error!("Error reading list_assets response body: {:?}", err);
+      GrokGenericApiError::WreqError(err)
+    })?;
 
     Ok(RawListAssetsResponse { status, headers, body })
   }
@@ -152,17 +147,11 @@ impl ListAssetsArgs<'_> {
 
 fn request_url(domain: &GrokDomain, request: &ListAssetsRequest) -> String {
   let page_size = request.page_size.unwrap_or(DEFAULT_PAGE_SIZE);
-  format!(
-    "{}{}?pageSize={}&orderBy={}&workspaceKind={}",
-    domain.get_domain(), LIST_ASSETS_PATH, page_size, ORDER_BY, WORKSPACE_KIND,
-  )
+  format!("{}{}?pageSize={}&orderBy={}&workspaceKind={}", domain.get_domain(), LIST_ASSETS_PATH, page_size, ORDER_BY, WORKSPACE_KIND,)
 }
 
 fn parse_response(body: &str) -> Result<ListAssetsResponse, GrokError> {
-  serde_json::from_str(body)
-      .map_err(|err| {
-        GrokGenericApiError::SerdeResponseParseErrorWithBody(err, body.to_string()).into()
-      })
+  serde_json::from_str(body).map_err(|err| GrokGenericApiError::SerdeResponseParseErrorWithBody(err, body.to_string()).into())
 }
 
 #[cfg(test)]
@@ -180,20 +169,14 @@ mod tests {
     #[test]
     fn url_defaults_to_page_size_40() {
       let request = ListAssetsRequest { page_size: None };
-      assert_eq!(
-        request_url(&GrokDomain::DefaultDomain, &request),
-        "https://grok.com/rest/assets?pageSize=40&orderBy=ORDER_BY_CREATE_TIME&workspaceKind=WORKSPACE_KIND_IMAGINE_ALL",
-      );
+      assert_eq!(request_url(&GrokDomain::DefaultDomain, &request), "https://grok.com/rest/assets?pageSize=40&orderBy=ORDER_BY_CREATE_TIME&workspaceKind=WORKSPACE_KIND_IMAGINE_ALL",);
     }
 
     #[test]
     fn url_respects_page_size_and_domain_overrides() {
       let request = ListAssetsRequest { page_size: Some(7) };
       let domain = GrokDomain::Custom("http://localhost:8080".to_string());
-      assert_eq!(
-        request_url(&domain, &request),
-        "http://localhost:8080/rest/assets?pageSize=7&orderBy=ORDER_BY_CREATE_TIME&workspaceKind=WORKSPACE_KIND_IMAGINE_ALL",
-      );
+      assert_eq!(request_url(&domain, &request), "http://localhost:8080/rest/assets?pageSize=7&orderBy=ORDER_BY_CREATE_TIME&workspaceKind=WORKSPACE_KIND_IMAGINE_ALL",);
     }
   }
 
@@ -213,35 +196,23 @@ mod tests {
       assert_eq!(video.width, Some(736));
       assert_eq!(video.height, Some(400));
       assert_eq!(video.is_deleted, Some(false));
-      assert_eq!(
-        video.aux_keys.get("preview-image").map(String::as_str),
-        Some("users/00000000-0000-4000-8000-000000000000/generated/98db6014-be3a-4c92-9aec-91c80123ccac/preview_image.jpg"),
-      );
+      assert_eq!(video.aux_keys.get("preview-image").map(String::as_str), Some("users/00000000-0000-4000-8000-000000000000/generated/98db6014-be3a-4c92-9aec-91c80123ccac/preview_image.jpg"),);
       let video_input = video.media_gen_input.as_ref().unwrap();
       assert_eq!(video_input["imageToVideo"]["duration"], 6);
 
       let image = &response.assets[1];
       assert_eq!(image.asset_id, "8d0b3727-f040-4b33-abf0-16e7d4364e6c");
       assert_eq!(image.mime_type.as_deref(), Some("image/jpeg"));
-      assert_eq!(
-        image.source_conversation_id.as_deref(),
-        Some("e851b4f1-0605-4a41-b624-d629c2c1638d"),
-      );
+      assert_eq!(image.source_conversation_id.as_deref(), Some("e851b4f1-0605-4a41-b624-d629c2c1638d"),);
       let image_input = image.media_gen_input.as_ref().unwrap();
-      assert_eq!(
-        image_input["textToImage"]["prompt"],
-        "A pirate ship in the middle of the forest",
-      );
+      assert_eq!(image_input["textToImage"]["prompt"], "A pirate ship in the middle of the forest",);
     }
 
     #[test]
     fn missing_required_assets_is_an_error() {
       // `assets` is required, so an object without it fails to parse.
       let result = parse_response("{}");
-      assert!(matches!(
-        result,
-        Err(GrokError::ApiGeneric(GrokGenericApiError::SerdeResponseParseErrorWithBody(_, _))),
-      ));
+      assert!(matches!(result, Err(GrokError::ApiGeneric(GrokGenericApiError::SerdeResponseParseErrorWithBody(_, _))),));
     }
   }
 
@@ -259,13 +230,7 @@ mod tests {
       let secrets = load_grok_test_secrets()?;
 
       let page_size: u32 = 5;
-      let args = ListAssetsArgs {
-        request: ListAssetsRequest { page_size: Some(page_size) },
-        credentials: &secrets.cookies,
-        domain_override: None,
-        request_headers: Some(&secrets.headers),
-        request_timeout: None,
-      };
+      let args = ListAssetsArgs { request: ListAssetsRequest { page_size: Some(page_size) }, credentials: &secrets.cookies, domain_override: None, request_headers: Some(&secrets.headers), request_timeout: None };
 
       // Fetch raw so we can print the whole body and spot fields the typed
       // response might be dropping.
@@ -320,7 +285,7 @@ mod tests {
         Err(err) => {
           dump();
           panic!("list_assets (cookies only) failed to parse body: {err}");
-        }
+        },
       };
       for asset in &response.assets {
         println!("[test] asset: {} ({:?})", asset.asset_id, asset.mime_type);
@@ -335,19 +300,13 @@ mod tests {
 
     /// Pretty-print a JSON body for inspection, falling back to the raw string.
     fn pretty_json(body: &str) -> String {
-      serde_json::from_str::<serde_json::Value>(body)
-          .and_then(|value| serde_json::to_string_pretty(&value))
-          .unwrap_or_else(|_| body.to_string())
+      serde_json::from_str::<serde_json::Value>(body).and_then(|value| serde_json::to_string_pretty(&value)).unwrap_or_else(|_| body.to_string())
     }
 
     // The account under test has generated media, so expect a non-empty page
     // whose entries carry the structural fields. (No PII asserted.)
     fn list_assets_assertions_pass(response: &ListAssetsResponse, page_size: u32) -> bool {
-      !response.assets.is_empty()
-          && response.assets.len() <= page_size as usize
-          && response.assets.iter().all(|asset| {
-            !asset.asset_id.is_empty() && asset.mime_type.is_some()
-          })
+      !response.assets.is_empty() && response.assets.len() <= page_size as usize && response.assets.iter().all(|asset| !asset.asset_id.is_empty() && asset.mime_type.is_some())
     }
 
     fn assert_list_assets(response: &ListAssetsResponse, page_size: u32) {
